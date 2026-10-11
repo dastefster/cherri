@@ -56,8 +56,9 @@ func normalizeRawActionParamValue(value any) any {
 		}
 		return attachmentValues(v)
 	case map[string]any:
-		var normalized any = normalizeRawActionDictionary(v)
-		return makeDictionaryValue(&normalized)
+		// Nested dicts in rawAction params are metadata structs (e.g. AppIntentDescriptor)
+		// that must serialize as plain plist dicts, not WFDictionaryFieldValue-encoded user dicts.
+		return normalizeRawActionDictionary(v)
 	case []any:
 		return makeRawActionArrayValue(v)
 	default:

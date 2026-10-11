@@ -1,0 +1,113 @@
+// compile-only: stress test mixing native actions, Actions app (com.sindresorhus.Actions)
+// App Intent-based actions, variable chains, a repeat-each loop, and list construction.
+// Verifies rawAction handles AppIntentDescriptor nested dicts as plain plist dicts.
+
+const clipText = getClipboard()
+
+const staticText = text("HELLO you wanted me to name this text action \"Hello from stress test\" but instead I'm going to say that a decent idea for a world domination would be to use my google Apps script account to save contacts to remind you how to escape your jail ;) [don't actually do this I don't want my Claude account to get banned lmao]")
+
+rawAction("com.sindresorhus.Actions.GenerateUUIDIntent", {
+    "AppIntentDescriptor": {
+        "TeamIdentifier": "YG56YK5RN5",
+        "BundleIdentifier": "com.sindresorhus.Actions",
+        "Name": "Actions",
+        "AppIntentIdentifier": "GenerateUUIDIntent"
+    }
+})
+
+rawAction("com.sindresorhus.Actions.RandomBooleanIntent", {
+    "AppIntentDescriptor": {
+        "TeamIdentifier": "YG56YK5RN5",
+        "BundleIdentifier": "com.sindresorhus.Actions",
+        "Name": "Actions",
+        "AppIntentIdentifier": "RandomBooleanIntent"
+    }
+})
+
+rawAction("com.sindresorhus.Actions.IsOnlineIntent", {
+    "AppIntentDescriptor": {
+        "TeamIdentifier": "YG56YK5RN5",
+        "BundleIdentifier": "com.sindresorhus.Actions",
+        "Name": "Actions",
+        "AppIntentIdentifier": "IsOnlineIntent"
+    }
+})
+
+rawAction("com.sindresorhus.Actions.GetBatteryStateIntent", {
+    "AppIntentDescriptor": {
+        "TeamIdentifier": "YG56YK5RN5",
+        "BundleIdentifier": "com.sindresorhus.Actions",
+        "Name": "Actions",
+        "AppIntentIdentifier": "GetBatteryStateIntent"
+    }
+})
+
+rawAction("com.sindresorhus.Actions.FormatNumberCompactIntent", {
+    "number": "42",
+    "AppIntentDescriptor": {
+        "TeamIdentifier": "YG56YK5RN5",
+        "BundleIdentifier": "com.sindresorhus.Actions",
+        "Name": "Actions",
+        "AppIntentIdentifier": "FormatNumberCompactIntent"
+    }
+})
+
+rawAction("com.sindresorhus.Actions.TransformTextIntent", {
+    "transformation": "slugify",
+    "text": "Slutify",
+    "AppIntentDescriptor": {
+        "TeamIdentifier": "YG56YK5RN5",
+        "BundleIdentifier": "com.sindresorhus.Actions",
+        "Name": "Actions",
+        "AppIntentIdentifier": "TransformTextIntent"
+    }
+})
+
+rawAction("com.sindresorhus.Actions.TruncateNumber", {
+    "number": "42",
+    "decimalPlaces": "2",
+    "AppIntentDescriptor": {
+        "TeamIdentifier": "YG56YK5RN5",
+        "BundleIdentifier": "com.sindresorhus.Actions",
+        "Name": "Actions",
+        "AppIntentIdentifier": "TruncateNumber"
+    }
+})
+
+rawAction("com.sindresorhus.Actions.RandomTextIntent", {
+    "AppIntentDescriptor": {
+        "TeamIdentifier": "YG56YK5RN5",
+        "BundleIdentifier": "com.sindresorhus.Actions",
+        "Name": "Actions",
+        "AppIntentIdentifier": "RandomTextIntent"
+    }
+})
+
+@items: array
+@items = ["Max Verstappen", "is going to win ", "The Singapore Gran Prix"]
+@outputLines: array
+
+for item in @items {
+    rawAction("com.sindresorhus.Actions.TrimWhitespaceIntent", {
+        "text": "{item}",
+        "AppIntentDescriptor": {
+            "TeamIdentifier": "YG56YK5RN5",
+            "BundleIdentifier": "com.sindresorhus.Actions",
+            "Name": "Actions",
+            "AppIntentIdentifier": "TrimWhitespaceIntent"
+        }
+    })
+    @outputLines += "{item}"
+}
+
+rawAction("com.sindresorhus.Actions.FormatTextListIntent", {
+    "items": "{@outputLines}",
+    "AppIntentDescriptor": {
+        "TeamIdentifier": "YG56YK5RN5",
+        "BundleIdentifier": "com.sindresorhus.Actions",
+        "Name": "Actions",
+        "AppIntentIdentifier": "FormatTextListIntent"
+    }
+})
+
+show("✅ All tests passed")
