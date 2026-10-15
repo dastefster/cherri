@@ -1,7 +1,7 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.6 BUILD 2026-10-15 17:55
-// Type Cherri code, insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
+// v0.0.7 BUILD 2026-10-15 18:00
+// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -13,7 +13,8 @@ import Cherri
 // ===================================
 
 struct ContentView: View {
-    @State private var source = "alert(\"Hello from Cherri\")\n"
+    // Kept in UserDefaults so closing the app never loses work. A file will replace this if scripts get large.
+    @AppStorage("cherriSource") private var source = "alert(\"Hello from Cherri\")\n"
     @State private var status = "Cherri \(CherriCompilerVersion())"
     @State private var failed = false
     @State private var working = false
