@@ -1,7 +1,7 @@
 // ===================================
 // Cherri Bind Package
-// v0.0.1 BUILD 2026-10-15 01:55
-// The only package gomobile binds, so Swift sees Compile and CompilerVersion and none of the compiler's internals.
+// v0.0.2 BUILD 2026-10-15 13:55
+// The only package gomobile binds, so Swift sees Compile, CompilerVersion and ActionCatalog and none of the compiler's internals.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -21,4 +21,9 @@ func Compile(source string, name string) ([]byte, error) {
 
 func CompilerVersion() string {
 	return cherrilib.CompilerVersion()
+}
+
+// ActionCatalog returns every standard action with its parameters as a JSON string for the action picker.
+func ActionCatalog() (string, error) {
+	return cherrilib.ActionCatalog()
 }

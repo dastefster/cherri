@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Library Wrapper
-// v0.0.2 BUILD 2026-10-15 01:45
+// v0.0.3 BUILD 2026-10-15 13:45
 // Exposes the Cherri compiler as a library so gomobile can bind it into a Swift app.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -79,6 +79,14 @@ var standardActionsLoaded bool
 
 var standardIncludeLine = regexp.MustCompile(`(?m)^[ \t]*#include[ \t]+'actions/[^']*'.*$`)
 
+// ensureStandardActions loads the standard actions the first time anything needs them.
+func ensureStandardActions() {
+	if !standardActionsLoaded {
+		loadStandardActions()
+		standardActionsLoaded = true
+	}
+}
+
 // CompilerVersion returns the version of the Cherri compiler this library was built from.
 func CompilerVersion() string {
 	return version
@@ -115,10 +123,7 @@ func Compile(source string, name string) (result []byte, err error) {
 		defer func() { failure = recover() }()
 
 		prepareArgs(sourcePath)
-		if !standardActionsLoaded {
-			loadStandardActions()
-			standardActionsLoaded = true
-		}
+		ensureStandardActions()
 		main()
 	}()
 	var output = strings.TrimSpace(restoreOutput())

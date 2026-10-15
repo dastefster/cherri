@@ -1,0 +1,121 @@
+// ===================================
+// Action Catalog
+// v0.0.2 BUILD 2026-10-15 14:28
+// Loads the list of every Cherri action from the embedded compiler and turns an action into starter code to insert.
+// dev by @dastefster 🍒🔨
+// ===================================
+
+import Foundation
+import Cherri
+
+// ===================================
+// MODELS
+// ===================================
+
+nonisolated struct CatalogParam: Codable, Hashable {
+    let name: String
+    let type: String
+    let values: [String]?
+    let optional: Bool?
+    let literal: Bool?
+    let repeats: Bool?
+    let qty: Bool?
+    let defaultValue: String?
+
+    enum CodingKeys: String, CodingKey {
+        case name, type, values, optional, literal, repeats, qty
+        case defaultValue = "default"
+    }
+
+    var isOptional: Bool { optional ?? false }
+}
+
+nonisolated struct CatalogAction: Codable, Identifiable, Hashable {
+    let name: String
+    let title: String?
+    let description: String?
+    let warning: String?
+    let category: String
+    let subcategory: String?
+    let params: [CatalogParam]
+    let returns: String?
+    let macOnly: Bool?
+    let nonMacOnly: Bool?
+    let minVersion: Double?
+    let maxVersion: Double?
+
+    var id: String { name }
+}
+
+nonisolated struct CatalogCategory: Codable, Hashable, Identifiable {
+    let id: String
+    let title: String
+}
+
+nonisolated struct ActionCatalog: Codable {
+    let compilerVersion: String
+    let categories: [CatalogCategory]
+    let actions: [CatalogAction]
+}
+
+// ===================================
+// LOADING
+// ===================================
+
+extension ActionCatalog {
+    // The first call makes the compiler load all of its actions, so call this off the main thread.
+    nonisolated static func load() throws -> ActionCatalog {
+        var error: NSError?
+        let json = CherriActionCatalog(&error)
+        if let error {
+            throw error
+        }
+
+        return try JSONDecoder().decode(ActionCatalog.self, from: Data(json.utf8))
+    }
+}
+
+// ===================================
+// SEARCH AND INSERTION
+// ===================================
+
+extension CatalogAction {
+    func matches(_ query: String) -> Bool {
+        name.lowercased().contains(query)
+            || (title ?? "").lowercased().contains(query)
+            || (description ?? "").lowercased().contains(query)
+    }
+
+    // Starter code with every required argument filled by a placeholder of the right kind. Optional ones are left out.
+    var insertionText: String {
+        let required = params.filter { !$0.isOptional }
+        if required.isEmpty {
+            return "\(name)()"
+        }
+
+        return "\(name)(" + required.map(\.placeholder).joined(separator: ", ") + ")"
+    }
+}
+
+extension CatalogParam {
+    var placeholder: String {
+        if let first = values?.first {
+            return "\"\(first)\""
+        }
+
+        switch type {
+        case "number", "float":
+            return "0"
+        case "bool":
+            return "true"
+        case "dictionary":
+            return "{}"
+        case "array":
+            return "[]"
+        case "rawtext":
+            return "''"
+        default:
+            return "\"\""
+        }
+    }
+}

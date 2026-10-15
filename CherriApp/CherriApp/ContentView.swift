@@ -1,7 +1,7 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.2 BUILD 2026-10-15 13:40
-// Type Cherri code, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
+// v0.0.3 BUILD 2026-10-15 13:58
+// Type Cherri code, insert actions from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -18,6 +18,7 @@ struct ContentView: View {
     @State private var failed = false
     @State private var working = false
     @State private var exportFile: ExportFile?
+    @State private var showingActions = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -30,6 +31,12 @@ struct ContentView: View {
                 .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
 
             HStack(spacing: 12) {
+                Button(action: { showingActions = true }) {
+                    Text("Actions")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+
                 Button(action: compile) {
                     Text("Compile")
                         .frame(maxWidth: .infinity)
@@ -43,6 +50,9 @@ struct ContentView: View {
                 .buttonStyle(.bordered)
             }
             .disabled(working)
+            .sheet(isPresented: $showingActions) {
+                ActionPickerView { text in insert(text) }
+            }
 
             Text("Export sends your shortcut to RoutineHub's HubSign service to be signed.")
                 .font(.caption)
@@ -62,6 +72,18 @@ struct ContentView: View {
         .sheet(item: $exportFile) { file in
             ShareSheet(url: file.url)
         }
+    }
+
+    // ===================================
+    // INSERT ACTION
+    // ===================================
+
+    // Appends on its own line for now. Inserting at the cursor needs a UIKit text view, which comes later.
+    private func insert(_ text: String) {
+        if !source.isEmpty && !source.hasSuffix("\n") {
+            source += "\n"
+        }
+        source += text + "\n"
     }
 
     // ===================================
