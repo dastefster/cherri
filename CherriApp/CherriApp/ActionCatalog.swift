@@ -1,7 +1,7 @@
 // ===================================
 // Action Catalog
-// v0.0.2 BUILD 2026-10-15 14:28
-// Loads the list of every Cherri action from the embedded compiler and turns an action into starter code to insert.
+// v0.0.4 BUILD 2026-10-15 18:35
+// Loads the list of every Cherri action from the embedded compiler, gives each a readable name, and turns an action into starter code to insert.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -82,8 +82,19 @@ extension ActionCatalog {
 extension CatalogAction {
     func matches(_ query: String) -> Bool {
         name.lowercased().contains(query)
+            || displayName.lowercased().contains(query)
+            || (ActionVariants.variant(for: name)?.alternate.lowercased().contains(query) ?? false)
             || (title ?? "").lowercased().contains(query)
             || (description ?? "").lowercased().contains(query)
+    }
+
+    // The documented title when Cherri has one, otherwise the call name split into words. Not Apple's official name, just readable.
+    var displayName: String {
+        if let title, !title.isEmpty {
+            return title
+        }
+
+        return name.spacedFromCamelCase
     }
 
     // Starter code with every required argument filled by a placeholder of the right kind. Optional ones are left out.
@@ -117,5 +128,31 @@ extension CatalogParam {
         default:
             return "\"\""
         }
+    }
+}
+
+// ===================================
+// CAMEL CASE SPLITTING
+// ===================================
+
+extension String {
+    // "getBatteryLevel" becomes "Get Battery Level" and "getURL" becomes "Get URL".
+    var spacedFromCamelCase: String {
+        let chars = Array(self)
+        var result = ""
+
+        for (index, char) in chars.enumerated() {
+            if index > 0 && char.isUppercase {
+                let previous = chars[index - 1]
+                let nextIsLower = index + 1 < chars.count && chars[index + 1].isLowercase
+
+                if previous.isLowercase || previous.isNumber || (previous.isUppercase && nextIsLower) {
+                    result.append(" ")
+                }
+            }
+            result.append(char)
+        }
+
+        return result.prefix(1).uppercased() + result.dropFirst()
     }
 }

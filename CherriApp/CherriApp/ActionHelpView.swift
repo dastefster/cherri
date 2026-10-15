@@ -1,6 +1,6 @@
 // ===================================
 // Action Help
-// v0.0.3 BUILD 2026-10-15 15:30
+// v0.0.4 BUILD 2026-10-15 18:08
 // Help sheet for one action: how to call it, what each parameter expects, defaults, and allowed values. Tapping an allowed value inserts it, quoted, at the editor cursor.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -67,7 +67,7 @@ struct ActionHelpView: View {
                     }
                 }
             }
-            .navigationTitle(action.title ?? action.name)
+            .navigationTitle(action.displayName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
