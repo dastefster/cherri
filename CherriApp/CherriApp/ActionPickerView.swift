@@ -1,7 +1,7 @@
 // ===================================
 // Action Picker
-// v0.0.1 BUILD 2026-10-15 13:58
-// Searchable list of every Cherri action. Tapping one hands starter code back to the editor.
+// v0.0.3 BUILD 2026-10-15 15:30
+// Searchable list of every Cherri action. Tapping one hands starter code back to the editor; the info button opens its help, where an allowed value can be tapped to insert it.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -13,11 +13,13 @@ import SwiftUI
 
 struct ActionPickerView: View {
     let onInsert: (String) -> Void
+    let onInsertValue: (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var catalog: ActionCatalog?
     @State private var loadError: String?
     @State private var query = ""
+    @State private var helpAction: CatalogAction?
 
     var body: some View {
         NavigationStack {
@@ -43,6 +45,12 @@ struct ActionPickerView: View {
             .searchable(text: $query, prompt: "Search actions")
         }
         .task { await load() }
+        .sheet(item: $helpAction) { action in
+            ActionHelpView(action: action) { value in
+                onInsertValue(value)
+                dismiss()
+            }
+        }
     }
 
     // ===================================
@@ -60,13 +68,24 @@ struct ActionPickerView: View {
             ForEach(sections, id: \.0.id) { section in
                 Section(section.0.title) {
                     ForEach(section.1) { action in
-                        Button {
-                            onInsert(action.insertionText)
-                            dismiss()
-                        } label: {
-                            row(for: action)
+                        HStack(spacing: 12) {
+                            Button {
+                                onInsert(action.insertionText)
+                                dismiss()
+                            } label: {
+                                row(for: action)
+                            }
+                            .buttonStyle(.plain)
+
+                            Button {
+                                helpAction = action
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .font(.title3)
+                                    .foregroundStyle(.tint)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
