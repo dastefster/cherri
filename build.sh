@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ===================================
 # Cherri Library Build
-# v0.0.2 BUILD 2026-10-15 01:42
+# v0.0.3 BUILD 2026-10-15 01:55
 # Copies a Cherri checkout into build/cherrilib and turns it into an importable, non-fatal library.
 # dev by @dastefster 🍒🔨
 # ===================================
@@ -61,5 +61,7 @@ perl -pi -e 's/^(func checkMissingStandardInclude\(identifier \*string, parsing 
 # ===================================
 
 cp "$HERE"/src/wrapper.go "$HERE"/src/wrapper_test.go "$OUT"/
+mkdir -p "$OUT"/bind
+cp "$HERE"/src/bind.go "$OUT"/bind/
 
 echo "built $OUT"
