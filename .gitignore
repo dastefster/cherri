@@ -1,3 +1,8 @@
 build/
 cherri-src/
 Cherri.xcframework/
+
+xcuserdata/
+DerivedData/
+.DS_Store
+*.xcuserstate
