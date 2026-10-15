@@ -1,0 +1,44 @@
+// compile-only: iOS/iPadOS-only third-party actions (Pythonista 3, com.omz-software.Pythonista3) that run
+// scripts and write files in the author's real Pythonista library. Nothing runs unless the switch below
+// is changed from "no" to "yes", so the file only needs to compile.
+//
+// Exercises the Pythonista actions (actions_pythonista.go). The script and file names are from the author's
+// device and only need to compile, not resolve. The sql_engine.py path below holds an invisible U+2060 after
+// the slash, exactly as the Shortcuts script picker wrote it, and must pass through untouched.
+
+#define name PYTHONISTA TEST
+#define color green
+
+@runActions = "no"
+if @runActions == "yes" {
+    const fileName = text("test_out.txt")
+
+    // Get File: a variable name with Error If Not Found off, then a literal path with Show When Run off.
+    const file = getPythonistaFile(fileName, false, true)
+    const sqlFile = getPythonistaFile("icloud/sql_engine.py", nil, false)
+
+    // Run Script, every option set as in the device export. The file connects to Input Files.
+    const output = runPythonistaScript("iCloud/⁠sql_engine.py", nil, file, true, false, false)
+
+    // Run Script untouched: only the script path and the always-written empty Input Files list.
+    runPythonistaScript("iCloud/schema_generator.py")
+
+    // Script arguments: one is written as a bare value, two or more as a list, and a variable stays a text token.
+    runPythonistaScript("iCloud/schema_generator.py", ["hello"])
+    runPythonistaScript("iCloud/schema_generator.py", ["hello", "world"])
+    runPythonistaScript("iCloud/schema_generator.py", ["hello", "{fileName}"])
+
+    // The Script parameter accepts a whole variable or Ask Each Time, which Shortcuts writes as attachments.
+    runPythonistaScript(fileName)
+    runPythonistaScript(Ask)
+
+    // Inline script: braces in a raw string are code, not variables. Run in Pythonista App and Auto-Return on.
+    const inlineOutput = runPythonistaInlineScript('print("hi")', nil, nil, true, true)
+    runPythonistaInlineScript('print({"a": 1})')
+
+    // Add File: a variable name with Overwrite on and Show When Run off, then the untouched form.
+    addPythonistaFile(inlineOutput, fileName, true, false)
+    addPythonistaFile(output, "test_out.txt")
+}
+
+show("✅ All tests passed")
