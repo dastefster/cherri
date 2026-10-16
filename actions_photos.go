@@ -119,7 +119,7 @@ func init() {
 			{name: "input", validType: Variable, key: "WFContentItemInputParameter", optional: true},
 		},
 	)
-	findAlbums.appIntent.requiresInstall = true
+	findAlbums.appIntent.requiresAppInstallation = true
 	findAlbums.outputType = Arr
 	actions["findAlbums"] = findAlbums
 
