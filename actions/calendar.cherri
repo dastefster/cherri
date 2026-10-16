@@ -85,6 +85,27 @@ enum reminderDetail {
 // [Doc]: [Reminders] Get Reminder Detail: Get a detail of a reminder.
 action 'properties.reminders' getReminderDetail(variable reminder: 'WFInput', reminderDetail detail: 'WFContentItemPropertyName')
 
+enum reminderPriority {
+    'Low',
+    'Medium',
+    'High',
+}
+
+// [Doc]: [Reminders] Add New Reminder: Add a new reminder. The list, due date, alert and location are picked in the Shortcut.
+action 'addnewreminder' addNewReminder(
+    text ?title: 'WFCalendarItemTitle',
+    text ?notes: 'WFCalendarItemNotes',
+    text ?tags: 'WFTags',
+    text ?url: 'WFURL',
+    bool ?flag: 'WFFlag',
+    bool ?urgent: 'WFUrgent',
+    reminderPriority ?priority: 'WFPriority',
+    variable ?images: 'WFImages'
+)
+
+// [Doc]: [Reminders] Get Upcoming Reminders: Get the reminders that are coming up.
+action 'getupcomingreminders' getUpcomingReminders(): array
+
 // [Doc]: [Reminders] Open Reminders List
 action 'showlist' openRemindersList(variable list: 'WFList')
 

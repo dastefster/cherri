@@ -19,6 +19,14 @@ if @runActions == "yes" {
     deleteReminderSections(ShortcutInput)
     searchReminders()
 
+    // Priority is stored as its name, and the flag and urgent toggles as booleans.
+    addNewReminder("Title", "Notes", "tag", "example.com", true, true, "High", ShortcutInput)
+    addNewReminder("Title only")
+    addNewReminder(nil, nil, nil, nil, true)
+    addNewReminder(nil, nil, nil, nil, nil, nil, "Low")
+    addNewReminder()
+    getUpcomingReminders()
+
     // Every detail is stored as its plain name.
     getReminderDetail(ShortcutInput, "Title")
     getReminderDetail(ShortcutInput, "Due Date")
