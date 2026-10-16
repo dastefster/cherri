@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.16 BUILD 2026-10-16 04:05
+// v0.0.17 BUILD 2026-10-16 04:15
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -15,7 +15,7 @@ import Cherri
 
 struct ContentView: View {
     // Kept in UserDefaults so closing the app never loses work. A file will replace this if scripts get large.
-    @AppStorage("cherriSource") private var source = "alert(\"Hello from Cherri\")\n"
+    @AppStorage("cherriSource") private var source = StarterCode.text
     @State private var status = "Cherri \(CherriCompilerVersion())"
     @State private var failed = false
     @State private var showDetails = false
@@ -28,6 +28,8 @@ struct ContentView: View {
     @State private var showingWelcome = false
     @State private var showingGuide = false
     @State private var showingSettings = false
+    @AppStorage(ExportSettings.confirmKey) private var confirmBeforeExport = true
+    @State private var confirmingExport = false
     @AppStorage(EditorSettings.fontKey) private var fontID = EditorSettings.systemFontID
     @AppStorage(EditorSettings.sizeKey) private var fontSize = EditorSettings.defaultSize
     @AppStorage(EditorSettings.lightKey) private var lightThemeID = EditorSettings.defaultLightThemeID
@@ -82,7 +84,7 @@ struct ContentView: View {
                     GuideView(onShowWelcome: { showingWelcome = true })
                 }
                 .navigationDestination(isPresented: $showingSettings) {
-                    SettingsView()
+                    SettingsView(onShowWelcome: { showingWelcome = true })
                 }
         }
         .fullScreenCover(isPresented: $showingWelcome) {
@@ -120,7 +122,9 @@ struct ContentView: View {
                 }
                 .buttonStyle(.borderedProminent)
 
-                Button(action: exportToShortcuts) {
+                Button(action: {
+                    if confirmBeforeExport { confirmingExport = true } else { exportToShortcuts() }
+                }) {
                     Text("Export")
                         .frame(maxWidth: .infinity)
                 }
@@ -145,6 +149,12 @@ struct ContentView: View {
         .padding()
         .sheet(item: $exportFile) { file in
             ShareSheet(url: file.url)
+        }
+        .alert("Export Shortcut?", isPresented: $confirmingExport) {
+            Button("Export") { exportToShortcuts() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your shortcut will be sent to RoutineHub's HubSign service to be signed. You can turn this prompt off in Settings.")
         }
     }
 

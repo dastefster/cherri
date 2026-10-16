@@ -1,6 +1,6 @@
 // ===================================
 // In-App Guide
-// v0.0.4 BUILD 2026-10-16 02:58
+// v0.0.6 BUILD 2026-10-16 04:30
 // Basic documentation sheet: getting started, Cherri syntax basics, the Actions picker, Compile vs Export, troubleshooting, beta limitations, and credits. Content lives in the guideSections array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -57,7 +57,7 @@ let guideSections: [GuideSection] = [
         .text("Tap **Actions** to search or browse. Choose an action to open its form. Fill in what you need and leave the rest empty, because optional parameters can be skipped."),
         .text("**Swipe left** on an action and tap **Quick Insert** to skip the form and drop the action into your code right away."),
         .text("The **i** button explains what each parameter accepts. Tapping an allowed value in the help inserts it at your cursor."),
-        .text("The variable menu in a form lists the variables defined above your cursor, so you can drop one in without typing it."),
+        .text("The variable menu in a form lists the variables in your code, newest first, plus Cherri's built-ins, so you can drop one in without typing it."),
         .tip("Actions are inserted where your cursor is. Tap in the editor first to choose the spot."),
     ]),
     GuideSection(id: "export", title: "Compile vs. Export", symbol: "square.and.arrow.up", blocks: [
@@ -74,7 +74,7 @@ let guideSections: [GuideSection] = [
     ]),
     GuideSection(id: "beta", title: "Known beta limitations", symbol: "exclamationmark.triangle", blocks: [
         .text("This is an early beta. Here is what to expect:"),
-        .text("• No syntax highlighting or autocomplete yet."),
+        .text("• No autocomplete yet. Use the Actions picker to insert actions."),
         .text("• Very large scripts may be slow. They are stored in the app's settings for now."),
         .text("• Some actions haven't been checked against the latest iOS. If an action misbehaves, tell me which one."),
         .text("• Export always goes through HubSign. If it's down, Export won't work, but Compile will."),
@@ -93,7 +93,6 @@ struct GuideView: View {
     let onShowWelcome: () -> Void
     // Own expand/collapse state: DisclosureGroup rows did not respond to taps inside this List.
     @State private var expanded: Set<String> = ["start"]
-    @AppStorage("hasSeenWelcome") private var hasSeenWelcome = true
 
     var body: some View {
         Group {
@@ -113,15 +112,6 @@ struct GuideView: View {
                         Label("Show welcome screen", systemImage: "hand.wave")
                     }
                 }
-
-                // Debug builds only, so TestFlight and App Store builds never show it.
-                #if DEBUG
-                Section("Developer") {
-                    Button(role: .destructive, action: { hasSeenWelcome = false }) {
-                        Label("Reset first run", systemImage: "arrow.counterclockwise")
-                    }
-                }
-                #endif
             }
             .navigationTitle("Guide")
             .navigationBarTitleDisplayMode(.inline)
@@ -156,20 +146,24 @@ struct GuideView: View {
             if isOpen {
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(Array(section.blocks.enumerated()), id: \.offset) { _, block in
-                        render(block)
+                        GuideBlockView(block: block)
                     }
                 }
             }
         }
         .padding(.vertical, 4)
     }
+}
 
-    // ===================================
-    // BLOCK RENDERING
-    // ===================================
+// ===================================
+// BLOCK RENDERING
+// ===================================
 
-    @ViewBuilder
-    private func render(_ block: GuideBlock) -> some View {
+// Shared by the Guide and the Documentation pages.
+struct GuideBlockView: View {
+    let block: GuideBlock
+
+    var body: some View {
         switch block {
         case .text(let string):
             Text(LocalizedStringKey(string))
