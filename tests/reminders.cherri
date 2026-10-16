@@ -1,0 +1,30 @@
+// compile-only: these Reminders actions act on your real lists, so there is nothing to assert on.
+@runActions = "no"
+
+// Reference values come from device exports of every action below. Pickers that need your own lists are left blank.
+if @runActions == "yes" {
+    const group = createReminderGroup("Group")
+    createReminderGroup()
+    const list = createReminderList(group)
+    createReminderList()
+    createReminderSection(list)
+    createReminderSection()
+
+    updateReminderList(list, "New name")
+    updateReminderList(list)
+    updateReminderList()
+
+    deleteReminderGroups(group)
+    deleteReminderLists(list)
+    deleteReminderSections(ShortcutInput)
+    searchReminders()
+
+    // Every detail is stored as its plain name.
+    getReminderDetail(ShortcutInput, "Title")
+    getReminderDetail(ShortcutInput, "Due Date")
+    getReminderDetail(ShortcutInput, "Is Flagged")
+    getReminderDetail(ShortcutInput, "Subtasks")
+    getReminderDetail(ShortcutInput, "Last Modified Date")
+}
+
+show("✅ All tests passed")
