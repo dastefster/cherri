@@ -45,6 +45,17 @@ func init() {
 		},
 	)
 
+	// iOS 27 replaced the Rename Album action, and the old identifier now shows as an unknown action.
+	actions["renameAlbum"] = photosAction(
+		"Rename Album",
+		"Renames `album` to `newTitle`.",
+		"RenameAlbumIntent",
+		[]parameterDefinition{
+			{name: "album", validType: Variable, key: "album", optional: true},
+			{name: "newTitle", validType: String, key: "title", optional: true},
+		},
+	)
+
 	actions["favoritePhotos"] = photosAction(
 		"Favorite Photos",
 		"Favorites `photos`.",

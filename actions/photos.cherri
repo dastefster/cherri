@@ -5,8 +5,8 @@ Photos Actions
 // [Doc]: Create Album
 action 'photos.createalbum' createAlbum(text name: 'AlbumName', variable ?images: 'WFInput')
 
-// [Doc]: Rename Album
-action renameAlbum(variable album: 'album', text newTitle: 'title')
+// [Doc]: Rename Album (Legacy): Renames an album on iOS 26 and earlier. iOS 27 replaced the action, use renameAlbum.
+action v26< renameAlbumLegacy(variable album: 'album', text newTitle: 'title')
 
 // [Doc]: Search Photos
 action 'com.apple.mobileslideshow.PhotosSearchAssistantIntent' searchPhotos(text criteria: 'criteria'): array

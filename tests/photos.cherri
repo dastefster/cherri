@@ -14,6 +14,11 @@ if @runActions == "yes" {
     openPhoto(shot)
     deleteAlbums(shot)
 
+    // iOS 27 replaced the old Rename Album identifier, which now shows as an unknown action.
+    renameAlbum(shot, "New name")
+    renameAlbum(shot)
+    renameAlbum()
+
     createMemory("A trip to the beach")
     createMemory()
 
