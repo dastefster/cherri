@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Syntax Highlighter
-// v0.0.3 BUILD 2026-10-16 03:52
+// v0.0.4 BUILD 2026-10-16 04:12
 // Colors comments, strings, numbers, operators, type names, keywords, #directives, @variables, declared names (const, loop and function parameters) and action calls in a text view using the current theme. Regex passes only, so it stays instant on normal-sized shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -64,6 +64,8 @@ enum CherriHighlighter {
     static func style(_ textView: UITextView, with style: EditorStyle) {
         textView.backgroundColor = style.theme.background
         textView.tintColor = style.theme.caret
+        textView.layer.borderWidth = style.theme.border == nil ? 0 : 2
+        textView.layer.borderColor = style.theme.border?.cgColor
         textView.font = style.font
         textView.textColor = style.theme.text
 
