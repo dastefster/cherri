@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b2a5c"/><stop offset="1" stop-color="#16102b"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#c98a4b"/><stop offset="0.5" stop-color="#e3a966"/><stop offset="1" stop-color="#a86f36"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c4cbd6"/><stop offset="0.55" stop-color="#7f8896"/><stop offset="1" stop-color="#565e6b"/>
+    </linearGradient>
+    <radialGradient id="cherry" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#ff6b78"/><stop offset="0.45" stop-color="#e3162f"/><stop offset="1" stop-color="#8f0a1e"/>
+    </radialGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7bd56a"/><stop offset="1" stop-color="#2f8f43"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- hammer, tilted so the head sits upper right -->
+  <g transform="rotate(38 512 520)">
+    <rect x="478" y="170" width="68" height="720" rx="30" fill="url(#wood)"/>
+    <rect x="330" y="130" width="364" height="170" rx="34" fill="url(#steel)"/>
+    <rect x="330" y="130" width="46" height="170" rx="22" fill="#3d4451" opacity="0.55"/>
+    <rect x="648" y="130" width="46" height="170" rx="22" fill="#3d4451" opacity="0.55"/>
+    <rect x="352" y="146" width="320" height="26" rx="13" fill="#ffffff" opacity="0.55"/>
+  </g>
+  <!-- soft shadow under the cherries -->
+  <ellipse cx="530" cy="905" rx="300" ry="38" fill="#000" opacity="0.28"/>
+  <!-- stems -->
+  <path d="M388 640 C400 500 470 400 590 330" stroke="#3f8f3a" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <path d="M668 690 C670 540 640 420 590 330" stroke="#3f8f3a" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <!-- leaf -->
+  <path d="M590 330 C640 230 760 215 840 262 C790 345 680 375 590 330 Z" fill="url(#leaf)"/>
+  <path d="M600 326 C680 300 750 280 820 266" stroke="#2f8f43" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <!-- cherries -->
+  <circle cx="388" cy="765" r="160" fill="url(#cherry)"/>
+  <circle cx="668" cy="800" r="160" fill="url(#cherry)"/>
+  <ellipse cx="335" cy="700" rx="46" ry="30" transform="rotate(-35 335 700)" fill="#fff" opacity="0.5"/>
+  <ellipse cx="615" cy="735" rx="46" ry="30" transform="rotate(-35 615 735)" fill="#fff" opacity="0.5"/>
+</svg>

@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.9 BUILD 2026-10-15 22:25
+// v0.0.10 BUILD 2026-10-16 02:20
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -24,8 +24,45 @@ struct ContentView: View {
     @State private var exportFile: ExportFile?
     @State private var showingActions = false
     @State private var editor = EditorController()
+    @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
+    @State private var showingWelcome = false
+
+    // ===================================
+    // BODY
+    // ===================================
 
     var body: some View {
+        NavigationStack {
+            mainContent
+                .navigationTitle("CherriCuts")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(action: {
+                            editor.textView?.resignFirstResponder()
+                            showingWelcome = true
+                        }) {
+                            Image(systemName: "questionmark.circle")
+                        }
+                    }
+                }
+        }
+        .onAppear {
+            if !hasSeenWelcome { showingWelcome = true }
+        }
+        .fullScreenCover(isPresented: $showingWelcome) {
+            WelcomeView {
+                hasSeenWelcome = true
+                showingWelcome = false
+            }
+        }
+    }
+
+    // ===================================
+    // MAIN CONTENT
+    // ===================================
+
+    private var mainContent: some View {
         VStack(spacing: 12) {
             CodeEditor(text: $source, controller: editor)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
