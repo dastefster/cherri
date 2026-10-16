@@ -98,7 +98,7 @@ type actionDefinition struct {
 	appIntent          appIntent
 	outputType         tokenType
 	outputName         string // outputName is the human-readable output label the app itself declares (shown on the magic variable chip), used in place of the generic title-cased action name when set.
-	defaultAction      bool // Default action for this identifier during decompilation.
+	defaultAction      bool   // Default action for this identifier during decompilation.
 	macOnly            bool
 	nonMacOnly         bool
 	minVersion         float64
