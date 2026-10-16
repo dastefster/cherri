@@ -1,6 +1,6 @@
 // ===================================
 // In-App Guide
-// v0.0.6 BUILD 2026-10-16 04:30
+// v0.0.7 BUILD 2026-10-16 16:58
 // Basic documentation sheet: getting started, Cherri syntax basics, the Actions picker, Compile vs Export, troubleshooting, beta limitations, and credits. Content lives in the guideSections array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -33,7 +33,7 @@ let guideSections: [GuideSection] = [
         .text("CherriCuts turns code into a real Apple Shortcut. Your code is saved automatically, so closing the app never loses work."),
         .text("**1. Write.** Type Cherri code in the editor, or tap **Actions** to search the actions you know from Shortcuts. Fill in the form and the action is inserted at your cursor."),
         .text("**2. Compile.** Checks your code. Success shows the size of the shortcut. Errors appear under the editor."),
-        .text("**3. Export.** Signs the shortcut and opens the share sheet. Choose the **Shortcuts** icon to add it to your library."),
+        .text("**3. Export.** Signs the shortcut and opens the share sheet. Choose the **Shortcuts** icon (swipe the row if you don't see it) to add it to your library."),
         .code("alert(\"Hello from Cherri\")"),
     ]),
     GuideSection(id: "syntax", title: "Cherri basics", symbol: "chevron.left.forwardslash.chevron.right", blocks: [
@@ -63,7 +63,7 @@ let guideSections: [GuideSection] = [
     GuideSection(id: "export", title: "Compile vs. Export", symbol: "square.and.arrow.up", blocks: [
         .text("**Compile** runs entirely on your device and sends nothing anywhere."),
         .text("**Export** needs an internet connection. iOS only imports signed shortcuts, so your shortcut is sent to RoutineHub's HubSign service to be signed, then returned to you."),
-        .text("In the share sheet, choose the **Shortcuts** icon. Shortcuts opens with an Add Shortcut screen."),
+        .text("In the share sheet, choose the **Shortcuts** icon (swipe the row if you don't see it). Shortcuts opens with an Add Shortcut screen."),
     ]),
     GuideSection(id: "trouble", title: "Troubleshooting", symbol: "wrench.and.screwdriver", blocks: [
         .text("**Export spins forever after choosing Save to Files.** Force-quit CherriCuts and reopen it, then pick the **Shortcuts** icon instead."),
