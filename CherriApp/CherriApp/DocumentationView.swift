@@ -1,6 +1,6 @@
 // ===================================
 // Documentation
-// v0.0.1 BUILD 2026-10-16 04:30
+// v0.0.2 BUILD 2026-10-16 04:45
 // In-app reference for everything CherriCuts does in beta 1: the editor, the Actions picker, Compile, Export, third-party app actions, Settings, and what stays on your device. Content lives in the docTopics array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -64,6 +64,7 @@ let docTopics: [GuideSection] = [
         .text("**Compile** never leaves your device."),
         .text("**Export** sends the compiled shortcut to RoutineHub's HubSign service so it can be signed, and nothing else. CherriCuts has no accounts, no ads and no analytics."),
         .text("If you install the app through TestFlight, Apple collects its own crash and usage data for testing."),
+        .tip("The full privacy policy is in Settings, under About."),
     ]),
     GuideSection(id: "limits", title: "Beta limits", symbol: "exclamationmark.triangle", blocks: [
         .text("This is the first beta, so some things are still on the way:"),

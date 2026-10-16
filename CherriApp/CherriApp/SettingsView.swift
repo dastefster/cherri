@@ -1,6 +1,6 @@
 // ===================================
 // Settings
-// v0.0.3 BUILD 2026-10-16 04:30
+// v0.0.4 BUILD 2026-10-16 04:45
 // Grouped settings list with colored icon tiles: Editor (Appearance), Export (ask before exporting), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses) and a debug-only Developer section.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -133,6 +133,12 @@ struct SettingsView: View {
                     LicensesView()
                 } label: {
                     SettingsLabel(title: "Licenses", symbol: "doc.text.fill", color: .gray)
+                }
+                Link(destination: URL(string: "https://dastefster.github.io/cherricuts/privacy.html")!) {
+                    SettingsLabel(title: "Privacy Policy", symbol: "hand.raised.fill", color: .blue)
+                }
+                Link(destination: URL(string: "mailto:dastefster@gmail.com?subject=CherriCuts%20feedback")!) {
+                    SettingsLabel(title: "Send Feedback", symbol: "envelope.fill", color: .green)
                 }
             }
 
