@@ -1,0 +1,27 @@
+// compile-only: these Craft actions act on a real Craft account, so there is nothing to assert on.
+@runActions = "no"
+
+// Reference values come from device exports of every action below. Pickers that need Craft content are left blank.
+if @runActions == "yes" {
+    const doc = craftCreateDocument("Title", "Content")
+    craftCreateDocument(nil, "Content only")
+    craftCreateDocument("Title only")
+    craftCreateDocument()
+
+    craftFindPage("Title")
+    craftFindPage()
+
+    // The count is stored as text.
+    craftGetBlocks(1)
+    craftGetBlocks()
+
+    craftAddToDocument(doc)
+    craftAddSubpageToDocument()
+    craftDeleteDocument()
+    craftMoveDocument()
+    craftRenameDocument()
+    craftOpenDocument()
+    craftOpenDailyNote()
+}
+
+show("✅ All tests passed")

@@ -75,6 +75,7 @@ type appIntent struct {
 	name                string
 	bundleIdentifier    string
 	appIntentIdentifier string
+	teamIdentifier      string // teamIdentifier is the developer team of a third-party app, left empty to use the placeholder.
 }
 
 // actionDefinition defines an action, what it expects and has functions for checking the arguments and creating the parameters.
@@ -832,9 +833,15 @@ func generateActionDebugDefinition() string {
 }
 
 func appIntentDescriptor(intent appIntent) map[string]any {
+	// Apple's own apps are written with a placeholder team, but third-party apps carry the real one.
+	var teamIdentifier = "0000000000"
+	if intent.teamIdentifier != "" {
+		teamIdentifier = intent.teamIdentifier
+	}
+
 	return map[string]any{
 		"AppIntentDescriptor": map[string]string{
-			"TeamIdentifier":      "0000000000",
+			"TeamIdentifier":      teamIdentifier,
 			"BundleIdentifier":    intent.bundleIdentifier,
 			"Name":                intent.name,
 			"AppIntentIdentifier": intent.appIntentIdentifier,
