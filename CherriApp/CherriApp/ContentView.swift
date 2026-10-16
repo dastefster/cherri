@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.17 BUILD 2026-10-16 04:15
+// v0.0.19 BUILD 2026-10-16 16:58
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -276,7 +276,7 @@ struct ContentView: View {
                 let url = FileManager.default.temporaryDirectory.appendingPathComponent("Shortcut.shortcut")
                 try signed.write(to: url, options: .atomic)
 
-                status = "Signed OK: \(signed.count) bytes. Choose Shortcuts in the share sheet to import."
+                status = "Signed OK: \(signed.count) bytes. Tap Shortcuts in the share sheet to import."
                 exportFile = ExportFile(url: url)
             } catch {
                 status = error.localizedDescription

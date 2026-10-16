@@ -1,6 +1,6 @@
 // ===================================
 // Documentation
-// v0.0.2 BUILD 2026-10-16 04:45
+// v0.0.3 BUILD 2026-10-16 16:58
 // In-app reference for everything CherriCuts does in beta 1: the editor, the Actions picker, Compile, Export, third-party app actions, Settings, and what stays on your device. Content lives in the docTopics array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -41,7 +41,7 @@ let docTopics: [GuideSection] = [
     ]),
     GuideSection(id: "export", title: "Export", symbol: "square.and.arrow.up", blocks: [
         .text("**Export** compiles your code, gets the shortcut signed, and opens the share sheet. iOS only accepts signed shortcuts, and signing is done by RoutineHub's **HubSign** service, so Export needs an internet connection."),
-        .text("In the share sheet, choose the **Shortcuts** icon. Shortcuts opens with an Add Shortcut screen, and the shortcut joins your library."),
+        .text("In the share sheet, choose the **Shortcuts** icon (swipe the row if you don't see it). Shortcuts opens with an Add Shortcut screen, and the shortcut joins your library."),
         .text("By default CherriCuts asks before exporting, because your shortcut is sent to HubSign. You can turn that question off in Settings, under **Ask Before Exporting**."),
         .tip("If Export seems stuck after choosing Save to Files, force-quit CherriCuts, reopen it, and pick the Shortcuts icon instead."),
     ]),
