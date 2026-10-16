@@ -68,6 +68,8 @@ func categoryTitle(id string) string {
 		return "Accessibility"
 	case "intelligence":
 		return "Apple Intelligence"
+	case "thirdparty":
+		return "Third-Party Apps"
 	}
 	if id == "" {
 		return id
