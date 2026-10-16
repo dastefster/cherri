@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.15 BUILD 2026-10-16 03:52
+// v0.0.16 BUILD 2026-10-16 04:05
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -28,7 +28,7 @@ struct ContentView: View {
     @State private var showingWelcome = false
     @State private var showingGuide = false
     @State private var showingSettings = false
-    @AppStorage(EditorSettings.fontKey) private var fontID = EditorFont.system.rawValue
+    @AppStorage(EditorSettings.fontKey) private var fontID = EditorSettings.systemFontID
     @AppStorage(EditorSettings.sizeKey) private var fontSize = EditorSettings.defaultSize
     @AppStorage(EditorSettings.lightKey) private var lightThemeID = EditorSettings.defaultLightThemeID
     @AppStorage(EditorSettings.darkKey) private var darkThemeID = EditorSettings.defaultDarkThemeID

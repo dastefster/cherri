@@ -1,6 +1,6 @@
 // ===================================
 // Editor Themes, Fonts and Settings Keys
-// v0.0.3 BUILD 2026-10-16 03:52
+// v0.0.5 BUILD 2026-10-16 04:12
 // Color themes (each with light or dark use), monospaced font choices, and the saved-settings keys shared by the editor and the Settings screens.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -27,6 +27,8 @@ struct EditorTheme: Identifiable, Hashable {
     let caret: UIColor
     // Operators and punctuation. Most themes color them like keywords; Tomorrow Night Bright keeps them muted.
     var symbolOverride: UIColor? = nil
+    // A frame around the editor, for themes whose background would otherwise melt into the screen.
+    var border: UIColor? = nil
 
     var symbol: UIColor {
         symbolOverride ?? keyword
@@ -101,7 +103,7 @@ extension EditorTheme {
             id: "tomorrow-night-bright", name: "Tomorrow Night Bright",
             background: UIColor(hex: 0x000000), text: UIColor(hex: 0xEAEAEA), comment: UIColor(hex: 0x969896),
             string: UIColor(hex: 0xB9CA4A), number: UIColor(hex: 0xE78C45), keyword: UIColor(hex: 0xC397D8),
-            variable: UIColor(hex: 0xD54E53), action: UIColor(hex: 0x7AA6DA), type: UIColor(hex: 0x70C0B1), caret: UIColor(hex: 0xEAEAEA), symbolOverride: UIColor(hex: 0x969896)
+            variable: UIColor(hex: 0xD54E53), action: UIColor(hex: 0x7AA6DA), type: UIColor(hex: 0x70C0B1), caret: UIColor(hex: 0xEAEAEA), symbolOverride: UIColor(hex: 0x969896), border: UIColor(hex: 0x282A36)
         )
     }
 
@@ -143,36 +145,6 @@ extension EditorTheme {
 }
 
 // ===================================
-// FONTS
-// ===================================
-
-// Only fonts that ship with iOS, so nothing has to be bundled yet.
-enum EditorFont: String, CaseIterable, Identifiable {
-    case system
-    case menlo
-    case courierNew
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .system: return "SF Mono"
-        case .menlo: return "Menlo"
-        case .courierNew: return "Courier New"
-        }
-    }
-
-    func font(size: CGFloat) -> UIFont {
-        let fallback = UIFont.monospacedSystemFont(ofSize: size, weight: .regular)
-        switch self {
-        case .system: return fallback
-        case .menlo: return UIFont(name: "Menlo-Regular", size: size) ?? fallback
-        case .courierNew: return UIFont(name: "CourierNewPSMT", size: size) ?? fallback
-        }
-    }
-}
-
-// ===================================
 // SETTINGS KEYS
 // ===================================
 
@@ -182,6 +154,30 @@ enum EditorSettings {
     static let lightKey = "editorLightTheme"
     static let darkKey = "editorDarkTheme"
 
+    // "system" means SF Mono. Anything else is a PostScript font name chosen in Apple's font picker.
+    static let systemFontID = "system"
+
+    // Values saved by the first Settings build, before the font picker existed.
+    private static func resolved(_ id: String) -> String {
+        ["menlo": "Menlo-Regular", "courierNew": "CourierNewPSMT"][id] ?? id
+    }
+
+    static func uiFont(id: String, size: CGFloat) -> UIFont {
+        let fallback = UIFont.monospacedSystemFont(ofSize: size, weight: .regular)
+        let name = resolved(id)
+        if name == systemFontID { return fallback }
+
+        // A font that was removed from the phone falls back to SF Mono instead of crashing.
+        return UIFont(name: name, size: size) ?? fallback
+    }
+
+    static func fontDisplayName(id: String) -> String {
+        let name = resolved(id)
+        if name == systemFontID { return "SF Mono" }
+
+        return UIFont(name: name, size: 12)?.familyName ?? name
+    }
+
     static let defaultSize = 15.0
     static let sizeRange = 10.0...28.0
     static let defaultThemeID = "default"
@@ -190,7 +186,7 @@ enum EditorSettings {
     static let defaultDarkThemeID = "tomorrow-night-bright"
 
     static func style(fontID: String, size: Double, lightID: String, darkID: String, dark: Bool) -> EditorStyle {
-        let font = (EditorFont(rawValue: fontID) ?? .system).font(size: CGFloat(size))
+        let font = uiFont(id: fontID, size: CGFloat(size))
         let theme = EditorTheme.theme(id: dark ? darkID : lightID)
         return EditorStyle(font: font, theme: theme)
     }

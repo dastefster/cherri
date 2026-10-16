@@ -1,6 +1,6 @@
 // ===================================
 // Appearance Settings
-// v0.0.2 BUILD 2026-10-16 03:52
+// v0.0.3 BUILD 2026-10-16 04:05
 // Live code preview, light and dark theme pickers (they follow the system appearance), font picker and font size stepper.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -13,11 +13,12 @@ import UIKit
 // ===================================
 
 struct AppearanceView: View {
-    @AppStorage(EditorSettings.fontKey) private var fontID = EditorFont.system.rawValue
+    @AppStorage(EditorSettings.fontKey) private var fontID = EditorSettings.systemFontID
     @AppStorage(EditorSettings.sizeKey) private var fontSize = EditorSettings.defaultSize
     @AppStorage(EditorSettings.lightKey) private var lightID = EditorSettings.defaultLightThemeID
     @AppStorage(EditorSettings.darkKey) private var darkID = EditorSettings.defaultDarkThemeID
     @Environment(\.colorScheme) private var colorScheme
+    @State private var showingFontPicker = false
 
     private var style: EditorStyle {
         EditorSettings.style(fontID: fontID, size: fontSize, lightID: lightID, darkID: darkID, dark: colorScheme == .dark)
@@ -39,10 +40,25 @@ struct AppearanceView: View {
             }
 
             Section {
-                NavigationLink {
-                    FontListView(selection: $fontID, size: fontSize)
+                Button {
+                    showingFontPicker = true
                 } label: {
-                    LabeledContent("Font", value: (EditorFont(rawValue: fontID) ?? .system).title)
+                    HStack {
+                        Text("Font")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Text(EditorSettings.fontDisplayName(id: fontID))
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+
+                if fontID != EditorSettings.systemFontID {
+                    Button("Use Default Font (SF Mono)") {
+                        fontID = EditorSettings.systemFontID
+                    }
                 }
 
                 HStack {
@@ -57,7 +73,7 @@ struct AppearanceView: View {
 
             Section {
                 Button("Reset to Defaults", role: .destructive) {
-                    fontID = EditorFont.system.rawValue
+                    fontID = EditorSettings.systemFontID
                     fontSize = EditorSettings.defaultSize
                     lightID = EditorSettings.defaultLightThemeID
                     darkID = EditorSettings.defaultDarkThemeID
@@ -66,6 +82,16 @@ struct AppearanceView: View {
         }
         .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingFontPicker) {
+            FontPicker(
+                onPick: { name in
+                    fontID = name
+                    showingFontPicker = false
+                },
+                onCancel: { showingFontPicker = false }
+            )
+            .ignoresSafeArea()
+        }
     }
 }
 
@@ -154,28 +180,47 @@ struct ThemeListView: View {
 // FONT PICKER
 // ===================================
 
-struct FontListView: View {
-    @Binding var selection: String
-    let size: Double
+// Apple's own font picker, limited to monospaced fonts. It has search, Recents, and a My Fonts tab for fonts installed on the phone.
+struct FontPicker: UIViewControllerRepresentable {
+    let onPick: (String) -> Void
+    let onCancel: () -> Void
 
-    var body: some View {
-        List(EditorFont.allCases) { option in
-            Button {
-                selection = option.rawValue
-            } label: {
-                HStack {
-                    Text(option.title)
-                        .font(Font(option.font(size: 17) as CTFont))
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    if option.rawValue == selection {
-                        Image(systemName: "checkmark")
-                            .foregroundStyle(.tint)
-                    }
-                }
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onPick: onPick, onCancel: onCancel)
+    }
+
+    func makeUIViewController(context: Context) -> UIFontPickerViewController {
+        let configuration = UIFontPickerViewController.Configuration()
+        configuration.filteredTraits = [.traitMonoSpace]
+        configuration.includeFaces = false
+
+        let picker = UIFontPickerViewController(configuration: configuration)
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIFontPickerViewController, context: Context) {}
+
+    @MainActor
+    final class Coordinator: NSObject, UIFontPickerViewControllerDelegate {
+        let onPick: (String) -> Void
+        let onCancel: () -> Void
+
+        init(onPick: @escaping (String) -> Void, onCancel: @escaping () -> Void) {
+            self.onPick = onPick
+            self.onCancel = onCancel
+        }
+
+        func fontPickerViewControllerDidPickFont(_ viewController: UIFontPickerViewController) {
+            if let name = viewController.selectedFontDescriptor?.postscriptName {
+                onPick(name)
+            } else {
+                onCancel()
             }
         }
-        .navigationTitle("Font")
-        .navigationBarTitleDisplayMode(.inline)
+
+        func fontPickerViewControllerDidCancel(_ viewController: UIFontPickerViewController) {
+            onCancel()
+        }
     }
 }
