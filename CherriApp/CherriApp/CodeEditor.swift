@@ -1,6 +1,6 @@
 // ===================================
 // Code Editor
-// v0.0.3 BUILD 2026-10-15 16:33
+// v0.0.4 BUILD 2026-10-16 03:30
 // Cursor-aware text editor (a UIKit text view inside SwiftUI) so actions and values land where the cursor is, not at the end.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -88,20 +88,18 @@ final class EditorController {
 struct CodeEditor: UIViewRepresentable {
     @Binding var text: String
     let controller: EditorController
+    let style: EditorStyle
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(text: $text)
+        Coordinator(text: $text, style: style)
     }
 
     func makeUIView(context: Context) -> UITextView {
         let textView = UITextView()
         textView.delegate = context.coordinator
 
-        let base = UIFont.monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .body).pointSize, weight: .regular)
-        textView.font = UIFontMetrics(forTextStyle: .body).scaledFont(for: base)
-        textView.adjustsFontForContentSizeCategory = true
-        textView.textColor = .label
-        textView.backgroundColor = .secondarySystemBackground
+        // The font size now comes from Settings, so Dynamic Type scaling is off.
+        textView.adjustsFontForContentSizeCategory = false
         textView.layer.cornerRadius = 10
         textView.textContainerInset = UIEdgeInsets(top: 12, left: 8, bottom: 12, right: 8)
         textView.alwaysBounceVertical = true
@@ -119,27 +117,48 @@ struct CodeEditor: UIViewRepresentable {
         textView.selectedRange = NSRange(location: (text as NSString).length, length: 0)
         controller.textView = textView
 
+        context.coordinator.restyle(textView)
+
         return textView
     }
 
     func updateUIView(_ uiView: UITextView, context: Context) {
         context.coordinator.text = $text
+        context.coordinator.style = style
 
         // Only touch the text when it really differs, otherwise the cursor jumps while typing.
+        var needsStyle = context.coordinator.appliedStyleKey != style.key
         if uiView.text != text {
             uiView.text = text
+            needsStyle = true
+        }
+
+        if needsStyle {
+            context.coordinator.restyle(uiView)
         }
     }
 
+    @MainActor
     final class Coordinator: NSObject, UITextViewDelegate {
         var text: Binding<String>
+        var style: EditorStyle
+        var appliedStyleKey = ""
 
-        init(text: Binding<String>) {
+        init(text: Binding<String>, style: EditorStyle) {
             self.text = text
+            self.style = style
+        }
+
+        func restyle(_ textView: UITextView) {
+            CherriHighlighter.style(textView, with: style)
+            appliedStyleKey = style.key
         }
 
         func textViewDidChange(_ textView: UITextView) {
             text.wrappedValue = textView.text
+
+            CherriHighlighter.apply(to: textView.textStorage, style: style)
+            textView.typingAttributes = [.font: style.font, .foregroundColor: style.theme.text]
         }
     }
 }

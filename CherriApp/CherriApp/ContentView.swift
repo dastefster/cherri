@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.13 BUILD 2026-10-16 02:50
+// v0.0.15 BUILD 2026-10-16 03:52
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -27,6 +27,12 @@ struct ContentView: View {
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     @State private var showingWelcome = false
     @State private var showingGuide = false
+    @State private var showingSettings = false
+    @AppStorage(EditorSettings.fontKey) private var fontID = EditorFont.system.rawValue
+    @AppStorage(EditorSettings.sizeKey) private var fontSize = EditorSettings.defaultSize
+    @AppStorage(EditorSettings.lightKey) private var lightThemeID = EditorSettings.defaultLightThemeID
+    @AppStorage(EditorSettings.darkKey) private var darkThemeID = EditorSettings.defaultDarkThemeID
+    @Environment(\.colorScheme) private var colorScheme
 
     // ===================================
     // BODY
@@ -54,6 +60,14 @@ struct ContentView: View {
                 .navigationTitle("CherriCuts")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(action: {
+                            editor.textView?.resignFirstResponder()
+                            showingSettings = true
+                        }) {
+                            Image(systemName: "gearshape")
+                        }
+                    }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button(action: {
                             editor.textView?.resignFirstResponder()
@@ -67,6 +81,9 @@ struct ContentView: View {
                 .navigationDestination(isPresented: $showingGuide) {
                     GuideView(onShowWelcome: { showingWelcome = true })
                 }
+                .navigationDestination(isPresented: $showingSettings) {
+                    SettingsView()
+                }
         }
         .fullScreenCover(isPresented: $showingWelcome) {
             WelcomeView { showingWelcome = false }
@@ -77,9 +94,13 @@ struct ContentView: View {
     // MAIN CONTENT
     // ===================================
 
+    private var editorStyle: EditorStyle {
+        EditorSettings.style(fontID: fontID, size: fontSize, lightID: lightThemeID, darkID: darkThemeID, dark: colorScheme == .dark)
+    }
+
     private var mainContent: some View {
         VStack(spacing: 12) {
-            CodeEditor(text: $source, controller: editor)
+            CodeEditor(text: $source, controller: editor, style: editorStyle)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             HStack(spacing: 12) {
