@@ -22,6 +22,20 @@ if @runActions == "yes" {
     craftRenameDocument()
     craftOpenDocument()
     craftOpenDailyNote()
+
+    craftCreateFolder("Name")
+    craftCreateFolder()
+    craftRenameFolder("New name")
+    craftDeleteFolder()
+    craftMoveFolder()
+    craftOpenFolder()
+    craftOpenAndSearch()
+    craftOpenQuickEntry()
+    craftOpenTag()
+    craftCreateReminder("Reminder")
+    craftCreateTask("Title", "Content")
+    craftCreateTask("Title only")
+    craftSetTaskStatus()
 }
 
 show("✅ All tests passed")
