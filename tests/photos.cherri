@@ -1,0 +1,31 @@
+// compile-only: these Photos actions need iOS 27 and act on a real photo library, so there is nothing to assert on.
+#define version 27
+@runActions = "no"
+
+// Reference values come from device exports of every action below. Pickers that need your own library are left blank.
+if @runActions == "yes" {
+    const shot = getLatestScreenshots(1)
+
+    enhancePhotos(shot)
+    enhancePhotos(ShortcutInput)
+    enhancePhotos()
+    favoritePhotos(shot)
+    hidePhotos(ShortcutInput)
+    openPhoto(shot)
+    deleteAlbums(shot)
+
+    createMemory("A trip to the beach")
+    createMemory()
+
+    // The library view is stored as lowercase text.
+    filterPhotosLibrary("both")
+    filterPhotosLibrary("personal")
+    filterPhotosLibrary("shared")
+
+    const albums = findAlbums()
+    findAlbums(albums)
+    addToSharedAlbum(shot)
+    addToSharedAlbum()
+}
+
+show("✅ All tests passed")

@@ -76,6 +76,7 @@ type appIntent struct {
 	bundleIdentifier    string
 	appIntentIdentifier string
 	teamIdentifier      string // teamIdentifier is the developer team of a third-party app, left empty to use the placeholder.
+	requiresInstall     bool   // requiresInstall marks entity query actions, which Shortcuts writes as requiring the app to be installed.
 }
 
 // actionDefinition defines an action, what it expects and has functions for checking the arguments and creating the parameters.
@@ -839,13 +840,18 @@ func appIntentDescriptor(intent appIntent) map[string]any {
 		teamIdentifier = intent.teamIdentifier
 	}
 
+	var descriptor = map[string]any{
+		"TeamIdentifier":      teamIdentifier,
+		"BundleIdentifier":    intent.bundleIdentifier,
+		"Name":                intent.name,
+		"AppIntentIdentifier": intent.appIntentIdentifier,
+	}
+	if intent.requiresInstall {
+		descriptor["ActionRequiresAppInstallation"] = true
+	}
+
 	return map[string]any{
-		"AppIntentDescriptor": map[string]string{
-			"TeamIdentifier":      teamIdentifier,
-			"BundleIdentifier":    intent.bundleIdentifier,
-			"Name":                intent.name,
-			"AppIntentIdentifier": intent.appIntentIdentifier,
-		},
+		"AppIntentDescriptor": descriptor,
 	}
 }
 
