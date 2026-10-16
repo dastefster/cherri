@@ -1,6 +1,6 @@
 // ===================================
 // Share Sheet
-// v0.0.3 BUILD 2026-10-16 16:58
+// v0.0.4 BUILD 2026-10-16 19:05
 // Hands a signed .shortcut file to Shortcuts through the iOS share sheet. Rows that only distract (Save to Files, AirDrop, Copy, Messages, Mail and similar) are hidden so Shortcuts is easy to find.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -29,7 +29,9 @@ struct ShareSheet: UIViewControllerRepresentable {
         let controller = UIActivityViewController(activityItems: [url], applicationActivities: nil)
 
         // Save to Files has no public constant, and it hung once on a real device, so it is excluded by identifier.
+        // A screen recording showed the first guess did not hide it; AddToiCloudDrive is the identifier iOS uses for that row.
         controller.excludedActivityTypes = [
+            UIActivity.ActivityType("com.apple.CloudDocsUI.AddToiCloudDrive"),
             UIActivity.ActivityType("com.apple.DocumentManagerUICore.SaveToFiles"),
             .airDrop,
             .copyToPasteboard,
