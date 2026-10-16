@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.8 BUILD 2026-10-15 22:10
+// v0.0.9 BUILD 2026-10-15 22:25
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -56,6 +56,7 @@ struct ContentView: View {
             .disabled(working)
             .sheet(isPresented: $showingActions) {
                 ActionPickerView(
+                    source: source,
                     onInsert: { editor.insertStatement($0) },
                     onInsertValue: { editor.insertInline($0) }
                 )
