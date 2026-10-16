@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.19 BUILD 2026-10-16 16:58
+// v0.0.20 BUILD 2026-10-16 19:46
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -251,9 +251,24 @@ struct ContentView: View {
     // EXPORT TO SHORTCUTS
     // ===================================
 
+    // Reads "#define name My Shortcut" from the source so the exported shortcut and its signing request carry the user's chosen name; falls back to "Shortcut".
+    private static func shortcutName(from code: String) -> String {
+        let fallback = "Shortcut"
+        guard let regex = try? NSRegularExpression(pattern: #"^[ \t]*#define[ \t]+name[ \t]+(.+?)[ \t]*$"#, options: [.anchorsMatchLines]),
+              let match = regex.firstMatch(in: code, range: NSRange(code.startIndex..., in: code)),
+              let range = Range(match.range(at: 1), in: code) else { return fallback }
+        // File-name-hostile characters would break the temp file path.
+        let cleaned = String(code[range])
+            .components(separatedBy: CharacterSet(charactersIn: "/\\:?%*|\"<>"))
+            .joined(separator: "-")
+            .trimmingCharacters(in: .whitespaces)
+        return cleaned.isEmpty ? fallback : String(cleaned.prefix(80))
+    }
+
     // Compile, sign with HubSign, write a .shortcut file, then show the share sheet where "Shortcuts" imports it.
     private func exportToShortcuts() {
         let code = source
+        let name = Self.shortcutName(from: code)
         working = true
         failed = false
         showDetails = false
@@ -271,9 +286,9 @@ struct ContentView: View {
                 }.value
 
                 status = "Signing with HubSign…"
-                let signed = try await HubSign.sign(plist: plist, name: "Shortcut", compilerVersion: CherriCompilerVersion())
+                let signed = try await HubSign.sign(plist: plist, name: name, compilerVersion: CherriCompilerVersion())
 
-                let url = FileManager.default.temporaryDirectory.appendingPathComponent("Shortcut.shortcut")
+                let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(name).shortcut")
                 try signed.write(to: url, options: .atomic)
 
                 status = "Signed OK: \(signed.count) bytes. Tap Shortcuts in the share sheet to import."
