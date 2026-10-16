@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.10 BUILD 2026-10-16 02:20
+// v0.0.13 BUILD 2026-10-16 02:50
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -26,12 +26,29 @@ struct ContentView: View {
     @State private var editor = EditorController()
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     @State private var showingWelcome = false
+    @State private var showingGuide = false
 
     // ===================================
     // BODY
     // ===================================
 
+    // The welcome screen replaces the whole view on first launch. Presenting it as a cover from onAppear flashed the editor for a frame first.
     var body: some View {
+        Group {
+            if hasSeenWelcome {
+                mainView
+            } else {
+                WelcomeView { hasSeenWelcome = true }
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: hasSeenWelcome)
+    }
+
+    // ===================================
+    // MAIN VIEW
+    // ===================================
+
+    private var mainView: some View {
         NavigationStack {
             mainContent
                 .navigationTitle("CherriCuts")
@@ -40,21 +57,19 @@ struct ContentView: View {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button(action: {
                             editor.textView?.resignFirstResponder()
-                            showingWelcome = true
+                            showingGuide = true
                         }) {
                             Image(systemName: "questionmark.circle")
                         }
                     }
                 }
-        }
-        .onAppear {
-            if !hasSeenWelcome { showingWelcome = true }
+                // Pushed, not a sheet: a sheet and a fullScreenCover on the same view conflict and the sheet never opened.
+                .navigationDestination(isPresented: $showingGuide) {
+                    GuideView(onShowWelcome: { showingWelcome = true })
+                }
         }
         .fullScreenCover(isPresented: $showingWelcome) {
-            WelcomeView {
-                hasSeenWelcome = true
-                showingWelcome = false
-            }
+            WelcomeView { showingWelcome = false }
         }
     }
 
