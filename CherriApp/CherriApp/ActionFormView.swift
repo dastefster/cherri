@@ -1,6 +1,6 @@
 // ===================================
 // Action Form
-// v0.0.2 BUILD 2026-10-15 18:35
+// v0.0.3 BUILD 2026-10-15 22:25
 // Fill-in form for one action: a field per parameter in plain words, a live preview of the Cherri call, and an Insert button that writes the call with nil in any skipped slot.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -13,6 +13,7 @@ import SwiftUI
 
 struct ActionFormView: View {
     let action: CatalogAction
+    let source: String
     let onInsert: (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -41,7 +42,7 @@ struct ActionFormView: View {
 
                 Section {
                     ForEach(action.params, id: \.name) { param in
-                        ParamField(param: param, value: binding(for: param))
+                        ParamField(param: param, value: binding(for: param), variables: EditorVariables.names(in: source))
                     }
                 } header: {
                     Text("Parameters")
@@ -95,6 +96,7 @@ struct ActionFormView: View {
 private struct ParamField: View {
     let param: CatalogParam
     @Binding var value: String
+    let variables: [String]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -135,11 +137,39 @@ private struct ParamField: View {
             .labelsHidden()
             .frame(maxWidth: .infinity, alignment: .leading)
         } else {
-            TextField(param.name, text: $value, prompt: Text(prompt))
-                .keyboardType(isNumeric ? .numbersAndPunctuation : .default)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .font(.system(.body, design: usesCode ? .monospaced : .default))
+            HStack(spacing: 8) {
+                TextField(param.name, text: $value, prompt: Text(prompt))
+                    .keyboardType(isNumeric ? .numbersAndPunctuation : .default)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .font(.system(.body, design: usesCode ? .monospaced : .default))
+
+                if param.type == "variable" {
+                    variableMenu
+                }
+            }
+        }
+    }
+
+    // Picking a name avoids typos and the easy-to-forget @ that mutable variables need.
+    private var variableMenu: some View {
+        Menu {
+            if !variables.isEmpty {
+                Section("In your code") {
+                    ForEach(variables, id: \.self) { name in
+                        Button(name) { value = name }
+                    }
+                }
+            }
+
+            Section("Built in") {
+                ForEach(EditorVariables.builtIns, id: \.self) { name in
+                    Button(name) { value = name }
+                }
+            }
+        } label: {
+            Image(systemName: "chevron.down.circle")
+                .font(.title3)
         }
     }
 
@@ -158,7 +188,7 @@ private struct ParamField: View {
 
         switch param.type {
         case "variable":
-            return "Variable name"
+            return "Variable, like @name"
         case "dictionary":
             return "{}"
         case "array":
