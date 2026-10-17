@@ -49,4 +49,12 @@ if stillZ.text != "z" {
     mustOutput("❌ FAIL: prior item after append — got {stillZ}, expected 'z'", "❌ FAIL: prior item after append — got {stillZ}, expected 'z'")
 }
 
+// number literals: the List action only holds text, so numbers must be emitted as text that Shortcuts coerces back
+@numbers = [1, 2, 3, 4]
+const numberSumResult = statistic("Sum", @numbers)
+@numberSum = "{numberSumResult}"
+if @numberSum != "10" {
+    mustOutput("❌ FAIL: number array sum — got {@numberSum}, expected '10'", "❌ FAIL: number array sum — got {@numberSum}, expected '10'")
+}
+
 show("✅ All tests passed")

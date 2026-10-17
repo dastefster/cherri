@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/electrikmilk/args-parser"
@@ -880,7 +881,10 @@ func makeArrayVariable(t *token) {
 		case reflect.String:
 			itemType = String
 		case reflect.Float64:
-			itemType = Integer
+			// The List action only holds text; a raw number as the item value is discarded by Shortcuts, which left
+			// number arrays empty. Text like "1" is coerced back to a number by whatever action reads the list.
+			itemType = String
+			value = strconv.FormatFloat(value.(float64), 'f', -1, 64)
 		case reflect.Map:
 			itemType = Dict
 		default:
