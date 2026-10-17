@@ -1,6 +1,6 @@
 // ===================================
 // In-App Guide
-// v0.0.7 BUILD 2026-10-16 16:58
+// v0.0.8 BUILD 2026-10-16 19:52
 // Basic documentation sheet: getting started, Cherri syntax basics, the Actions picker, Compile vs Export, troubleshooting, beta limitations, and credits. Content lives in the guideSections array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -64,6 +64,14 @@ let guideSections: [GuideSection] = [
         .text("**Compile** runs entirely on your device and sends nothing anywhere."),
         .text("**Export** needs an internet connection. iOS only imports signed shortcuts, so your shortcut is sent to RoutineHub's HubSign service to be signed, then returned to you."),
         .text("In the share sheet, choose the **Shortcuts** icon (swipe the row if you don't see it). Shortcuts opens with an Add Shortcut screen."),
+    ]),
+    GuideSection(id: "style", title: "Name, color and icon", symbol: "paintpalette", blocks: [
+        .text("Put these lines at the very top of your code to style the shortcut you export:"),
+        .code("#define name My Shortcut\n#define color blue\n#define glyph hammer"),
+        .text("**name** is what your shortcut is called when you import it. Without it, the shortcut is called Shortcut."),
+        .text("**color** can be `red`, `darkorange`, `orange`, `yellow`, `green`, `teal`, `lightblue`, `blue`, `darkblue`, `violet`, `purple`, `pink`, `darkgray`, `gray` or `taupe`."),
+        .text("**glyph** is the icon shown on the shortcut. `apple` and `hammer` are two examples."),
+        .tip("All three lines are optional. Use only the ones you want."),
     ]),
     GuideSection(id: "trouble", title: "Troubleshooting", symbol: "wrench.and.screwdriver", blocks: [
         .text("**Export spins forever after choosing Save to Files.** Force-quit CherriCuts and reopen it, then pick the **Shortcuts** icon instead."),

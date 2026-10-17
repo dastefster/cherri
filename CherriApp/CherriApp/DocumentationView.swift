@@ -1,6 +1,6 @@
 // ===================================
 // Documentation
-// v0.0.3 BUILD 2026-10-16 16:58
+// v0.0.4 BUILD 2026-10-16 19:52
 // In-app reference for everything CherriCuts does in beta 1: the editor, the Actions picker, Compile, Export, third-party app actions, Settings, and what stays on your device. Content lives in the docTopics array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -44,6 +44,14 @@ let docTopics: [GuideSection] = [
         .text("In the share sheet, choose the **Shortcuts** icon (swipe the row if you don't see it). Shortcuts opens with an Add Shortcut screen, and the shortcut joins your library."),
         .text("By default CherriCuts asks before exporting, because your shortcut is sent to HubSign. You can turn that question off in Settings, under **Ask Before Exporting**."),
         .tip("If Export seems stuck after choosing Save to Files, force-quit CherriCuts, reopen it, and pick the Shortcuts icon instead."),
+    ]),
+    GuideSection(id: "style", title: "Name, color and icon", symbol: "paintpalette", blocks: [
+        .text("Three optional lines at the top of your code control how the exported shortcut looks:"),
+        .code("#define name My Shortcut\n#define color blue\n#define glyph hammer"),
+        .text("**name** sets the shortcut's name, which is also used for the exported file. Without it, the name is Shortcut."),
+        .text("**color** sets the shortcut's color. Choose from `red`, `darkorange`, `orange`, `yellow`, `green`, `teal`, `lightblue`, `blue`, `darkblue`, `violet`, `purple`, `pink`, `darkgray`, `gray` or `taupe`."),
+        .text("**glyph** sets the icon on the shortcut. `apple` and `hammer` are two examples."),
+        .tip("Your shortcut's name is sent to HubSign along with the shortcut when you Export."),
     ]),
     GuideSection(id: "thirdparty", title: "Third-party app actions", symbol: "square.grid.2x2", blocks: [
         .text("The **Third-Party Apps** category holds actions for other apps, such as **Scriptable**, **Pythonista** and **Menu Box**. Other categories include actions for apps like Craft, Photos and Reminders."),
