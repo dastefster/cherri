@@ -16,3 +16,7 @@ repeat i for 6 {
 
 @choice = chooseFromVCard(@items, "Prompt")
 show("{@choice}")
+
+// search: an array literal passed for the result types
+const spotlight = search("Cherri", 3, ["Notes", "Reminders"])
+show("{spotlight}")

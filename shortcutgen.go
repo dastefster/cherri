@@ -700,6 +700,9 @@ func paramValue(arg actionArgument, handleAs tokenType) any {
 		return makeQuantityFieldValue(arg.value.([]actionArgument))
 	case RawString:
 		return arg.value.(string)
+	case Arr:
+		// Array literals passed straight to an array parameter (like search's result types) are plain values.
+		return arg.value
 	default:
 		return attachmentValues(arg.value.(string))
 	}
