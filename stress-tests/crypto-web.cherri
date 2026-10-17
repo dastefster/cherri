@@ -1,0 +1,85 @@
+#include 'actions/text'
+#include 'actions/crypto'
+#include 'actions/web'
+
+#define name Crypto and Web Test
+#define color purple
+#define glyph apple
+
+// hashes of "abc" are well-known test vectors; lowercase first so hex case cannot cause a false failure
+@abc = "abc"
+const md5 = hash(@abc)
+const md5lower = lowercase(md5)
+@s = "{md5lower}"
+if @s != "900150983cd24fb0d6963f7d28e17f72" {
+    alert("❌ FAIL: hash MD5 — got {@s}")
+}
+
+const sha1 = hash(@abc, "SHA1")
+const sha1lower = lowercase(sha1)
+@s = "{sha1lower}"
+if @s != "a9993e364706816aba3e25717850c26c9cd0d89d" {
+    alert("❌ FAIL: hash SHA1 — got {@s}")
+}
+
+const sha256 = hash(@abc, "SHA256")
+const sha256lower = lowercase(sha256)
+@s = "{sha256lower}"
+if @s != "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" {
+    alert("❌ FAIL: hash SHA256 — got {@s}")
+}
+
+// base64 round trip
+@hello = "hello"
+const enc = base64Encode(@hello)
+@s = "{enc}"
+if @s != "aGVsbG8=" {
+    alert("❌ FAIL: base64Encode — got {@s}")
+}
+
+const dec = base64Decode(enc)
+@s = "{dec}"
+if @s != "hello" {
+    alert("❌ FAIL: base64Decode — got {@s}")
+}
+
+// URL encode and decode
+const urlEnc = urlEncode("a b&c")
+@s = "{urlEnc}"
+if @s != "a%20b%26c" {
+    alert("❌ FAIL: urlEncode — got {@s}")
+}
+
+const urlDec = urlDecode(urlEnc)
+@s = "{urlDec}"
+if @s != "a b&c" {
+    alert("❌ FAIL: urlDecode — got {@s}")
+}
+
+// URL parts
+const host = getURLDetail("https://example.com:8080/some/path?x=1#top", "Host")
+@s = "{host}"
+if @s != "example.com" {
+    alert("❌ FAIL: getURLDetail Host — got {@s}")
+}
+
+const path = getURLDetail("https://example.com:8080/some/path?x=1#top", "Path")
+@s = "{path}"
+if @s != "/some/path" {
+    alert("❌ FAIL: getURLDetail Path — got {@s}")
+}
+
+const query = getURLDetail("https://example.com:8080/some/path?x=1#top", "Query")
+@s = "{query}"
+if @s != "x=1" {
+    alert("❌ FAIL: getURLDetail Query — got {@s}")
+}
+
+// finds links inside text
+const links = getURLs("see https://example.com and https://apple.com today")
+const linkCount = count(links)
+if linkCount != 2 {
+    alert("❌ FAIL: getURLs — found {linkCount} links, expected 2")
+}
+
+show("✅ Crypto and Web test passed")

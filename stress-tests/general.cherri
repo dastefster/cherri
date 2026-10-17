@@ -1,0 +1,89 @@
+#define name General Test
+#define color green
+#define glyph apple
+
+// text
+const t = text("hello")
+@s = "{t}"
+if @s != "hello" {
+    alert("❌ FAIL: text — got {@s}")
+}
+
+// number from text
+@digits = "42"
+const n = number(@digits)
+if n != 42 {
+    alert("❌ FAIL: number — got {n}")
+}
+
+// formatNumber rounds to 2 places by default
+const fm = formatNumber(3.14159)
+@s = "{fm}"
+if @s != "3.14" {
+    alert("❌ FAIL: formatNumber — got {@s}")
+}
+
+// randomNumber stays in range
+const r = randomNumber(1, 5)
+if r < 1 {
+    alert("❌ FAIL: randomNumber below range — got {r}")
+}
+if r > 5 {
+    alert("❌ FAIL: randomNumber above range — got {r}")
+}
+
+// list actions
+@items = ["a", "b", "c", "d"]
+
+const total = count(@items)
+if total != 4 {
+    alert("❌ FAIL: count — got {total}")
+}
+
+const first = getFirstItem(@items)
+@s = "{first}"
+if @s != "a" {
+    alert("❌ FAIL: getFirstItem — got {@s}")
+}
+
+const last = getLastItem(@items)
+@s = "{last}"
+if @s != "d" {
+    alert("❌ FAIL: getLastItem — got {@s}")
+}
+
+const second = getListItem(@items, 2)
+@s = "{second}"
+if @s != "b" {
+    alert("❌ FAIL: getListItem — got {@s}")
+}
+
+const slice = getListItems(@items, 2, 3)
+const sliceCount = count(slice)
+if sliceCount != 2 {
+    alert("❌ FAIL: getListItems — got {sliceCount} items")
+}
+
+// dictionary actions
+@d = {"k": "v", "j": "w"}
+
+const keys = getKeys(@d)
+const keyCount = count(keys)
+if keyCount != 2 {
+    alert("❌ FAIL: getKeys — got {keyCount} keys")
+}
+
+const val = getValue(@d, "k")
+@s = "{val}"
+if @s != "v" {
+    alert("❌ FAIL: getValue — got {@s}")
+}
+
+const d2 = setValue(@d, "z", "9")
+const z = getValue(d2, "z")
+@s = "{z}"
+if @s != "9" {
+    alert("❌ FAIL: setValue — got {@s}")
+}
+
+show("✅ General test passed")

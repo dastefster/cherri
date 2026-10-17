@@ -1,0 +1,12 @@
+#include 'actions/documents'
+
+#define name Notes Test
+#define color yellow
+#define glyph apple
+
+appendNote("Cherri Test", "Appended by CherriCuts")
+const found = search("Cherri Test", 1)
+const first = getFirstItem(found)
+openNote(first)
+
+show("✅ Notes test finished")

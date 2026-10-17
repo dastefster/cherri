@@ -1,0 +1,27 @@
+#include 'actions/math'
+
+#define name Array Test
+#define color teal
+#define glyph apple
+
+@items = ["a", "b", "c"]
+@items += "d"
+
+@n = 0
+for item in @items {
+    @n += 1
+}
+
+if @n != 4 {
+    alert("❌ FAIL: expected 4 items, got {@n}")
+}
+
+// number literals must survive too (the List action only holds text)
+@numbers = [1, 2, 3, 4]
+const numberSum = statistic("Sum", @numbers)
+@s = "{numberSum}"
+if @s != "10" {
+    alert("❌ FAIL: number array sum — got {@s}")
+}
+
+show("✅ Array test passed")
