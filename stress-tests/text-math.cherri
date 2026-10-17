@@ -1,0 +1,117 @@
+#include 'actions/text'
+#include 'actions/math'
+
+#define name Text and Math Test
+#define color blue
+#define glyph apple
+
+// case changes
+const up = uppercase("abc")
+@s = "{up}"
+if @s != "ABC" {
+    alert("❌ FAIL: uppercase — got {@s}")
+}
+
+const low = lowercase("ABC")
+@s = "{low}"
+if @s != "abc" {
+    alert("❌ FAIL: lowercase — got {@s}")
+}
+
+const cap = capitalize("hello world")
+@s = "{cap}"
+if @s != "Hello world" {
+    alert("❌ FAIL: capitalize — got {@s}")
+}
+
+const capAll = capitalizeAll("hello world")
+@s = "{capAll}"
+if @s != "Hello World" {
+    alert("❌ FAIL: capitalizeAll — got {@s}")
+}
+
+// replace and trim
+const rep = replaceText("cat", "dog", "the cat sat")
+@s = "{rep}"
+if @s != "the dog sat" {
+    alert("❌ FAIL: replaceText — got {@s}")
+}
+
+const rx = replaceText('[0-9]+', "#", "a1b22", true, true)
+@s = "{rx}"
+if @s != "a#b#" {
+    alert("❌ FAIL: replaceText regex — got {@s}")
+}
+
+const trimmed = trimWhitespace("   hi   ")
+@s = "{trimmed}"
+if @s != "hi" {
+    alert("❌ FAIL: trimWhitespace — got {@s}")
+}
+
+// regular expressions
+const m = matchText('([a-z]+)@([a-z]+)', "me@home")
+const g2 = getMatchGroup(m, 2)
+@s = "{g2}"
+if @s != "home" {
+    alert("❌ FAIL: getMatchGroup — got {@s}")
+}
+
+// calculate
+const sq = calculate("x^2", 4)
+if sq != 16 {
+    alert("❌ FAIL: calculate x^2 — got {sq}")
+}
+
+const root = calculate("√x", 9)
+if root != 3 {
+    alert("❌ FAIL: calculate √x — got {root}")
+}
+
+const fact = calculate("x!", 5)
+if fact != 120 {
+    alert("❌ FAIL: calculate x! — got {fact}")
+}
+
+// statistics
+@nums = [1, 2, 3, 4]
+
+const sum = statistic("Sum", @nums)
+@s = "{sum}"
+if @s != "10" {
+    alert("❌ FAIL: statistic Sum — got {@s}")
+}
+
+const avg = statistic("Average", @nums)
+@s = "{avg}"
+if @s != "2.5" {
+    alert("❌ FAIL: statistic Average — got {@s}")
+}
+
+const max = statistic("Maximum", @nums)
+@s = "{max}"
+if @s != "4" {
+    alert("❌ FAIL: statistic Maximum — got {@s}")
+}
+
+// rounding
+const rd = round(3.6)
+if rd != 4 {
+    alert("❌ FAIL: round — got {rd}")
+}
+
+const ce = ceil(3.2)
+if ce != 4 {
+    alert("❌ FAIL: ceil — got {ce}")
+}
+
+const fl = floor(3.8)
+if fl != 3 {
+    alert("❌ FAIL: floor — got {fl}")
+}
+
+// not asserted, so we can learn what Shortcuts returns
+const tc = titleCase("the cat of oz")
+const alt = alternatingCase("hello")
+
+show("✅ Text and Math test passed. titleCase: {tc} / alternatingCase: {alt}")
