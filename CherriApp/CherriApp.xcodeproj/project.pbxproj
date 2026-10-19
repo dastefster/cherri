@@ -34,22 +34,9 @@
 		81DCF6C63080AA5900D1F36B /* Cherri.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Cherri.xcframework; path = ../Cherri.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		81D29E8330846BEC00D61A20 /* Exceptions for "CherriApp" folder in "CherriApp" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 81DCF69A3080A7D100D1F36B /* CherriApp */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		81DCF69D3080A7D100D1F36B /* CherriApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				81D29E8330846BEC00D61A20 /* Exceptions for "CherriApp" folder in "CherriApp" target */,
-			);
 			path = CherriApp;
 			sourceTree = "<group>";
 		};
@@ -433,7 +420,6 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = CherriApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CherriCuts;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -481,7 +467,6 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = CherriApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CherriCuts;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
