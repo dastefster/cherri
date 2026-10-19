@@ -1,6 +1,6 @@
 // ===================================
 // App Icon Picker
-// v0.0.1 BUILD 2026-10-19 13:05
+// v0.0.2 BUILD 2026-10-19 14:15
 // Grid of the available app icons with a preview of each; tapping one switches the Home Screen icon.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -51,7 +51,7 @@ struct AppIconView: View {
             }
             .padding()
 
-            Text("Default follows your Home Screen icon style: set it to Automatic and the icon switches between light and dark with your iPhone. Any other icon stays as chosen.")
+            Text("Default follows your iPhone's light and dark appearance. If it doesn't switch, check your Home Screen icon style under Edit → Customize. Any other icon stays as chosen.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal)
