@@ -1,6 +1,6 @@
 // ===================================
 // Appearance Settings
-// v0.0.3 BUILD 2026-10-16 04:05 (Updated)
+// v0.0.4 BUILD 2026-10-19 19:35
 // Live code preview, light and dark theme pickers (they follow the system appearance), font picker, font size stepper, and App Icon picker.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -32,11 +32,23 @@ struct AppearanceView: View {
                     .listRowInsets(EdgeInsets())
             }
 
-            // The beta ships two themes, so there is nothing to pick yet. ThemeListView stays in the file for later.
+            // Light and dark each get their own theme because the editor follows the phone's appearance. Any theme can go in either slot (Dracula is a dark theme that ships as the light-mode default).
             Section {
-                LabeledContent("Theme", value: EditorTheme.theme(id: colorScheme == .dark ? darkID : lightID).name)
+                NavigationLink {
+                    ThemeListView(title: "Light Mode Theme", selection: $lightID, fontID: fontID, fontSize: fontSize)
+                } label: {
+                    LabeledContent("Light Mode", value: EditorTheme.theme(id: lightID).name)
+                }
+
+                NavigationLink {
+                    ThemeListView(title: "Dark Mode Theme", selection: $darkID, fontID: fontID, fontSize: fontSize)
+                } label: {
+                    LabeledContent("Dark Mode", value: EditorTheme.theme(id: darkID).name)
+                }
+            } header: {
+                Text("Editor Theme")
             } footer: {
-                Text("Follows the system appearance: Dracula in light mode, Tomorrow Night Bright in dark mode.")
+                Text("Your iPhone's light or dark appearance decides which theme the editor uses.")
             }
 
             Section {
@@ -141,20 +153,40 @@ struct CodePreview: UIViewRepresentable {
 struct ThemeListView: View {
     let title: String
     @Binding var selection: String
+    let fontID: String
+    let fontSize: Double
+
+    // Shows the highlighted theme whatever appearance the phone is in, so the other mode's theme can be judged without flipping the system setting.
+    private var previewStyle: EditorStyle {
+        EditorStyle(
+            font: EditorSettings.uiFont(id: fontID, size: CGFloat(fontSize)),
+            theme: EditorTheme.theme(id: selection)
+        )
+    }
 
     var body: some View {
-        List(EditorTheme.all) { theme in
-            Button {
-                selection = theme.id
-            } label: {
-                HStack(spacing: 14) {
-                    swatch(theme)
-                    Text(theme.name)
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    if theme.id == selection {
-                        Image(systemName: "checkmark")
-                            .foregroundStyle(.tint)
+        List {
+            Section {
+                CodePreview(style: previewStyle)
+                    .frame(height: 210)
+                    .listRowInsets(EdgeInsets())
+            }
+
+            Section {
+                ForEach(EditorTheme.all) { theme in
+                    Button {
+                        selection = theme.id
+                    } label: {
+                        HStack(spacing: 14) {
+                            swatch(theme)
+                            Text(theme.name)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if theme.id == selection {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(.tint)
+                            }
+                        }
                     }
                 }
             }
