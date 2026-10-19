@@ -28,6 +28,7 @@ struct ContentView: View {
     @State private var showingWelcome = false
     @State private var showingGuide = false
     @State private var showingSettings = false
+    @State private var showingClearConfirm = false
     @AppStorage(ExportSettings.confirmKey) private var confirmBeforeExport = true
     @State private var confirmingExport = false
     @AppStorage(EditorSettings.fontKey) private var fontID = EditorSettings.systemFontID
@@ -71,11 +72,21 @@ struct ContentView: View {
                         }
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button(action: {
-                            editor.textView?.resignFirstResponder()
-                            showingGuide = true
-                        }) {
-                            Image(systemName: "questionmark.circle")
+                        HStack(spacing: 16) {
+                            Button(action: {
+                                editor.textView?.resignFirstResponder()
+                                showingClearConfirm = true
+                            }) {
+                                Image(systemName: "trash")
+                                    .foregroundStyle(.red)
+                            }
+                            
+                            Button(action: {
+                                editor.textView?.resignFirstResponder()
+                                showingGuide = true
+                            }) {
+                                Image(systemName: "questionmark.circle")
+                            }
                         }
                     }
                 }
@@ -156,6 +167,14 @@ struct ContentView: View {
         } message: {
             Text("Your shortcut will be sent to RoutineHub's HubSign service to be signed. You can turn this prompt off in Settings.")
         }
+        .alert("Clear Editor?", isPresented: $showingClearConfirm) {
+            Button("Clear", role: .destructive) {
+                source = ""
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will delete all current Cherri code in the editor.")
+        }
     }
 
     // ===================================
@@ -225,7 +244,7 @@ struct ContentView: View {
 
     // The compiler is a Go library that can take a moment on big files, so it runs off the main thread.
     private func compile() {
-        let code = source
+        let code = source.trimmingCharacters(in: .whitespacesAndNewlines)
         working = true
         failed = false
         showDetails = false
@@ -267,7 +286,7 @@ struct ContentView: View {
 
     // Compile, sign with HubSign, write a .shortcut file, then show the share sheet where "Shortcuts" imports it.
     private func exportToShortcuts() {
-        let code = source
+        let code = source.trimmingCharacters(in: .whitespacesAndNewlines)
         let name = Self.shortcutName(from: code)
         working = true
         failed = false

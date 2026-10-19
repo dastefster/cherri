@@ -1,7 +1,7 @@
 // ===================================
 // Appearance Settings
-// v0.0.3 BUILD 2026-10-16 04:05
-// Live code preview, light and dark theme pickers (they follow the system appearance), font picker and font size stepper.
+// v0.0.3 BUILD 2026-10-16 04:05 (Updated)
+// Live code preview, light and dark theme pickers (they follow the system appearance), font picker, font size stepper, and App Icon picker.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -70,7 +70,7 @@ struct AppearanceView: View {
                         .labelsHidden()
                 }
             }
-
+            
             Section {
                 Button("Reset to Defaults", role: .destructive) {
                     fontID = EditorSettings.systemFontID
@@ -224,3 +224,4 @@ struct FontPicker: UIViewControllerRepresentable {
         }
     }
 }
+
