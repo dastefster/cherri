@@ -382,7 +382,7 @@ var actions = map[string]*actionDefinition{
 
 			if len(args) >= 4 {
 				if args[3].valueType == Variable {
-					params["WFContactEmails"] = argumentValue(args, 3)
+					params["WFContactEmails"] = argumentValue(args, 4)
 				} else {
 					params["WFContactEmails"] = contactValue(emailAddress, []actionArgument{args[3]})
 				}
@@ -1816,7 +1816,7 @@ var actions = map[string]*actionDefinition{
 			},
 			{
 				name:      "message",
-				validType: Variable,
+				validType: String,
 				key:       "message",
 			},
 		},
