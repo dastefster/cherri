@@ -34,6 +34,7 @@ let guideSections: [GuideSection] = [
         .text("**1. Write.** Type Cherri code in the editor, or tap **Actions** to search the actions you know from Shortcuts. Fill in the form and the action is inserted at your cursor."),
         .text("**2. Compile.** Checks your code. Success shows the size of the shortcut. Errors appear under the editor."),
         .text("**3. Export.** Signs the shortcut and opens the share sheet. Choose the **Shortcuts** icon (swipe the row if you don't see it) then tap the blue **Add Shortcut** button in the Shortcuts app to add it to your library."),
+        .text("**4. Clear.** Tap the red trash icon to instantly clear the editor. A safety alert ensures you don't accidentally erase your work."),
         .code("alert(\"Hello from Cherri\")"),
     ]),
     GuideSection(id: "syntax", title: "Cherri basics", symbol: "chevron.left.forwardslash.chevron.right", blocks: [
@@ -192,3 +193,4 @@ struct GuideBlockView: View {
         }
     }
 }
+

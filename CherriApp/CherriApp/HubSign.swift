@@ -52,7 +52,8 @@ enum HubSign {
             throw HubSignError.notText
         }
 
-        var request = URLRequest(url: endpoint, timeoutInterval: 30)
+        // Increased timeout to 60 seconds to accommodate server latency or network drops
+        var request = URLRequest(url: endpoint, timeoutInterval: 60)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("CherriApp/0.0.2 (cherri/\(compilerVersion))", forHTTPHeaderField: "User-Agent")
@@ -89,3 +90,4 @@ enum HubSign {
         return result.0
     }
 }
+

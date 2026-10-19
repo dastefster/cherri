@@ -1,7 +1,7 @@
 // ===================================
 // Settings
-// v0.0.4 BUILD 2026-10-16 04:45
-// Grouped settings list with colored icon tiles: Editor (Appearance), Export (ask before exporting), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses) and a debug-only Developer section.
+// v0.0.6 BUILD 2026-10-19 12:50
+// Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses) and a debug-only Developer section. The App Icon picker follows light/dark by default and lets Purple override it.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -65,6 +65,11 @@ struct SettingsView: View {
     @AppStorage("cherriSource") private var source = StarterCode.text
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = true
     @State private var confirmingReset = false
+    
+    // Tracks the current app icon based on the system state
+    @State private var activeIcon: String = UIApplication.shared.alternateIconName ?? "AppIcon"
+    // Blocks stacked requests: a second call while iOS is still showing its change alert can fail.
+    @State private var changingIcon = false
 
     private var appVersion: String {
         let info = Bundle.main.infoDictionary
@@ -81,6 +86,25 @@ struct SettingsView: View {
                 } label: {
                     SettingsLabel(title: "Appearance", symbol: "textformat.size", color: .indigo)
                 }
+            }
+            
+            Section("App Icon") {
+                Picker(selection: Binding(
+                    get: { activeIcon },
+                    set: { newValue in setAppIcon(to: newValue) }
+                )) {
+                    Text("Default").tag("AppIcon")
+                    Text("Purple").tag("AppIcon-Purple")
+                } label: {
+                    SettingsLabel(title: "App Icon", symbol: "app.dashed", color: .purple)
+                }
+                .pickerStyle(.menu)
+
+                #if DEBUG
+                Button(action: runIsolatedPurpleIconAPITest) {
+                    SettingsLabel(title: "Run Isolated Purple Icon API Test", symbol: "stethoscope", color: .orange)
+                }
+                #endif
             }
 
             Section {
@@ -142,7 +166,6 @@ struct SettingsView: View {
                 }
             }
 
-            // Debug builds only, so TestFlight and App Store builds never show it.
             #if DEBUG
             Section("Developer") {
                 Button(role: .destructive, action: { hasSeenWelcome = false }) {
@@ -160,6 +183,61 @@ struct SettingsView: View {
             Text("This replaces everything in the editor with the starter code. It can't be undone.")
         }
     }
+
+    // ===================================
+    // APP ICON SWITCH
+    // ===================================
+
+    // "AppIcon" is the primary set and follows light/dark mode. Any other name is an alternate set that overrides it.
+    @MainActor
+    private func setAppIcon(to newValue: String) {
+        let app = UIApplication.shared
+        let nameToSet: String? = (newValue == "AppIcon") ? nil : newValue
+
+        guard !changingIcon, app.alternateIconName != nameToSet else {
+            activeIcon = app.alternateIconName ?? "AppIcon"
+            return
+        }
+
+        changingIcon = true
+        activeIcon = newValue
+        app.setAlternateIconName(nameToSet) { error in
+            DispatchQueue.main.async {
+                // iOS sometimes reports a bogus invalidation error (POSIX 54) even though the swap worked, so the icon name iOS actually holds decides the result.
+                let current = app.alternateIconName
+                if let error = error, current != nameToSet {
+                    print("[AppIcon] Switch to \(nameToSet ?? "primary") failed: \(error as NSError)")
+                }
+                activeIcon = current ?? "AppIcon"
+                changingIcon = false
+            }
+        }
+    }
+
+    // ===================================
+    // ICON API DIAGNOSTIC (DEBUG ONLY)
+    // ===================================
+
+    #if DEBUG
+    @MainActor
+    private func runIsolatedPurpleIconAPITest() {
+        let app = UIApplication.shared
+        let requestedName = "AppIcon-Purple"
+
+        print("[IsolatedAppIconTest] Before direct request: supportsAlternateIcons=\(app.supportsAlternateIcons), alternateIconName=\(app.alternateIconName ?? "nil"), requestedAlternateIconName=\(requestedName)")
+        app.setAlternateIconName(requestedName) { error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    let nsError = error as NSError
+                    print("[IsolatedAppIconTest] Completion error: domain=\(nsError.domain), code=\(nsError.code), localizedDescription=\(nsError.localizedDescription), userInfo=\(nsError.userInfo)")
+                } else {
+                    print("[IsolatedAppIconTest] Completion succeeded")
+                }
+                print("[IsolatedAppIconTest] After completion: alternateIconName=\(app.alternateIconName ?? "nil")")
+            }
+        }
+    }
+    #endif
 }
 
 // ===================================
