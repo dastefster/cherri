@@ -1,6 +1,6 @@
 // ===================================
 // App Icon Picker
-// v0.0.2 BUILD 2026-10-19 14:15
+// v0.0.3 BUILD 2026-10-19 19:40
 // Grid of the available app icons with a preview of each; tapping one switches the Home Screen icon.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -24,6 +24,7 @@ struct AppIconOption: Identifiable {
     static let all: [AppIconOption] = [
         AppIconOption(id: "AppIcon", title: "Default", preview: "IconPreviewDefault"),
         AppIconOption(id: "AppIcon-Purple", title: "Purple", preview: "IconPreviewPurple"),
+        AppIconOption(id: "AppIcon-Glass", title: "Glass", preview: "IconPreviewGlass"),
     ]
 
     static func title(for iconID: String) -> String {
@@ -51,7 +52,7 @@ struct AppIconView: View {
             }
             .padding()
 
-            Text("Default follows your iPhone's light and dark appearance. If it doesn't switch, check your Home Screen icon style under Edit → Customize. Any other icon stays as chosen.")
+            Text("Default and Glass follow your iPhone's light and dark appearance. If they don't switch, check your Home Screen icon style under Edit → Customize. Purple stays as chosen.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal)
