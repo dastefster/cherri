@@ -1,6 +1,6 @@
 // ===================================
 // Editor Themes, Fonts and Settings Keys
-// v0.0.5 BUILD 2026-10-16 04:12
+// v0.0.6 BUILD 2026-10-19 19:45
 // Color themes (each with light or dark use), monospaced font choices, and the saved-settings keys shared by the editor and the Settings screens.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -72,7 +72,8 @@ private extension UIColor {
 // Computed rather than stored so the colors never become shared mutable state.
 extension EditorTheme {
     static var all: [EditorTheme] {
-        [standard, dracula, tomorrowNightBright, oneDark, solarizedDark, solarizedLight, githubLight]
+        [standard, dracula, tomorrowNightBright, oneDark, solarizedDark, solarizedLight, githubLight,
+         nord, monokai, gruvboxDark, tokyoNight, catppuccinMocha, githubDark, catppuccinLatte]
     }
 
     static func theme(id: String) -> EditorTheme {
@@ -140,6 +141,71 @@ extension EditorTheme {
             background: UIColor(hex: 0xFFFFFF), text: UIColor(hex: 0x24292F), comment: UIColor(hex: 0x6E7781),
             string: UIColor(hex: 0x0A3069), number: UIColor(hex: 0x0550AE), keyword: UIColor(hex: 0xCF222E),
             variable: UIColor(hex: 0x953800), action: UIColor(hex: 0x8250DF), type: UIColor(hex: 0x1B7C83), caret: UIColor(hex: 0x24292F)
+        )
+    }
+
+    static var nord: EditorTheme {
+        EditorTheme(
+            id: "nord", name: "Nord",
+            background: UIColor(hex: 0x2E3440), text: UIColor(hex: 0xD8DEE9), comment: UIColor(hex: 0x616E88),
+            string: UIColor(hex: 0xA3BE8C), number: UIColor(hex: 0xB48EAD), keyword: UIColor(hex: 0x81A1C1),
+            variable: UIColor(hex: 0xD08770), action: UIColor(hex: 0x88C0D0), type: UIColor(hex: 0x8FBCBB), caret: UIColor(hex: 0xD8DEE9)
+        )
+    }
+
+    static var monokai: EditorTheme {
+        EditorTheme(
+            id: "monokai", name: "Monokai",
+            background: UIColor(hex: 0x272822), text: UIColor(hex: 0xF8F8F2), comment: UIColor(hex: 0x75715E),
+            string: UIColor(hex: 0xE6DB74), number: UIColor(hex: 0xAE81FF), keyword: UIColor(hex: 0xF92672),
+            variable: UIColor(hex: 0xFD971F), action: UIColor(hex: 0xA6E22E), type: UIColor(hex: 0x66D9EF), caret: UIColor(hex: 0xF8F8F0)
+        )
+    }
+
+    static var gruvboxDark: EditorTheme {
+        EditorTheme(
+            id: "gruvbox-dark", name: "Gruvbox Dark",
+            background: UIColor(hex: 0x282828), text: UIColor(hex: 0xEBDBB2), comment: UIColor(hex: 0x928374),
+            string: UIColor(hex: 0xB8BB26), number: UIColor(hex: 0xD3869B), keyword: UIColor(hex: 0xFB4934),
+            variable: UIColor(hex: 0xFE8019), action: UIColor(hex: 0x83A598), type: UIColor(hex: 0xFABD2F), caret: UIColor(hex: 0xEBDBB2)
+        )
+    }
+
+    static var tokyoNight: EditorTheme {
+        EditorTheme(
+            id: "tokyo-night", name: "Tokyo Night",
+            background: UIColor(hex: 0x1A1B26), text: UIColor(hex: 0xC0CAF5), comment: UIColor(hex: 0x565F89),
+            string: UIColor(hex: 0x9ECE6A), number: UIColor(hex: 0xFF9E64), keyword: UIColor(hex: 0xBB9AF7),
+            variable: UIColor(hex: 0xF7768E), action: UIColor(hex: 0x7AA2F7), type: UIColor(hex: 0x2AC3DE), caret: UIColor(hex: 0xC0CAF5)
+        )
+    }
+
+    static var catppuccinMocha: EditorTheme {
+        EditorTheme(
+            id: "catppuccin-mocha", name: "Catppuccin Mocha",
+            background: UIColor(hex: 0x1E1E2E), text: UIColor(hex: 0xCDD6F4), comment: UIColor(hex: 0x6C7086),
+            string: UIColor(hex: 0xA6E3A1), number: UIColor(hex: 0xFAB387), keyword: UIColor(hex: 0xCBA6F7),
+            variable: UIColor(hex: 0xF38BA8), action: UIColor(hex: 0x89B4FA), type: UIColor(hex: 0xF9E2AF), caret: UIColor(hex: 0xF5E0DC)
+        )
+    }
+
+    // GitHub's dark background is close to the black screen behind the editor, so it gets GitHub's own border color as a frame.
+    static var githubDark: EditorTheme {
+        EditorTheme(
+            id: "github-dark", name: "GitHub Dark",
+            background: UIColor(hex: 0x0D1117), text: UIColor(hex: 0xE6EDF3), comment: UIColor(hex: 0x8B949E),
+            string: UIColor(hex: 0xA5D6FF), number: UIColor(hex: 0x79C0FF), keyword: UIColor(hex: 0xFF7B72),
+            variable: UIColor(hex: 0xFFA657), action: UIColor(hex: 0xD2A8FF), type: UIColor(hex: 0x7EE787), caret: UIColor(hex: 0x2F81F7), border: UIColor(hex: 0x30363D)
+        )
+    }
+
+    // A pale background would melt into a light screen, so Latte gets a soft frame too.
+    static var catppuccinLatte: EditorTheme {
+        EditorTheme(
+            id: "catppuccin-latte", name: "Catppuccin Latte",
+            background: UIColor(hex: 0xEFF1F5), text: UIColor(hex: 0x4C4F69), comment: UIColor(hex: 0x9CA0B0),
+            string: UIColor(hex: 0x40A02B), number: UIColor(hex: 0xFE640B), keyword: UIColor(hex: 0x8839EF),
+            variable: UIColor(hex: 0xD20F39), action: UIColor(hex: 0x1E66F5), type: UIColor(hex: 0xDF8E1D), caret: UIColor(hex: 0xDC8A78), border: UIColor(hex: 0xCCD0DA)
         )
     }
 }

@@ -61,7 +61,7 @@ let docTopics: [GuideSection] = [
     ]),
     GuideSection(id: "settings", title: "Settings", symbol: "gearshape", blocks: [
         .text("Open Settings with the gear at the top left of the editor."),
-        .text("**Appearance** controls how the editor looks. Colors follow your device: **Dracula** in light mode and **Tomorrow Night Bright** in dark mode. Pick a font with Apple's font picker, which shows monospaced fonts only. To add more, tap **Manage Fonts** in the picker and install one. Font size goes from 10 to 28. **Reset to Defaults** puts everything back."),
+        .text("**Appearance** controls how the editor looks. Your iPhone's light or dark appearance decides which of two themes the editor uses. Choose them under **Light Mode** and **Dark Mode**, with a live preview of each. They start as **Dracula** in light mode and **Tomorrow Night Bright** in dark mode. Pick a font with Apple's font picker, which shows monospaced fonts only. To add more, tap **Manage Fonts** in the picker and install one. Font size goes from 10 to 28. **Reset to Defaults** puts everything back."),
         .text("**Ask Before Exporting** turns the confirmation before Export on or off."),
         .text("**Reset Editor to Starter Code** replaces everything in the editor with the starter code. It asks first, and it can't be undone."),
         .text("**Help** has the Guide, this documentation, and a way to see the welcome screen again."),
