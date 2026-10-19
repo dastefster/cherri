@@ -1835,7 +1835,7 @@ var actions = map[string]*actionDefinition{
 
 			// The picker key holds the same message as the visible parameter.
 			if len(args) > 1 && args[1].valueType == Variable {
-				params["WFLinkMessagesEntityVariablePickerKey"] = variableValue(args[1].value.(varValue))
+				params["WFLinkMessagesEntityVariablePickerKey"] = argumentValue(args, 1)
 			}
 
 			return params
