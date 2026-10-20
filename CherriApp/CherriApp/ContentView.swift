@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.21 BUILD 2026-10-19 20:50
+// v0.0.22 BUILD 2026-10-20 00:15
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -228,6 +228,9 @@ struct ContentView: View {
                     }
                 }
                 .font(.footnote)
+
+                Link("Send Feedback about this error", destination: Feedback.url(error: headline))
+                    .font(.footnote)
 
                 if showDetails {
                     ScrollView {
