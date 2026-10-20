@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.20 BUILD 2026-10-16 19:46
+// v0.0.21 BUILD 2026-10-19 20:50
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -31,6 +31,10 @@ struct ContentView: View {
     @State private var showingClearConfirm = false
     @AppStorage(ExportSettings.confirmKey) private var confirmBeforeExport = true
     @State private var confirmingExport = false
+    @AppStorage(ExportSettings.tipKey) private var showShareTip = true
+    // The signed file waits here while the tip is on screen, then moves to exportFile to open the share sheet.
+    @State private var pendingExport: ExportFile?
+    @State private var showingShareTip = false
     @AppStorage(EditorSettings.fontKey) private var fontID = EditorSettings.systemFontID
     @AppStorage(EditorSettings.sizeKey) private var fontSize = EditorSettings.defaultSize
     @AppStorage(EditorSettings.lightKey) private var lightThemeID = EditorSettings.defaultLightThemeID
@@ -166,6 +170,16 @@ struct ContentView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Your shortcut will be sent to RoutineHub's HubSign service to be signed. You can turn this prompt off in Settings.")
+        }
+        .alert("Add It to Shortcuts", isPresented: $showingShareTip) {
+            Button("Continue") {
+                let file = pendingExport
+                pendingExport = nil
+                // Presenting a sheet in the same moment an alert is dismissing can be dropped, so give the alert a beat to leave.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { exportFile = file }
+            }
+        } message: {
+            Text("Your shortcut is signed. On the next screen, tap Shortcuts in the row of apps (swipe the row if you don't see it), then tap Add Shortcut.")
         }
         .alert("Clear Editor?", isPresented: $showingClearConfirm) {
             Button("Clear", role: .destructive) {
@@ -311,7 +325,13 @@ struct ContentView: View {
                 try signed.write(to: url, options: .atomic)
 
                 status = "Signed OK: \(signed.count) bytes. Tap Shortcuts in the share sheet to import."
-                exportFile = ExportFile(url: url)
+                let file = ExportFile(url: url)
+                if showShareTip {
+                    pendingExport = file
+                    showingShareTip = true
+                } else {
+                    exportFile = file
+                }
             } catch {
                 status = error.localizedDescription
                 failed = true

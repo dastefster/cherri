@@ -1,6 +1,6 @@
 // ===================================
 // Documentation
-// v0.0.5 BUILD 2026-10-16 20:24
+// v0.0.6 BUILD 2026-10-19 20:50
 // In-app reference for everything CherriCuts does in beta 1: the editor, the Actions picker, Compile, Export, third-party app actions, Settings, and what stays on your device. Content lives in the docTopics array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -42,7 +42,7 @@ let docTopics: [GuideSection] = [
     GuideSection(id: "export", title: "Export", symbol: "square.and.arrow.up", blocks: [
         .text("**Export** compiles your code, gets the shortcut signed, and opens the share sheet. iOS only accepts signed shortcuts, and signing is done by RoutineHub's **HubSign** service, so Export needs an internet connection."),
         .text("In the share sheet, choose the **Shortcuts** icon (swipe the row if you don't see it). Shortcuts opens with an Add Shortcut screen. Tap the blue **Add Shortcut** button at the bottom and the shortcut joins your library."),
-        .text("By default CherriCuts asks before exporting, because your shortcut is sent to HubSign. You can turn that question off in Settings, under **Ask Before Exporting**."),
+        .text("By default CherriCuts asks before exporting, because your shortcut is sent to HubSign. You can turn that question off in Settings, under **Ask Before Exporting**. Once your shortcut is signed, a short tip reminds you to tap **Shortcuts** in the share sheet; you can turn it off under **Show Import Tip**."),
         .tip("If Export seems stuck after choosing Save to Files, force-quit CherriCuts, reopen it, and pick the Shortcuts icon instead."),
     ]),
     GuideSection(id: "style", title: "Name, color and icon", symbol: "paintpalette", blocks: [
@@ -62,7 +62,7 @@ let docTopics: [GuideSection] = [
     GuideSection(id: "settings", title: "Settings", symbol: "gearshape", blocks: [
         .text("Open Settings with the gear at the top left of the editor."),
         .text("**Appearance** controls how the editor looks. Your iPhone's light or dark appearance decides which of two themes the editor uses. Choose them under **Light Mode** and **Dark Mode**, with a live preview of each. They start as **Dracula** in light mode and **Tomorrow Night Bright** in dark mode. Pick a font with Apple's font picker, which shows monospaced fonts only. To add more, tap **Manage Fonts** in the picker and install one. Font size goes from 10 to 28. **Reset to Defaults** puts everything back."),
-        .text("**Ask Before Exporting** turns the confirmation before Export on or off."),
+        .text("**Ask Before Exporting** turns the confirmation before Export on or off. **Show Import Tip** turns the reminder about the Shortcuts icon in the share sheet on or off."),
         .text("**Reset Editor to Starter Code** replaces everything in the editor with the starter code. It asks first, and it can't be undone."),
         .text("**Help** has the Guide, this documentation, and a way to see the welcome screen again."),
         .text("**About** shows the app version, the Cherri compiler version and the licenses."),
