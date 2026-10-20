@@ -1,6 +1,6 @@
 // ===================================
 // HubSign Client
-// v0.0.2 BUILD 2026-10-19 23:25
+// v0.0.3 BUILD 2026-10-20 00:30
 // Sends a compiled (unsigned) Shortcut plist to RoutineHub's HubSign service and returns the signed .shortcut bytes.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -14,6 +14,7 @@ import Foundation
 enum HubSignError: LocalizedError {
     case notText
     case network(String)
+    case timedOut
     case badStatus(Int, String?)
     case badContentType(String)
     case notAShortcut
@@ -24,6 +25,8 @@ enum HubSignError: LocalizedError {
             return "The compiled Shortcut was not valid text, so it could not be sent for signing."
         case .network(let message):
             return "Could not reach HubSign: \(message)"
+        case .timedOut:
+            return "HubSign did not answer within 60 seconds. The service may be busy or briefly down. Wait a minute and tap Export again. Your code is safe. If it keeps happening, tap Send Feedback about this error."
         case .badStatus(let code, let detail):
             let suffix = detail.map { " Server said: \($0)" } ?? ""
             switch code {
@@ -85,6 +88,7 @@ enum HubSign {
                     attempt += 1
                     continue
                 }
+                if (error as? URLError)?.code == .timedOut { throw HubSignError.timedOut }
                 throw HubSignError.network(error.localizedDescription)
             }
 
