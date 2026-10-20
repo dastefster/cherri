@@ -1,6 +1,6 @@
 // ===================================
 // Settings
-// v0.0.7 BUILD 2026-10-19 13:05
+// v0.0.8 BUILD 2026-10-19 20:50
 // Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses) and a debug-only Developer section. App Icon opens a grid picker (see AppIconView).
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -19,6 +19,7 @@ enum StarterCode {
 
 enum ExportSettings {
     static let confirmKey = "confirmBeforeExport"
+    static let tipKey = "showShareTip"
 }
 
 // ===================================
@@ -62,6 +63,7 @@ struct SettingsView: View {
     let onShowWelcome: () -> Void
 
     @AppStorage(ExportSettings.confirmKey) private var confirmBeforeExport = true
+    @AppStorage(ExportSettings.tipKey) private var showShareTip = true
     @AppStorage("cherriSource") private var source = StarterCode.text
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = true
     @State private var confirmingReset = false
@@ -102,10 +104,14 @@ struct SettingsView: View {
                 Toggle(isOn: $confirmBeforeExport) {
                     SettingsLabel(title: "Ask Before Exporting", symbol: "paperplane.fill", color: .blue)
                 }
+
+                Toggle(isOn: $showShareTip) {
+                    SettingsLabel(title: "Show Import Tip", symbol: "lightbulb.fill", color: .orange)
+                }
             } header: {
                 Text("Export")
             } footer: {
-                Text("Export sends your shortcut to RoutineHub's HubSign service to be signed. Compile stays on your device.")
+                Text("Export sends your shortcut to RoutineHub's HubSign service to be signed. Compile stays on your device. The import tip reminds you to tap Shortcuts in the share sheet.")
             }
 
             Section("Your Code") {
