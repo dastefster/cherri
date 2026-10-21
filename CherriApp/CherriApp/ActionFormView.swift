@@ -1,6 +1,6 @@
 // ===================================
 // Action Form
-// v0.0.3 BUILD 2026-10-15 22:25
+// v0.0.4 BUILD 2026-10-20 22:55
 // Fill-in form for one action: a field per parameter in plain words, a live preview of the Cherri call, and an Insert button that writes the call with nil in any skipped slot.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -138,7 +138,8 @@ private struct ParamField: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         } else {
             HStack(spacing: 8) {
-                TextField(param.name, text: $value, prompt: Text(prompt))
+                TextField(param.name, text: $value, prompt: Text(prompt), axis: isMultiline ? .vertical : .horizontal)
+                    .lineLimit(isMultiline ? 1...12 : 1...1)
                     .keyboardType(isNumeric ? .numbersAndPunctuation : .default)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -205,7 +206,12 @@ private struct ParamField: View {
     }
 
     private var usesCode: Bool {
-        ["variable", "dictionary", "array"].contains(param.type)
+        ["variable", "dictionary", "array", "rawtext"].contains(param.type)
+    }
+
+    // A single-line field flattens pasted newlines into spaces, which turns a whole script into one // comment.
+    private var isMultiline: Bool {
+        param.type == "rawtext"
     }
 }
 
