@@ -1,0 +1,26 @@
+// compile-only: checks the Transform Text options compile; the output is judged by eye in Shortcuts
+
+// Transform Text: every option, using the app's raw values
+const t0 = transformText("camelCase", "Hello Cherri World")
+const t1 = transformText("pascalCase", "Hello Cherri World")
+const t2 = transformText("snakeCase", "Hello Cherri World")
+const t3 = transformText("constantCase", "Hello Cherri World")
+const t4 = transformText("dashCase", "Hello Cherri World")
+const t5 = transformText("slugify", "Hello Cherri World")
+const t6 = transformText("stripPunctation", "Hello Cherri World")
+const t7 = transformText("stripQuotationMarks", "Hello Cherri World")
+const t8 = transformText("stripHTML", "Hello Cherri World")
+const t9 = transformText("stripDiacritics", "Hello Cherri World")
+const t10 = transformText("jsonEscapedString", "Hello Cherri World")
+const t11 = transformText("transliterateToLatin", "Hello Cherri World")
+const t12 = transformText("transliterateLatinToArabic", "Hello Cherri World")
+const t13 = transformText("transliterateLatinToCyrillic", "Hello Cherri World")
+const t14 = transformText("transliterateLatinToGreek", "Hello Cherri World")
+const t15 = transformText("transliterateLatinToHebrew", "Hello Cherri World")
+const t16 = transformText("transliterateLatinToHangul", "Hello Cherri World")
+const t17 = transformText("transliterateLatinToHiragana", "Hello Cherri World")
+const t18 = transformText("transliterateLatinToThai", "Hello Cherri World")
+const t19 = transformText("transliterateHiraganaToKatakana", "Hello Cherri World")
+const t20 = transformText("transliterateMandarinToLatin", "Hello Cherri World")
+
+show("✅ All tests passed")

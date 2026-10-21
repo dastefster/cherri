@@ -30,6 +30,17 @@ func sindresorhusIntent(appIntentIdentifier string) appIntent {
 }
 
 func init() {
+	// Every option of Transform Text, each read from a Shortcuts export. These are the app's own raw values,
+	// not the labels in the picker, and "stripPunctation" is spelled that way by the app itself.
+	enumerations["actionsTransformation"] = []string{
+		"camelCase", "pascalCase", "snakeCase", "constantCase", "dashCase", "slugify",
+		"stripPunctation", "stripQuotationMarks", "stripHTML", "stripDiacritics", "jsonEscapedString",
+		"transliterateToLatin", "transliterateLatinToArabic", "transliterateLatinToCyrillic",
+		"transliterateLatinToGreek", "transliterateLatinToHebrew", "transliterateLatinToHangul",
+		"transliterateLatinToHiragana", "transliterateLatinToThai", "transliterateHiraganaToKatakana",
+		"transliterateMandarinToLatin",
+	}
+
 	actions["generateUUID"] = &actionDefinition{
 		doc: selfDoc{
 			title:       "Generate UUID",
@@ -124,6 +135,8 @@ func init() {
 				name:      "transformation",
 				key:       "transformation",
 				validType: String,
+				enum:      "actionsTransformation",
+				literal:   true,
 			},
 			{
 				name:      "text",
