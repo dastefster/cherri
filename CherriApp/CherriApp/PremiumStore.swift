@@ -1,7 +1,7 @@
 
 // ===================================
 // Cherri Premium
-// v0.0.1 BUILD 2026-10-21 16:10
+// v0.0.2 BUILD 2026-10-21 18:30
 // StoreKit 2 one-time unlock: loads the product, handles purchase and restore, watches for transactions that finish outside the app (Ask to Buy, refunds), and caches the result so the editor never waits on the network. Also defines which themes and icons are free.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -138,6 +138,13 @@ final class PremiumStore: ObservableObject {
     // Apple requires a visible way to do this. AppStore.sync asks for the Apple ID password, so it only runs when the person taps the button.
     func restore() async {
         message = nil
+
+        // The local entitlement check needs no sign-in; AppStore.sync() always shows Apple's password prompt, so only fall back to it when nothing is found.
+        await refreshEntitlements()
+        if isPremium {
+            message = "You're already unlocked."
+            return
+        }
 
         do {
             try await AppStore.sync()
