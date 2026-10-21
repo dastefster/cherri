@@ -1,7 +1,7 @@
 // ===================================
 // Welcome Screen
-// v0.0.1 BUILD 2026-10-16 02:20
-// Shown on first launch (and from the ? button): what CherriCuts is, the Write, Compile, Export flow, and the one privacy fact testers should know before exporting.
+// v0.0.2 BUILD 2026-10-20 18:15
+// Shown on first launch (and from the ? button): what Cherri Shortcuts is, the Write, Compile, Export flow, and the one privacy fact testers should know before exporting.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -52,7 +52,7 @@ struct WelcomeView: View {
                 .frame(width: 132, height: 132)
                 .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                 .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
-            Text("Welcome to CherriCuts")
+            Text("Welcome to Cherri Shortcuts")
                 .font(.largeTitle.bold())
                 .multilineTextAlignment(.center)
                 .padding(.top, 8)

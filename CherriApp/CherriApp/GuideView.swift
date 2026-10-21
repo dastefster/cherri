@@ -1,6 +1,6 @@
 // ===================================
 // In-App Guide
-// v0.0.9 BUILD 2026-10-16 20:24
+// v0.0.10 BUILD 2026-10-20 18:15
 // Basic documentation sheet: getting started, Cherri syntax basics, the Actions picker, Compile vs Export, troubleshooting, beta limitations, and credits. Content lives in the guideSections array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -30,7 +30,7 @@ struct GuideSection: Identifiable {
 
 let guideSections: [GuideSection] = [
     GuideSection(id: "start", title: "Getting started", symbol: "play.circle", blocks: [
-        .text("CherriCuts turns code into a real Apple Shortcut. Your code is saved automatically, so closing the app never loses work."),
+        .text("Cherri Shortcuts turns code into a real Apple Shortcut. Your code is saved automatically, so closing the app never loses work."),
         .text("**1. Write.** Type Cherri code in the editor, or tap **Actions** to search the actions you know from Shortcuts. Fill in the form and the action is inserted at your cursor."),
         .text("**2. Compile.** Checks your code. Success shows the size of the shortcut. Errors appear under the editor."),
         .text("**3. Export.** Signs the shortcut and opens the share sheet. Choose the **Shortcuts** icon (swipe the row if you don't see it) then tap the blue **Add Shortcut** button in the Shortcuts app to add it to your library."),
@@ -75,7 +75,7 @@ let guideSections: [GuideSection] = [
         .tip("All three lines are optional. Use only the ones you want."),
     ]),
     GuideSection(id: "trouble", title: "Troubleshooting", symbol: "wrench.and.screwdriver", blocks: [
-        .text("**Export spins forever after choosing Save to Files.** Force-quit CherriCuts and reopen it, then pick the **Shortcuts** icon instead."),
+        .text("**Export spins forever after choosing Save to Files.** Force-quit Cherri Shortcuts and reopen it, then pick the **Shortcuts** icon instead."),
         .text("**Shortcuts shows an \"Unknown action\" with an Update Shortcuts button.** The action needs a newer iOS than the one you're running. Some Photos actions need iOS 27."),
         .text("**A third-party action shows an install prompt.** Install that app from the App Store, then add the shortcut again."),
         .text("**An action asks you to choose something when it runs** (a space, folder, list or album). That's expected. These choices are specific to your device, so the shortcut asks you at run time."),
@@ -89,7 +89,7 @@ let guideSections: [GuideSection] = [
         .text("• Export always goes through HubSign. If it's down, Export won't work, but Compile will."),
     ]),
     GuideSection(id: "about", title: "About", symbol: "info.circle", blocks: [
-        .text("CherriCuts is made by Stefan Hottel (@dastefster) 🍒🔨"),
+        .text("Cherri Shortcuts is made by Stefan Hottel (@dastefster) 🍒🔨"),
         .text("It's built on **Cherri**, the open source Shortcuts language created by electrikmilk. Shortcut signing is provided by RoutineHub's HubSign."),
     ]),
 ]

@@ -1,7 +1,7 @@
 // ===================================
 // Documentation
-// v0.0.6 BUILD 2026-10-19 20:50
-// In-app reference for everything CherriCuts does in beta 1: the editor, the Actions picker, Compile, Export, third-party app actions, Settings, and what stays on your device. Content lives in the docTopics array so it can be edited without touching layout code.
+// v0.0.7 BUILD 2026-10-20 18:15
+// In-app reference for everything Cherri Shortcuts does in beta 1: the editor, the Actions picker, Compile, Export, third-party app actions, Settings, and what stays on your device. Content lives in the docTopics array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -12,8 +12,8 @@ import SwiftUI
 // ===================================
 
 let docTopics: [GuideSection] = [
-    GuideSection(id: "overview", title: "What CherriCuts does", symbol: "sparkles", blocks: [
-        .text("CherriCuts lets you build Apple Shortcuts by writing code instead of dragging blocks. You write in **Cherri**, a language made for Shortcuts, and the app turns it into a real shortcut you can add to your library and run like any other."),
+    GuideSection(id: "overview", title: "What Cherri Shortcuts does", symbol: "sparkles", blocks: [
+        .text("Cherri Shortcuts lets you build Apple Shortcuts by writing code instead of dragging blocks. You write in **Cherri**, a language made for Shortcuts, and the app turns it into a real shortcut you can add to your library and run like any other."),
         .text("Everything runs from one screen: an editor, an **Actions** button, **Compile** and **Export**."),
         .tip("New to Cherri? The Guide has a short tour of the language. This documentation covers what the app itself can do."),
     ]),
@@ -24,7 +24,7 @@ let docTopics: [GuideSection] = [
         .tip("Colors and font are set in Settings, under Appearance."),
     ]),
     GuideSection(id: "picker", title: "The Actions picker", symbol: "list.bullet.rectangle", blocks: [
-        .text("Tap **Actions** to open every action CherriCuts knows, grouped into categories the way Shortcuts groups them. Use the search field to find one by name or description."),
+        .text("Tap **Actions** to open every action Cherri Shortcuts knows, grouped into categories the way Shortcuts groups them. Use the search field to find one by name or description."),
         .text("**Tap an action** to open its form. Each parameter is a field in plain words, marked **required** or **optional**. Options become menus, yes/no values become an On/Off menu, and anything that takes a variable gets a small menu button next to the field."),
         .text("**The variable menu** lists the variables and constants in your code, newest first, plus Cherri's built-ins: `ShortcutInput`, `Clipboard`, `CurrentDate` and `Device`."),
         .text("**Your code** at the bottom of the form is a live preview of what will be inserted. Leave an optional field empty and it's skipped for you. If a required field is empty, a placeholder is inserted that you can edit afterwards."),
@@ -42,8 +42,8 @@ let docTopics: [GuideSection] = [
     GuideSection(id: "export", title: "Export", symbol: "square.and.arrow.up", blocks: [
         .text("**Export** compiles your code, gets the shortcut signed, and opens the share sheet. iOS only accepts signed shortcuts, and signing is done by RoutineHub's **HubSign** service, so Export needs an internet connection."),
         .text("In the share sheet, choose the **Shortcuts** icon (swipe the row if you don't see it). Shortcuts opens with an Add Shortcut screen. Tap the blue **Add Shortcut** button at the bottom and the shortcut joins your library."),
-        .text("By default CherriCuts asks before exporting, because your shortcut is sent to HubSign. You can turn that question off in Settings, under **Ask Before Exporting**. Once your shortcut is signed, a short tip reminds you to tap **Shortcuts** in the share sheet; you can turn it off under **Show Import Tip**."),
-        .tip("If Export seems stuck after choosing Save to Files, force-quit CherriCuts, reopen it, and pick the Shortcuts icon instead."),
+        .text("By default Cherri Shortcuts asks before exporting, because your shortcut is sent to HubSign. You can turn that question off in Settings, under **Ask Before Exporting**. Once your shortcut is signed, a short tip reminds you to tap **Shortcuts** in the share sheet; you can turn it off under **Show Import Tip**."),
+        .tip("If Export seems stuck after choosing Save to Files, force-quit Cherri Shortcuts, reopen it, and pick the Shortcuts icon instead."),
     ]),
     GuideSection(id: "style", title: "Name, color and icon", symbol: "paintpalette", blocks: [
         .text("Three optional lines at the top of your code control how the exported shortcut looks:"),
@@ -70,7 +70,7 @@ let docTopics: [GuideSection] = [
     GuideSection(id: "privacy", title: "Your code and your privacy", symbol: "lock.shield", blocks: [
         .text("Your code is stored only on your device."),
         .text("**Compile** never leaves your device."),
-        .text("**Export** sends the compiled shortcut to RoutineHub's HubSign service so it can be signed, and nothing else. CherriCuts has no accounts, no ads and no analytics."),
+        .text("**Export** sends the compiled shortcut to RoutineHub's HubSign service so it can be signed, and nothing else. Cherri Shortcuts has no accounts, no ads and no analytics."),
         .text("If you install the app through TestFlight, Apple collects its own crash and usage data for testing."),
         .tip("The full privacy policy is in Settings, under About."),
     ]),
@@ -102,7 +102,7 @@ struct DocumentationView: View {
                     }
                 }
             } footer: {
-                Text("What CherriCuts can do in beta 1. More will be added as the app grows.")
+                Text("What Cherri Shortcuts can do in beta 1. More will be added as the app grows.")
             }
 
             Section("Cherri language") {
