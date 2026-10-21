@@ -223,4 +223,110 @@ func init() {
 		"SetTaskStatusAppIntent",
 		nil,
 	)
+
+	// The Notes, Reminders and Search actions below are the older Siri-style Craft intents, read from one device
+	// export. They overlap the document actions above, so only text parameters and passed-in results are
+	// defined; pickers for a note, list or reminder stay blank for the Shortcut's user to fill in.
+	actions["craftAppendTextToNote"] = craftAction(
+		"Append Text to Craft Note",
+		"Appends `content` to a Craft note. Pick the note in the Shortcut.",
+		"CraftNoteAppendTextIntent",
+		[]parameterDefinition{
+			{name: "content", validType: String, key: "content", optional: true},
+		},
+	)
+
+	actions["craftCreateNote"] = craftAction(
+		"Create Craft Note",
+		"Creates a note in Craft named `name` with `content`.",
+		"CraftCreateNoteIntent",
+		[]parameterDefinition{
+			{name: "name", validType: String, key: "name", optional: true},
+			{name: "content", validType: String, key: "content", optional: true},
+		},
+	)
+
+	// Craft has a second, document-based Create Reminder above; this one takes a list rather than a document.
+	actions["craftCreateReminderInList"] = craftAction(
+		"Create Craft Reminder in List",
+		"Creates a reminder titled `title`. Pick the list in the Shortcut.",
+		"CraftCreateReminderIntent",
+		[]parameterDefinition{
+			{name: "title", validType: String, key: "title", optional: true},
+		},
+	)
+
+	actions["craftDeleteReminders"] = craftAction(
+		"Delete Craft Reminders",
+		"Deletes the Craft reminders passed in as `entities`, such as the output of Create Craft Reminder in List.",
+		"CraftDeleteRemindersIntent",
+		[]parameterDefinition{
+			{name: "entities", validType: Variable, key: "entities", optional: true},
+		},
+	)
+
+	// Shortcuts marks an entity query as needing the app installed, as it does for Menu Box's Find. The export
+	// also held a folder filter, which is left for the Shortcut's user to set.
+	actions["craftFindNote"] = craftAction(
+		"Find Craft Notes",
+		"Finds notes in Craft. Set the filter in the Shortcut.",
+		"NoteAppEntity",
+		nil,
+	)
+	actions["craftFindNote"].appIntent.requiresAppInstallation = true
+	actions["craftFindNote"].outputType = Variable
+	actions["craftFindNote"].outputName = "Note"
+
+	actions["craftOpenNote"] = craftAction(
+		"Open Craft Note",
+		"Opens a Craft note. Pass a note from another action as `target`, or pick it in the Shortcut.",
+		"CraftOpenNoteIntent",
+		[]parameterDefinition{
+			{name: "target", validType: Variable, key: "target", optional: true},
+		},
+	)
+
+	// The intent is named CraftOpenTaskIntent, but it is the action Craft labels Open Reminder.
+	actions["craftOpenReminder"] = craftAction(
+		"Open Craft Reminder",
+		"Opens a Craft reminder. Pass a reminder from another action as `target`, or pick it in the Shortcut.",
+		"CraftOpenTaskIntent",
+		[]parameterDefinition{
+			{name: "target", validType: Variable, key: "target", optional: true},
+		},
+	)
+
+	actions["craftSearchDocuments"] = craftAction(
+		"Search Craft Documents",
+		"Searches Craft for `criteria`.",
+		"CraftSearchInAppIntent",
+		[]parameterDefinition{
+			{name: "criteria", validType: String, key: "criteria", optional: true},
+		},
+	)
+
+	actions["craftUpdateNote"] = craftAction(
+		"Update Craft Note",
+		"Updates a Craft note. Pick the note in the Shortcut.",
+		"CraftUpdateNoteIntent",
+		nil,
+	)
+
+	// The flagged switch was also in the export, but as a bare boolean that is left for the Shortcut to set.
+	actions["craftUpdateReminder"] = craftAction(
+		"Update Craft Reminder",
+		"Updates a Craft reminder with a `note`. Pick the reminder in the Shortcut.",
+		"CraftUpdateReminderIntent",
+		[]parameterDefinition{
+			{name: "note", validType: String, key: "note", optional: true},
+		},
+	)
+
+	// Only one destination was exported (type "2"), so the destination is left for the Shortcut to pick.
+	actions["craftOpenTasksList"] = craftAction(
+		"Open Craft Tasks List",
+		"Opens a Craft tasks list such as the Inbox or Today. Pick the list in the Shortcut.",
+		"OpenTaskListIntent",
+		nil,
+	)
 }

@@ -38,4 +38,18 @@ if @runActions == "yes" {
     craftSetTaskStatus()
 }
 
+
+// Siri-style Craft notes, reminders and search
+craftAppendTextToNote("appended text")
+craftCreateNote("Test note", "Note body")
+const craftReminder = craftCreateReminderInList("Test reminder")
+craftDeleteReminders(craftReminder)
+const craftNotes = craftFindNote()
+craftOpenNote(craftNotes)
+craftOpenReminder(craftReminder)
+craftSearchDocuments("meeting")
+craftUpdateNote()
+craftUpdateReminder("updated note")
+craftOpenTasksList()
+
 show("✅ All tests passed")
