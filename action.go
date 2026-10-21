@@ -872,6 +872,9 @@ func parseActionDefinitions() {
 		case char == '"':
 			collectString()
 			advanceUntil('\n')
+		case char == '\'':
+			advance()
+			collectRawString()
 		case commentAhead():
 			collectComment()
 		case startOfLineTokenAhead(Enumeration):

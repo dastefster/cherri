@@ -73,6 +73,13 @@ func parseFunctions() {
 	functions = make(map[string]*function)
 	for char != -1 {
 		switch {
+		case char == '"':
+			collectString()
+			advanceUntil('\n')
+		case char == '\'':
+			// Code in a raw string, like a Scriptable script, can have a line that starts with `function`.
+			advance()
+			collectRawString()
 		case commentAhead():
 			collectComment()
 		case startOfLineTokenAhead(Function):

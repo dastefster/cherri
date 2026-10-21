@@ -26,6 +26,13 @@ if @runActions == "yes" {
 
     // Inline scripts take their code in a raw string so braces are not read as variables.
     runScriptableInlineScript('Script.complete()')
+    runScriptableInlineScript('const f = (n) => { return `n is ${n}\\n` }; Script.setShortcutOutput(f(1) + \'ok\'); Script.complete()')
+    // A line that starts with `function` inside the raw string must not be read as a Cherri function.
+    runScriptableInlineScript('// js comment
+function describe(i) {
+  return `n is ${i}`
+}
+Script.setShortcutOutput(describe(1))')
     runScriptableInlineScript('const x = {a: 1}; Script.setShortcutOutput(x)', note)
 
     refreshAllScriptableWidgets()

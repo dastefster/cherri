@@ -35,6 +35,9 @@ func parseCopyPastes() {
 		case char == '"':
 			collectString()
 			advanceUntil('\n')
+		case char == '\'':
+			advance()
+			collectRawString()
 		case commentAhead():
 			collectComment()
 		case startOfLineTokenAhead(Copy):

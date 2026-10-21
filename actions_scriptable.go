@@ -180,15 +180,16 @@ func init() {
 	actions["runScriptableInlineScript"] = &actionDefinition{
 		doc: scriptableRunDoc(
 			"Run Scriptable Inline Script",
-			"Runs JavaScript written into the action instead of a library script. Use a raw string ('...') for `source` "+
-				"so braces in the code are not read as variables.",
+			"Runs JavaScript written into the action instead of a library script. `source` is a raw string ('...'), "+
+				"so braces and `${}` in the code are not read as variables.",
 		),
 		appIdentifier: scriptableBundleIdentifier,
 		identifier:    "RunScriptInlineIntent",
 		nonMacOnly:    true,
+		// A raw string because JavaScript is full of braces, which a regular string would read as variables.
 		parameters: scriptableRunParameters(parameterDefinition{
 			name:      "source",
-			validType: String,
+			validType: RawString,
 		}),
 		appendParamsFunc: func(args []actionArgument) map[string]any {
 			return scriptableRunParams(args, func(arg actionArgument) (string, any) {
