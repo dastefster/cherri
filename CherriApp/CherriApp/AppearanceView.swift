@@ -1,6 +1,6 @@
 // ===================================
 // Appearance Settings
-// v0.0.4 BUILD 2026-10-19 19:35
+// v0.0.5 BUILD 2026-10-21 16:10
 // Live code preview, light and dark theme pickers (they follow the system appearance), font picker, font size stepper, and App Icon picker.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -17,11 +17,12 @@ struct AppearanceView: View {
     @AppStorage(EditorSettings.sizeKey) private var fontSize = EditorSettings.defaultSize
     @AppStorage(EditorSettings.lightKey) private var lightID = EditorSettings.defaultLightThemeID
     @AppStorage(EditorSettings.darkKey) private var darkID = EditorSettings.defaultDarkThemeID
+    @AppStorage(PremiumStore.unlockedKey) private var isPremium = false
     @Environment(\.colorScheme) private var colorScheme
     @State private var showingFontPicker = false
 
     private var style: EditorStyle {
-        EditorSettings.style(fontID: fontID, size: fontSize, lightID: lightID, darkID: darkID, dark: colorScheme == .dark)
+        EditorSettings.style(fontID: fontID, size: fontSize, lightID: lightID, darkID: darkID, dark: colorScheme == .dark, premium: isPremium)
     }
 
     var body: some View {
@@ -156,11 +157,20 @@ struct ThemeListView: View {
     let fontID: String
     let fontSize: Double
 
+    @AppStorage(PremiumStore.unlockedKey) private var isPremium = false
+    @State private var showingPremium = false
+    // A locked theme can be previewed without being selected, so the paywall isn't the first look at it.
+    @State private var previewID: String?
+
+    private func isLocked(_ id: String) -> Bool {
+        !isPremium && !PremiumFeatures.themeIsFree(id)
+    }
+
     // Shows the highlighted theme whatever appearance the phone is in, so the other mode's theme can be judged without flipping the system setting.
     private var previewStyle: EditorStyle {
         EditorStyle(
             font: EditorSettings.uiFont(id: fontID, size: CGFloat(fontSize)),
-            theme: EditorTheme.theme(id: selection)
+            theme: EditorTheme.theme(id: previewID ?? selection)
         )
     }
 
@@ -172,19 +182,41 @@ struct ThemeListView: View {
                     .listRowInsets(EdgeInsets())
             }
 
+            if let id = previewID, isLocked(id) {
+                Section {
+                    Button {
+                        showingPremium = true
+                    } label: {
+                        Label("Unlock Premium to use \(EditorTheme.theme(id: id).name)", systemImage: "crown.fill")
+                            .foregroundStyle(PremiumStore.gold)
+                    }
+                }
+            }
+
             Section {
                 ForEach(EditorTheme.all) { theme in
                     Button {
-                        selection = theme.id
+                        if isLocked(theme.id) {
+                            previewID = theme.id
+                        } else {
+                            selection = theme.id
+                            previewID = nil
+                        }
                     } label: {
                         HStack(spacing: 14) {
                             swatch(theme)
                             Text(theme.name)
                                 .foregroundStyle(.primary)
+                            if isLocked(theme.id) {
+                                PremiumBadge()
+                            }
                             Spacer()
                             if theme.id == selection {
                                 Image(systemName: "checkmark")
                                     .foregroundStyle(.tint)
+                            } else if theme.id == previewID {
+                                Image(systemName: "eye")
+                                    .foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -193,6 +225,9 @@ struct ThemeListView: View {
         }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingPremium) {
+            PremiumSheet()
+        }
     }
 
     // A tiny sample of the theme: its background with a few of its colors on top.

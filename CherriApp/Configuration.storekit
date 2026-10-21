@@ -1,0 +1,33 @@
+{
+  "identifier" : "7C3A91E4",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "6754210001",
+      "localizations" : [
+        {
+          "description" : "Unlock every editor theme and alternate app icon. One-time purchase.",
+          "displayName" : "Cherri Premium",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.dastefster.CherriApp.premium",
+      "referenceName" : "Cherri Premium",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

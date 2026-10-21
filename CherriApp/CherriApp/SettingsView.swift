@@ -1,6 +1,6 @@
 // ===================================
 // Settings
-// v0.0.10 BUILD 2026-10-20 18:15
+// v0.0.11 BUILD 2026-10-21 16:10
 // Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses) and a debug-only Developer section. App Icon opens a grid picker (see AppIconView).
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -66,6 +66,7 @@ struct SettingsView: View {
     @AppStorage(ExportSettings.tipKey) private var showShareTip = true
     @AppStorage("cherriSource") private var source = StarterCode.text
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = true
+    @AppStorage(PremiumStore.unlockedKey) private var isPremium = false
     @State private var confirmingReset = false
     
     // Only used to show the current icon name on the row; the picker screen does the switching.
@@ -80,6 +81,18 @@ struct SettingsView: View {
 
     var body: some View {
         List {
+            Section {
+                NavigationLink {
+                    PremiumView()
+                } label: {
+                    LabeledContent {
+                        Text(isPremium ? "Unlocked" : "")
+                    } label: {
+                        SettingsLabel(title: "Cherri Premium", symbol: "crown.fill", color: PremiumStore.gold)
+                    }
+                }
+            }
+
             Section("Editor") {
                 NavigationLink {
                     AppearanceView()

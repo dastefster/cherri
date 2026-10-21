@@ -1,6 +1,6 @@
 // ===================================
 // App Icon Picker
-// v0.0.3 BUILD 2026-10-19 19:40
+// v0.0.4 BUILD 2026-10-21 16:10
 // Grid of the available app icons with a preview of each; tapping one switches the Home Screen icon.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -40,6 +40,8 @@ struct AppIconView: View {
     @State private var activeIcon: String = UIApplication.shared.alternateIconName ?? "AppIcon"
     // Blocks stacked requests: a second call while iOS is still showing its change alert can fail.
     @State private var changing = false
+    @AppStorage(PremiumStore.unlockedKey) private var isPremium = false
+    @State private var showingPremium = false
 
     private let columns = [GridItem(.adaptive(minimum: 100, maximum: 130), spacing: 20)]
 
@@ -60,6 +62,9 @@ struct AppIconView: View {
         }
         .navigationTitle("App Icon")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingPremium) {
+            PremiumSheet()
+        }
         .onAppear { activeIcon = UIApplication.shared.alternateIconName ?? "AppIcon" }
     }
 
@@ -69,6 +74,7 @@ struct AppIconView: View {
 
     private func iconCell(_ option: AppIconOption) -> some View {
         let selected = activeIcon == option.id
+        let locked = !isPremium && !PremiumFeatures.iconIsFree(option.id)
         return Button {
             select(option)
         } label: {
@@ -82,6 +88,14 @@ struct AppIconView: View {
                         RoundedRectangle(cornerRadius: 22, style: .continuous)
                             .strokeBorder(selected ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: selected ? 3 : 1)
                     )
+                    .overlay(alignment: .topTrailing) {
+                        if locked {
+                            PremiumBadge()
+                                .padding(6)
+                                .background(.ultraThinMaterial, in: Circle())
+                                .padding(4)
+                        }
+                    }
                 Text(option.title)
                     .font(.footnote)
                     .foregroundStyle(selected ? .primary : .secondary)
@@ -98,6 +112,11 @@ struct AppIconView: View {
 
     @MainActor
     private func select(_ option: AppIconOption) {
+        if !isPremium && !PremiumFeatures.iconIsFree(option.id) {
+            showingPremium = true
+            return
+        }
+
         let app = UIApplication.shared
         let nameToSet = option.alternateName
 

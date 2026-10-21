@@ -28,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		81D2A0393089555D00D61A20 /* Configuration.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Configuration.storekit; sourceTree = "<group>"; };
 		81DCF69B3080A7D100D1F36B /* CherriApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CherriApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		81DCF6A83080A7D500D1F36B /* CherriAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CherriAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		81DCF6B23080A7D500D1F36B /* CherriAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CherriAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -86,6 +87,7 @@
 				81DCF6B53080A7D500D1F36B /* CherriAppUITests */,
 				81DCF6C53080AA5900D1F36B /* Frameworks */,
 				81DCF69C3080A7D100D1F36B /* Products */,
+				81D2A0393089555D00D61A20 /* Configuration.storekit */,
 			);
 			sourceTree = "<group>";
 		};

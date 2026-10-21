@@ -1,6 +1,6 @@
 // ===================================
 // Editor Themes, Fonts and Settings Keys
-// v0.0.6 BUILD 2026-10-19 19:45
+// v0.0.7 BUILD 2026-10-21 16:10
 // Color themes (each with light or dark use), monospaced font choices, and the saved-settings keys shared by the editor and the Settings screens.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -251,9 +251,13 @@ enum EditorSettings {
     static let defaultLightThemeID = "dracula"
     static let defaultDarkThemeID = "tomorrow-night-bright"
 
-    static func style(fontID: String, size: Double, lightID: String, darkID: String, dark: Bool) -> EditorStyle {
+    static func style(fontID: String, size: Double, lightID: String, darkID: String, dark: Bool, premium: Bool) -> EditorStyle {
         let font = uiFont(id: fontID, size: CGFloat(size))
-        let theme = EditorTheme.theme(id: dark ? darkID : lightID)
+
+        // A premium theme saved before the paywall existed, or before a refund, drops back to the standard theme instead of staying unlocked.
+        let wanted = dark ? darkID : lightID
+        let id = premium || PremiumFeatures.themeIsFree(wanted) ? wanted : defaultThemeID
+        let theme = EditorTheme.theme(id: id)
         return EditorStyle(font: font, theme: theme)
     }
 }
