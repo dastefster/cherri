@@ -1,6 +1,6 @@
 // ===================================
 // Settings
-// v0.0.9 BUILD 2026-10-20 00:15
+// v0.0.10 BUILD 2026-10-20 18:15
 // Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses) and a debug-only Developer section. App Icon opens a grid picker (see AppIconView).
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -140,7 +140,7 @@ struct SettingsView: View {
                 LabeledContent {
                     Text(appVersion)
                 } label: {
-                    SettingsLabel(title: "CherriCuts", symbol: "info.circle.fill", color: .gray)
+                    SettingsLabel(title: "Cherri Shortcuts", symbol: "info.circle.fill", color: .gray)
                 }
                 LabeledContent {
                     Text(CherriCompilerVersion())
@@ -194,9 +194,9 @@ struct LicensesView: View {
     var body: some View {
         List {
             Section {
-                Text("CherriCuts includes the Cherri compiler, created by electrikmilk and contributors and licensed under the GNU General Public License, version 2. CherriCuts uses a modified build that adds extra actions, and the source for it is available below.")
+                Text("Cherri Shortcuts includes the Cherri compiler, created by the Cherri developers (electrikmilk and contributors) and licensed under the GNU General Public License, version 2. Cherri Shortcuts uses a modified build that adds extra actions, and the source for it is available below.")
                 Link("Cherri (original)", destination: URL(string: "https://github.com/electrikmilk/cherri")!)
-                Link("Cherri build used by CherriCuts", destination: URL(string: "https://github.com/dastefster/cherri")!)
+                Link("Cherri build used by Cherri Shortcuts", destination: URL(string: "https://github.com/dastefster/cherri")!)
                 Link("GNU GPL version 2", destination: URL(string: "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html")!)
             } header: {
                 Text("Cherri")
@@ -209,7 +209,7 @@ struct LicensesView: View {
             }
 
             Section {
-                Text("Shortcuts is a trademark of Apple Inc. CherriCuts is an independent app and is not affiliated with or endorsed by Apple.")
+                Text("Shortcuts is a trademark of Apple Inc. Cherri Shortcuts is an independent app and is not affiliated with or endorsed by Apple.")
             }
         }
         .navigationTitle("Licenses")

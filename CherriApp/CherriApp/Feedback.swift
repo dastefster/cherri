@@ -1,7 +1,7 @@
 // ===================================
 // Feedback
-// v0.0.1 BUILD 2026-10-20 00:15
-// Builds the link to the CherriCuts Google Form. Version, device and (optionally) the error text are pre-filled so testers only have to describe what happened. Email stays available as a fallback.
+// v0.0.2 BUILD 2026-10-20 18:15
+// Builds the link to the Cherri Shortcuts Google Form. Version, device and (optionally) the error text are pre-filled so testers only have to describe what happened. Email stays available as a fallback.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -20,7 +20,7 @@ enum Feedback {
     private static let deviceField = "entry.1545904154"
     private static let errorField = "entry.414612068"
 
-    static let mailURL = URL(string: "mailto:dastefster@gmail.com?subject=CherriCuts%20feedback")!
+    static let mailURL = URL(string: "mailto:dastefster@gmail.com?subject=Cherri%20Shortcuts%20feedback")!
 
     private static var appVersion: String {
         let info = Bundle.main.infoDictionary

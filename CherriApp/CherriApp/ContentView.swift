@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.22 BUILD 2026-10-20 00:15
+// v0.0.23 BUILD 2026-10-20 18:15
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -64,7 +64,7 @@ struct ContentView: View {
     private var mainView: some View {
         NavigationStack {
             mainContent
-                .navigationTitle("CherriCuts")
+                .navigationTitle("Cherri Shortcuts")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
