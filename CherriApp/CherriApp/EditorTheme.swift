@@ -1,6 +1,6 @@
 // ===================================
 // Editor Themes, Fonts and Settings Keys
-// v0.0.7 BUILD 2026-10-21 16:10
+// v0.0.8 BUILD 2026-10-22 00:55
 // Color themes (each with light or dark use), monospaced font choices, and the saved-settings keys shared by the editor and the Settings screens.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -244,7 +244,7 @@ enum EditorSettings {
         return UIFont(name: name, size: 12)?.familyName ?? name
     }
 
-    static let defaultSize = 15.0
+    static let defaultSize = 16.0
     static let sizeRange = 10.0...28.0
     static let defaultThemeID = "default"
     // The beta ships these two: Dracula in light mode, Tomorrow Night Bright (pure black) in dark mode.

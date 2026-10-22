@@ -1,6 +1,6 @@
 // ===================================
 // Appearance Settings
-// v0.0.5 BUILD 2026-10-21 16:10
+// v0.0.7 BUILD 2026-10-22 00:50
 // Live code preview, light and dark theme pickers (they follow the system appearance), font picker, font size stepper, and App Icon picker.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -29,7 +29,6 @@ struct AppearanceView: View {
         List {
             Section {
                 CodePreview(style: style)
-                    .frame(height: 210)
                     .listRowInsets(EdgeInsets())
             }
 
@@ -116,6 +115,8 @@ struct AppearanceView: View {
 struct CodePreview: UIViewRepresentable {
     let style: EditorStyle
 
+    private static let minimumHeight: CGFloat = 210
+
     private static let sample = """
     // Greet the user
     @name = "Stefan"
@@ -144,6 +145,23 @@ struct CodePreview: UIViewRepresentable {
 
     func updateUIView(_ uiView: UITextView, context: Context) {
         CherriHighlighter.style(uiView, with: style)
+    }
+
+    // A text view with scrolling off reports the width of its longest line as its natural width, which made the row wider than the screen and clipped both edges at larger font sizes. Take the row's real width instead so long lines wrap, and grow the height to fit them.
+    // This only measures. It must never restyle the view: SwiftUI can measure with an older copy of this struct (iOS flips light and dark to take app-switcher snapshots), and restyling there paints stale theme colors over the current ones.
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: UITextView, context: Context) -> CGSize? {
+        let width = proposal.width ?? 360
+        let inset = uiView.textContainerInset
+        let padding = uiView.textContainer.lineFragmentPadding * 2
+        let available = max(1, width - inset.left - inset.right - padding)
+        let measured = (Self.sample as NSString).boundingRect(
+            with: CGSize(width: available, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
+            attributes: [.font: style.font],
+            context: nil
+        )
+        let height = ceil(measured.height) + inset.top + inset.bottom
+        return CGSize(width: width, height: max(Self.minimumHeight, height))
     }
 }
 
@@ -178,7 +196,6 @@ struct ThemeListView: View {
         List {
             Section {
                 CodePreview(style: previewStyle)
-                    .frame(height: 210)
                     .listRowInsets(EdgeInsets())
             }
 

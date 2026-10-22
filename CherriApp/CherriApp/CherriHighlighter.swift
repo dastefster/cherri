@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Syntax Highlighter
-// v0.0.4 BUILD 2026-10-16 04:12
+// v0.0.5 BUILD 2026-10-22 00:35
 // Colors comments, strings, numbers, operators, type names, keywords, #directives, @variables, declared names (const, loop and function parameters) and action calls in a text view using the current theme. Regex passes only, so it stays instant on normal-sized shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -21,7 +21,7 @@ enum CherriHighlighter {
     private static let tokenRegex: NSRegularExpression = {
         let pattern = [
             #"(//[^\n]*|/\*[\s\S]*?(?:\*/|\z))"#,                                                                 // 1 comment
-            #"("(?:\\.|[^"\\\n])*"?|'[^'\n]*'?)"#,                                                                 // 2 string
+            #"("(?:\\.|[^"\\\n])*"?|'[^']*'?)"#,                                                                       // 2 string (raw strings may span lines)
             #"(#[A-Za-z]+)"#,                                                                                       // 3 directive
             #"(@[A-Za-z_][A-Za-z0-9_]*)"#,                                                                          // 4 variable
             #"(\b\d+(?:\.\d+)?\b)"#,                                                                                // 5 number
@@ -114,6 +114,7 @@ enum CherriHighlighter {
         // Pass 2: comments, strings, numbers, keywords, types, action calls and operators.
         let palette = tokenColors(for: theme)
         let bold = boldVariant(of: style.font)
+        var rawStrings = [NSRange]()
         tokenRegex.enumerateMatches(in: text, options: [], range: full) { match, _, _ in
             guard let match else { return }
 
@@ -124,14 +125,19 @@ enum CherriHighlighter {
                     if index == 5 {
                         storage.addAttribute(.font, value: bold, range: range)
                     }
+                    if index == 1 && nsText.character(at: range.location) == 0x27 {
+                        rawStrings.append(range)
+                    }
                     break
                 }
             }
         }
 
         // Pass 3: `{name}` pieces that sit inside a string get the variable color against the string color.
+        // Raw strings ('...') never interpolate, so braces in pasted code such as JavaScript stay string-colored.
         interpolationRegex.enumerateMatches(in: text, options: [], range: full) { match, _, _ in
             guard let match else { return }
+            if rawStrings.contains(where: { NSLocationInRange(match.range.location, $0) }) { return }
 
             let current = storage.attribute(.foregroundColor, at: match.range.location, effectiveRange: nil) as? UIColor
             if current == theme.string {
