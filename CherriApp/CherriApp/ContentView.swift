@@ -1,7 +1,7 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.26 BUILD 2026-10-25 04:55
-// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link and turns it back into Cherri code.
+// v0.0.28 BUILD 2026-10-25 07:40
+// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -36,6 +36,7 @@ struct ContentView: View {
     @State private var unsupportedImport: ShortcutImporter.Imported?
     @State private var showingUnsupportedNotice = false
     @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage(ExportSettings.confirmKey) private var confirmBeforeExport = true
     @State private var confirmingExport = false
     @AppStorage(ExportSettings.tipKey) private var showShareTip = true
@@ -58,6 +59,14 @@ struct ContentView: View {
         Group {
             if hasSeenWelcome {
                 mainView
+                    // A link shared from the Shortcuts app is waiting in the shared App Group. Each of these can be the first to see it, and takePendingLink clears it, so it only imports once.
+                    .onOpenURL { url in
+                        if url.scheme == SharedImport.scheme { importSharedLink() }
+                    }
+                    .onChange(of: scenePhase) { _, phase in
+                        if phase == .active { importSharedLink() }
+                    }
+                    .onAppear(perform: importSharedLink)
             } else {
                 WelcomeView { hasSeenWelcome = true }
             }
@@ -349,6 +358,47 @@ struct ContentView: View {
         pendingImport = imported
         // Presenting an alert while the sheet is still leaving can drop it, so give the sheet a beat to go.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showingImportReplaceConfirm = true }
+    }
+
+    // Imports the link the Share extension saved, with the same replace-your-code question and unsupported-actions notice as a pasted link. A link shared a moment ago may not be published by iCloud yet, so "not found" is retried for a few seconds before it is reported.
+    private func importSharedLink() {
+        guard let link = SharedImport.takePendingLink() else { return }
+        showingImport = false
+        working = true
+        failed = false
+        showDetails = false
+        copied = false
+        status = "Importing the shared shortcut…"
+
+        Task {
+            let attempts = 6
+            for attempt in 1...attempts {
+                do {
+                    let imported = try await ShortcutImporter.importShortcut(from: link)
+                    working = false
+                    handleImported(imported)
+                    return
+                } catch let error as ShortcutImporter.Failure {
+                    if error.isMissing && attempt < attempts {
+                        status = "Waiting for iCloud to publish the shared shortcut… (\(attempt)/\(attempts - 1))"
+                        try? await Task.sleep(nanoseconds: 3_000_000_000)
+                        continue
+                    }
+                    showSharedFailure(error.headline, details: error.details, link: link, tries: attempt)
+                    return
+                } catch {
+                    showSharedFailure(error.localizedDescription, details: error.localizedDescription, link: link, tries: attempt)
+                    return
+                }
+            }
+        }
+    }
+
+    // The link and iCloud's answer go into the details so "Copy full message" carries what is needed to reproduce a failure.
+    private func showSharedFailure(_ headline: String, details: String, link: String, tries: Int) {
+        working = false
+        failed = true
+        status = "Shared link: \(link)\n\(details) (tried \(tries)x)\nError: \(headline)"
     }
 
     private func applyImport(_ imported: ShortcutImporter.Imported) {

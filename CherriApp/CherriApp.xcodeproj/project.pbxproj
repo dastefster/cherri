@@ -7,10 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		81D2A11E308E10F400D61A20 /* ShareToCherri.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 81D2A114308E10F300D61A20 /* ShareToCherri.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		81DCF6C73080AA5900D1F36B /* Cherri.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 81DCF6C63080AA5900D1F36B /* Cherri.xcframework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		81D2A11C308E10F400D61A20 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 81DCF6933080A7D100D1F36B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 81D2A113308E10F300D61A20;
+			remoteInfo = ShareToCherri;
+		};
 		81DCF6A93080A7D500D1F36B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 81DCF6933080A7D100D1F36B /* Project object */;
@@ -27,15 +35,48 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		81D2A11F308E10F400D61A20 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				81D2A11E308E10F400D61A20 /* ShareToCherri.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		81D2A0393089555D00D61A20 /* Configuration.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Configuration.storekit; sourceTree = "<group>"; };
+		81D2A114308E10F300D61A20 /* ShareToCherri.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareToCherri.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		81DCF69B3080A7D100D1F36B /* CherriApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CherriApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		81DCF6A83080A7D500D1F36B /* CherriAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CherriAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		81DCF6B23080A7D500D1F36B /* CherriAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CherriAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		81DCF6C63080AA5900D1F36B /* Cherri.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Cherri.xcframework; path = ../Cherri.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		81D2A122308E10F400D61A20 /* Exceptions for "ShareToCherri" folder in "ShareToCherri" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 81D2A113308E10F300D61A20 /* ShareToCherri */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		81D2A115308E10F300D61A20 /* ShareToCherri */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				81D2A122308E10F400D61A20 /* Exceptions for "ShareToCherri" folder in "ShareToCherri" target */,
+			);
+			path = ShareToCherri;
+			sourceTree = "<group>";
+		};
 		81DCF69D3080A7D100D1F36B /* CherriApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = CherriApp;
@@ -54,6 +95,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		81D2A111308E10F300D61A20 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		81DCF6983080A7D100D1F36B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -85,6 +133,7 @@
 				81DCF69D3080A7D100D1F36B /* CherriApp */,
 				81DCF6AB3080A7D500D1F36B /* CherriAppTests */,
 				81DCF6B53080A7D500D1F36B /* CherriAppUITests */,
+				81D2A115308E10F300D61A20 /* ShareToCherri */,
 				81DCF6C53080AA5900D1F36B /* Frameworks */,
 				81DCF69C3080A7D100D1F36B /* Products */,
 				81D2A0393089555D00D61A20 /* Configuration.storekit */,
@@ -97,6 +146,7 @@
 				81DCF69B3080A7D100D1F36B /* CherriApp.app */,
 				81DCF6A83080A7D500D1F36B /* CherriAppTests.xctest */,
 				81DCF6B23080A7D500D1F36B /* CherriAppUITests.xctest */,
+				81D2A114308E10F300D61A20 /* ShareToCherri.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -112,6 +162,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		81D2A113308E10F300D61A20 /* ShareToCherri */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 81D2A123308E10F400D61A20 /* Build configuration list for PBXNativeTarget "ShareToCherri" */;
+			buildPhases = (
+				81D2A110308E10F300D61A20 /* Sources */,
+				81D2A111308E10F300D61A20 /* Frameworks */,
+				81D2A112308E10F300D61A20 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				81D2A115308E10F300D61A20 /* ShareToCherri */,
+			);
+			name = ShareToCherri;
+			packageProductDependencies = (
+			);
+			productName = ShareToCherri;
+			productReference = 81D2A114308E10F300D61A20 /* ShareToCherri.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		81DCF69A3080A7D100D1F36B /* CherriApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 81DCF6BC3080A7D500D1F36B /* Build configuration list for PBXNativeTarget "CherriApp" */;
@@ -119,10 +191,12 @@
 				81DCF6973080A7D100D1F36B /* Sources */,
 				81DCF6983080A7D100D1F36B /* Frameworks */,
 				81DCF6993080A7D100D1F36B /* Resources */,
+				81D2A11F308E10F400D61A20 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				81D2A11D308E10F400D61A20 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				81DCF69D3080A7D100D1F36B /* CherriApp */,
@@ -190,6 +264,9 @@
 				LastSwiftUpdateCheck = 2630;
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
+					81D2A113308E10F300D61A20 = {
+						CreatedOnToolsVersion = 26.3;
+					};
 					81DCF69A3080A7D100D1F36B = {
 						CreatedOnToolsVersion = 26.3;
 					};
@@ -220,11 +297,19 @@
 				81DCF69A3080A7D100D1F36B /* CherriApp */,
 				81DCF6A73080A7D500D1F36B /* CherriAppTests */,
 				81DCF6B13080A7D500D1F36B /* CherriAppUITests */,
+				81D2A113308E10F300D61A20 /* ShareToCherri */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		81D2A112308E10F300D61A20 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		81DCF6993080A7D100D1F36B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -249,6 +334,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		81D2A110308E10F300D61A20 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		81DCF6973080A7D100D1F36B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -273,6 +365,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		81D2A11D308E10F400D61A20 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 81D2A113308E10F300D61A20 /* ShareToCherri */;
+			targetProxy = 81D2A11C308E10F400D61A20 /* PBXContainerItemProxy */;
+		};
 		81DCF6AA3080A7D500D1F36B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 81DCF69A3080A7D100D1F36B /* CherriApp */;
@@ -286,6 +383,69 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		81D2A120308E10F400D61A20 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ShareToCherri/ShareToCherri.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 21;
+				DEVELOPMENT_TEAM = B6A27JW462;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShareToCherri/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Cherri Shortcuts";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dastefster.CherriApp.ShareToCherri;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		81D2A121308E10F400D61A20 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ShareToCherri/ShareToCherri.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 21;
+				DEVELOPMENT_TEAM = B6A27JW462;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShareToCherri/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Cherri Shortcuts";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dastefster.CherriApp.ShareToCherri;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		81DCF6BA3080A7D500D1F36B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -411,6 +571,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CherriApp/CherriApp.entitlements;
+				INFOPLIST_FILE = AppInfo.plist;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 21;
 				DEVELOPMENT_TEAM = B6A27JW462;
@@ -457,6 +619,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CherriApp/CherriApp.entitlements;
+				INFOPLIST_FILE = AppInfo.plist;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 21;
 				DEVELOPMENT_TEAM = B6A27JW462;
@@ -603,6 +767,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		81D2A123308E10F400D61A20 /* Build configuration list for PBXNativeTarget "ShareToCherri" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				81D2A120308E10F400D61A20 /* Debug */,
+				81D2A121308E10F400D61A20 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		81DCF6963080A7D100D1F36B /* Build configuration list for PBXProject "CherriApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

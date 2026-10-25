@@ -1,6 +1,6 @@
 // ===================================
 // Shortcut Importer
-// v0.0.4 BUILD 2026-10-25 04:55
+// v0.0.5 BUILD 2026-10-25 07:40
 // Downloads a shortcut from a Shortcuts iCloud share link and turns it back into Cherri code for the editor. Only runs when the person taps Import.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -28,6 +28,8 @@ enum ShortcutImporter {
         let details: String
         // Mistakes the person can fix themselves (wrong link) don't need the support button.
         let offersSupport: Bool
+        // True when iCloud says the link doesn't exist. Right after a share that can just mean it isn't published yet.
+        var isMissing = false
 
         var errorDescription: String? { headline }
     }
@@ -169,9 +171,10 @@ enum ShortcutImporter {
                     headline: missing
                         ? "iCloud couldn't find that shortcut. The link may be old or sharing may be off. Copy a fresh iCloud link from the Shortcuts app and try again."
                         : "iCloud had a problem sending \(what) (HTTP \(http.statusCode)). Try again in a moment.",
-                    details: "HTTP \(http.statusCode) fetching \(what).",
+                    details: "HTTP \(http.statusCode) fetching \(what) from \(url.absoluteString).",
                     // A missing link or an iCloud server error isn't something support can fix, so only odd statuses offer it.
-                    offersSupport: !missing && !(500...599).contains(http.statusCode)
+                    offersSupport: !missing && !(500...599).contains(http.statusCode),
+                    isMissing: missing
                 )
             }
             return data
