@@ -1,6 +1,6 @@
 // ===================================
 // Import View
-// v0.0.1 BUILD 2026-10-25 04:55
+// v0.0.2 BUILD 2026-10-25 05:20
 // The Import sheet: paste a Shortcuts iCloud link (with Apple's no-prompt Paste button), import it into the editor, and reach support if the shortcut can't be read.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -16,6 +16,7 @@ struct ImportView: View {
     let onImported: (ShortcutImporter.Imported) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var link = ""
     @State private var clipboardMayHaveLink = false
     @State private var working = false
@@ -49,7 +50,8 @@ struct ImportView: View {
                         if ShortcutImporter.extractLink(from: pasted) != nil { startImport() }
                     }
                     .buttonBorderShape(.capsule)
-                    .tint(clipboardMayHaveLink ? .accentColor : .gray)
+                    // Never gray: the clipboard check can fail (iOS sometimes says the pasteboard is unavailable) while the button itself still works.
+                    .tint(.accentColor)
 
                     if clipboardMayHaveLink {
                         Label("There's a link on your clipboard. Tap Paste to use it.", systemImage: "doc.on.clipboard")
@@ -81,6 +83,10 @@ struct ImportView: View {
                 }
             }
             .onAppear(perform: checkClipboard)
+            // Coming back from the Shortcuts app after copying a link is the normal path, so look again then.
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { checkClipboard() }
+            }
         }
     }
 
