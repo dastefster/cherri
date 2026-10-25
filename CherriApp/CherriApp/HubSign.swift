@@ -1,6 +1,6 @@
 // ===================================
 // HubSign Client
-// v0.0.3 BUILD 2026-10-20 00:30
+// v0.0.5 BUILD 2026-10-25 06:05
 // Sends a compiled (unsigned) Shortcut plist to RoutineHub's HubSign service and returns the signed .shortcut bytes.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -73,11 +73,14 @@ enum HubSign {
             "shortcut": xml
         ])
 
-        // HubSign is a free community service and can hiccup under load, so a server error or a rate limit gets
-        // two gentle retries before the user sees a failure. Client errors and timeouts are not retried.
-        let maxAttempts = 3
+        // HubSign is a free community service and its 500s come in bursts that can last a minute (a tiny shortcut
+        // failed twice in a row while a big one went through right after), so a server error or a rate limit gets
+        // four retries spread over about 20 seconds before the user sees a failure. Client errors and timeouts are
+        // not retried.
+        let maxAttempts = 5
         var attempt = 1
         var result: (Data, URLResponse)
+        let started = Date()
 
         while true {
             do {
@@ -102,7 +105,7 @@ enum HubSign {
                 attempt += 1
                 continue
             }
-            throw HubSignError.badStatus(http.statusCode, bodySnippet(result.0))
+            throw HubSignError.badStatus(http.statusCode, diagnostics(http, body: result.0, attempt: attempt, since: started))
         }
 
         guard let http = result.1 as? HTTPURLResponse else {
@@ -129,11 +132,20 @@ enum HubSign {
         return urlError.code == .networkConnectionLost || urlError.code == .cannotConnectToHost
     }
 
-    // Honors a Retry-After value given in seconds, but never makes the user wait long.
+    // Honors a Retry-After value given in seconds, but never makes the user wait long. Waits 2, 4, 6, 8 seconds.
     private static func pause(attempt: Int, retryAfter: String? = nil) async throws {
         let requested = retryAfter.flatMap { Double($0) } ?? 0
-        let seconds = min(max(requested, Double(attempt) * 1.5), 6)
+        let seconds = min(max(requested, Double(attempt) * 2), 8)
         try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+    }
+
+    // What the server said plus how the request went, so a failure someone reports can be traced on HubSign's side.
+    // The Cloudflare ray ID identifies this exact request.
+    private static func diagnostics(_ http: HTTPURLResponse, body: Data, attempt: Int, since started: Date) -> String {
+        var parts = [bodySnippet(body) ?? "no message"]
+        parts.append("try \(attempt), \(Int(Date().timeIntervalSince(started))) s")
+        if let ray = http.value(forHTTPHeaderField: "cf-ray") { parts.append("ray \(ray)") }
+        return parts.joined(separator: " · ")
     }
 
     // A short plain-text reason from the server, if it sent one. HTML error pages are skipped.
