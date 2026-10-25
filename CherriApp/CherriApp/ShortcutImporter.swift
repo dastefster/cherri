@@ -1,6 +1,6 @@
 // ===================================
 // Shortcut Importer
-// v0.0.3 BUILD 2026-10-25 04:40
+// v0.0.4 BUILD 2026-10-25 04:55
 // Downloads a shortcut from a Shortcuts iCloud share link and turns it back into Cherri code for the editor. Only runs when the person taps Import.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -16,6 +16,10 @@ enum ShortcutImporter {
     struct Imported {
         let name: String
         let code: String
+        // Actions Cherri doesn't know come back as rawAction("identifier", ...), which can lose settings and may not
+        // run once compiled, so the editor warns about them. Each identifier is listed once, in the order found.
+        let unsupportedActions: [String]
+        let link: String
     }
 
     // A readable headline for the person, plus the raw technical text that goes into the support form.
@@ -73,7 +77,30 @@ enum ShortcutImporter {
             )
         }
 
-        return Imported(name: name, code: withName(decompiled.code, name: name))
+        return Imported(
+            name: name,
+            code: withName(decompiled.code, name: name),
+            unsupportedActions: rawActionIdentifiers(in: decompiled.code),
+            link: link
+        )
+    }
+
+    // ===================================
+    // UNSUPPORTED ACTIONS
+    // ===================================
+
+    private static let rawActionPattern = try? NSRegularExpression(pattern: #"rawAction\(\s*"([^"]+)""#)
+
+    static func rawActionIdentifiers(in code: String) -> [String] {
+        guard let pattern = rawActionPattern else { return [] }
+        let whole = NSRange(code.startIndex..., in: code)
+        var found: [String] = []
+        for match in pattern.matches(in: code, range: whole) {
+            guard let range = Range(match.range(at: 1), in: code) else { continue }
+            let identifier = String(code[range])
+            if !found.contains(identifier) { found.append(identifier) }
+        }
+        return found
     }
 
     // ===================================

@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.25 BUILD 2026-10-25 05:05
+// v0.0.26 BUILD 2026-10-25 04:55
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link and turns it back into Cherri code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -33,6 +33,9 @@ struct ContentView: View {
     // An import waits here while the replace-your-code question is on screen.
     @State private var pendingImport: ShortcutImporter.Imported?
     @State private var showingImportReplaceConfirm = false
+    @State private var unsupportedImport: ShortcutImporter.Imported?
+    @State private var showingUnsupportedNotice = false
+    @Environment(\.openURL) private var openURL
     @AppStorage(ExportSettings.confirmKey) private var confirmBeforeExport = true
     @State private var confirmingExport = false
     @AppStorage(ExportSettings.tipKey) private var showShareTip = true
@@ -215,6 +218,18 @@ struct ContentView: View {
         } message: {
             Text("Importing \"\(pendingImport?.name ?? "this shortcut")\" will replace everything in the editor.")
         }
+        .alert("Some Actions Aren't Supported Yet", isPresented: $showingUnsupportedNotice) {
+            Button("Tell Support") {
+                if let imported = unsupportedImport {
+                    let details = "Unsupported actions on import: \(imported.unsupportedActions.joined(separator: ", ")) | Link: \(imported.link)"
+                    openURL(Feedback.url(error: details))
+                }
+            }
+            Button("OK", role: .cancel) {}
+        } message: {
+            let actions = unsupportedImport?.unsupportedActions ?? []
+            Text("\"\(unsupportedImport?.name ?? "This shortcut")\" uses \(actions.count == 1 ? "an action" : "\(actions.count) actions") Cherri Shortcuts doesn't support yet:\n\n\(actions.joined(separator: "\n"))\n\nThey're kept in your code as rawAction lines, so they may lose their settings or not work once compiled.")
+        }
         .alert("Clear Editor?", isPresented: $showingClearConfirm) {
             Button("Clear", role: .destructive) {
                 source = ""
@@ -343,6 +358,13 @@ struct ContentView: View {
         copied = false
         let lines = imported.code.split(separator: "\n", omittingEmptySubsequences: false).count
         status = "Imported \"\(imported.name)\" (\(lines) lines). Tap Compile to check it."
+
+        guard !imported.unsupportedActions.isEmpty else { return }
+        let count = imported.unsupportedActions.count
+        status += " \(count) unsupported action\(count == 1 ? "" : "s") kept as rawAction."
+        unsupportedImport = imported
+        // The import sheet or the replace alert may still be leaving, and an alert presented over them can be dropped.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { showingUnsupportedNotice = true }
     }
 
     // ===================================
