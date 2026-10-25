@@ -1,7 +1,7 @@
 // ===================================
 // Cherri Bind Package
-// v0.0.2 BUILD 2026-10-15 13:55
-// The only package gomobile binds, so Swift sees Compile, CompilerVersion and ActionCatalog and none of the compiler's internals.
+// v0.0.3 BUILD 2026-10-25 04:15
+// The only package gomobile binds, so Swift sees Compile, Decompile, CompilerVersion and ActionCatalog and none of the compiler's internals.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -26,4 +26,9 @@ func CompilerVersion() string {
 // ActionCatalog returns every standard action with its parameters as a JSON string for the action picker.
 func ActionCatalog() (string, error) {
 	return cherrilib.ActionCatalog()
+}
+
+// Decompile turns an unsigned Shortcut plist back into Cherri source for the import feature.
+func Decompile(shortcut []byte, name string) (string, error) {
+	return cherrilib.Decompile(shortcut, name)
 }

@@ -1,7 +1,7 @@
 // ===================================
 // Cherri Library Wrapper Tests
-// v0.0.2 BUILD 2026-10-15 01:45
-// Runs upstream's Cherri test files through Compile() and checks errors come back instead of killing the process.
+// v0.0.4 BUILD 2026-10-25 05:40
+// Runs upstream's Cherri test files through Compile() and checks errors come back instead of killing the process. Also round-trips Decompile().
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -108,4 +108,101 @@ func TestCompilerVersion(t *testing.T) {
 		t.Fatal("empty version")
 	}
 	t.Logf("Cherri %s", CompilerVersion())
+}
+
+// ===================================
+// DECOMPILE TESTS
+// ===================================
+
+func TestDecompileRoundTrip(t *testing.T) {
+	var source = "#define name Round Trip\nconst greeting = \"hello\"\nalert(\"{greeting}\", \"Hi\")\n"
+
+	var compiled, compileErr = Compile(source, "Round Trip")
+	if compileErr != nil {
+		t.Fatalf("compile failed: %v", compileErr)
+	}
+
+	var code, decompileErr = Decompile(compiled, "Round Trip")
+	if decompileErr != nil {
+		t.Fatalf("decompile failed: %v", decompileErr)
+	}
+	t.Logf("decompiled:\n%s", code)
+
+	if !strings.Contains(code, "alert(") || !strings.Contains(code, "hello") {
+		t.Fatalf("decompiled code lost the actions: %s", code)
+	}
+
+	// The decompiled code has to compile again, or import would hand the user a broken editor.
+	var _, recompileErr = Compile(code, "Round Trip")
+	if recompileErr != nil {
+		t.Fatalf("decompiled code does not recompile: %v", recompileErr)
+	}
+}
+
+// The Scriptable Run actions keep their arguments outside the parameter keys, so the importer once dropped the
+// script and produced a call that could not compile. Round-trip every optional argument to keep that fixed.
+func TestDecompileScriptableRoundTrip(t *testing.T) {
+	var source = "#define name Scriptable\n#define mac false\n" +
+		"@who = \"Stefan\"\n" +
+		"const out = runScriptableInlineScript('const n = args.plainTexts[0];\\nScript.setShortcutOutput(\"it\\'s \" + n);', nil, [\"{@who}\", \"two\"], nil, nil, nil, true, false)\n" +
+		"alert(\"{out}\", \"Done\")\n"
+
+	var compiled, compileErr = Compile(source, "Scriptable")
+	if compileErr != nil {
+		t.Fatalf("compile failed: %v", compileErr)
+	}
+
+	var code, decompileErr = Decompile(compiled, "Scriptable")
+	if decompileErr != nil {
+		t.Fatalf("decompile failed: %v", decompileErr)
+	}
+	t.Logf("decompiled:\n%s", code)
+
+	if !strings.Contains(code, "Script.setShortcutOutput") || !strings.Contains(code, "plainTexts[0]") {
+		t.Fatalf("decompiled code lost the script: %s", code)
+	}
+
+	var again, recompileErr = Compile(code, "Scriptable")
+	if recompileErr != nil {
+		t.Fatalf("decompiled code does not recompile: %v", recompileErr)
+	}
+	var redecompiled, _ = Decompile(again, "Scriptable")
+	if redecompiled != code {
+		t.Fatalf("decompile is not stable across a recompile:\n--- first\n%s\n--- second\n%s", code, redecompiled)
+	}
+}
+
+func TestDecompileRejectsGarbageAndSigned(t *testing.T) {
+	if _, err := Decompile([]byte("nope"), "x"); err == nil {
+		t.Fatal("expected an error for too-short input")
+	}
+	if _, err := Decompile([]byte("AEA1\x00\x00\x00\x00\x00\x00\x00\x00"), "x"); err == nil {
+		t.Fatal("expected an error for a signed Shortcut")
+	}
+}
+
+func TestDecompileUpstreamShortcuts(t *testing.T) {
+	var files, _ = filepath.Glob("../../cherri-src/tests/*_unsigned.shortcut")
+	if len(files) == 0 {
+		t.Skip("no sample shortcuts found")
+	}
+
+	var passed, failed int
+	for _, file := range files {
+		var data, readErr = os.ReadFile(file)
+		if readErr != nil {
+			continue
+		}
+
+		var code, err = Decompile(data, "Sample")
+		if err != nil {
+			failed++
+			t.Logf("FAIL %s: %.160s", filepath.Base(file), strings.ReplaceAll(err.Error(), "\n", " "))
+			continue
+		}
+
+		passed++
+		_ = code
+	}
+	t.Logf("decompiled %d of %d sample shortcuts", passed, passed+failed)
 }

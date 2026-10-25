@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Library Wrapper
-// v0.0.3 BUILD 2026-10-15 13:45
+// v0.0.4 BUILD 2026-10-25 04:15
 // Exposes the Cherri compiler as a library so gomobile can bind it into a Swift app.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -164,4 +164,72 @@ func prepareArgs(sourcePath string) {
 	}
 	args.Args["no-ansi"] = ""
 	args.Args["skip-sign"] = ""
+}
+
+// ===================================
+// DECOMPILE
+// ===================================
+
+// Decompile turns an unsigned Shortcut file (XML or binary plist) back into Cherri source for the import feature.
+// `name` only names the temporary output; the Shortcut's own name comes back as a #define inside the source.
+func Decompile(shortcutBytes []byte, name string) (result string, err error) {
+	compileLock.Lock()
+	defer compileLock.Unlock()
+
+	// hasSignedBytes reads the first eight bytes, so anything shorter can't be a Shortcut at all.
+	if len(shortcutBytes) < 8 {
+		return "", fmt.Errorf("that doesn't look like a Shortcut file")
+	}
+	if hasSignedBytes(shortcutBytes) {
+		return "", fmt.Errorf("signed Shortcuts can't be imported, use an iCloud link instead")
+	}
+
+	name = strings.TrimSpace(unsafeNameChars.ReplaceAllString(name, ""))
+	if name == "" {
+		name = "Shortcut"
+	}
+
+	var dir, dirErr = os.MkdirTemp("", "cherri")
+	if dirErr != nil {
+		return "", dirErr
+	}
+	defer os.RemoveAll(dir)
+
+	var restoreOutput = captureOutput()
+	var failure any
+	func() {
+		defer func() { failure = recover() }()
+
+		prepareArgs(filepath.Join(dir, name+".cherri"))
+		// decompile() writes its result to a file, so point that at the temp folder.
+		args.Args["output"] = dir + "/"
+		ensureStandardActions()
+		basename = name
+		decompile(shortcutBytes)
+	}()
+	var output = strings.TrimSpace(restoreOutput())
+
+	resetParser()
+
+	if failure != nil {
+		if exit, exited := failure.(exitSignal); !exited || exit.code != 0 {
+			if exited {
+				return "", fmt.Errorf("%s", output)
+			}
+
+			return "", fmt.Errorf("internal decompiler error: %v\n%s", failure, output)
+		}
+	}
+
+	var outputs, _ = filepath.Glob(filepath.Join(dir, "*.cherri"))
+	if len(outputs) == 0 {
+		return "", fmt.Errorf("decompiler produced no code: %s", output)
+	}
+
+	var codeBytes, readErr = os.ReadFile(outputs[0])
+	if readErr != nil {
+		return "", readErr
+	}
+
+	return string(codeBytes), nil
 }

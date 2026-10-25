@@ -1,0 +1,119 @@
+diff --git a/action.go b/action.go
+index 2099baf..8a56a26 100644
+--- a/action.go
++++ b/action.go
+@@ -484,7 +484,9 @@ func validActionOutput(param *parameterDefinition, value any) {
+ 	var actionIdent = value.(action).ident
+ 	if action, found := actions[actionIdent]; found {
+ 		var actionOutputType = action.outputType
+-		if actionOutputType == "" {
++		// A variable output is Shortcuts' generic pass-through type, so it fits any parameter. Decompiled
++		// shortcuts rely on this: the Shortcuts app freely feeds such an output straight into a text argument.
++		if actionOutputType == "" || actionOutputType == Variable {
+ 			return
+ 		}
+ 		if actionOutputType != param.validType && param.validType != Variable {
+diff --git a/actions_scriptable.go b/actions_scriptable.go
+index b397a57..a1ab9d0 100644
+--- a/actions_scriptable.go
++++ b/actions_scriptable.go
+@@ -144,6 +144,7 @@ func init() {
+ 		),
+ 		appIdentifier: scriptableBundleIdentifier,
+ 		identifier:    "ParameterizedRunScriptIntent",
++		decomp:        decompScriptableRun("fileName", false),
+ 		nonMacOnly:    true,
+ 		defaultAction: true,
+ 		parameters: scriptableRunParameters(parameterDefinition{
+@@ -185,6 +186,7 @@ func init() {
+ 		),
+ 		appIdentifier: scriptableBundleIdentifier,
+ 		identifier:    "RunScriptInlineIntent",
++		decomp:        decompScriptableRun("script", true),
+ 		nonMacOnly:    true,
+ 		// A raw string because JavaScript is full of braces, which a regular string would read as variables.
+ 		parameters: scriptableRunParameters(parameterDefinition{
+@@ -237,3 +239,83 @@ func init() {
+ 		},
+ 	}
+ }
++
++// decompScriptableRun reads the arguments of the two Scriptable Run actions back out of the plist. Their
++// script, texts and urls parameters have no plist key of their own (appendParamsFunc writes them), and the
++// generic argument reader matches parameters by key, so without this every argument was dropped and the
++// decompiled call could not be compiled again.
++func decompScriptableRun(scriptKey string, rawScript bool) func(action *ShortcutAction) []string {
++	return func(action *ShortcutAction) []string {
++		var keys = []string{scriptKey, "parameter", "texts", "urls", "images", "files", "runInApp", "ShowWhenRun"}
++		var arguments = make([]string, len(keys))
++		for i, key := range keys {
++			var value, found = action.WFWorkflowActionParameters[key]
++			if !found {
++				continue
++			}
++
++			switch key {
++			case scriptKey:
++				arguments[i] = decompScriptableScript(value, rawScript)
++			case "texts", "urls":
++				arguments[i] = decompScriptableItems(value)
++			default:
++				arguments[i] = decompValue(value)
++			}
++		}
++
++		// The script is the one required argument, so it is always written even if the plist left it out.
++		if arguments[0] == "" {
++			arguments[0] = decompScriptableScript("", rawScript)
++		}
++
++		// Optional arguments the plist never set are dropped from the end and skipped with nil in between.
++		var last = len(arguments) - 1
++		for last > 0 && arguments[last] == "" {
++			last--
++		}
++		arguments = arguments[:last+1]
++		for i := range arguments {
++			if arguments[i] == "" {
++				arguments[i] = "nil"
++			}
++		}
++
++		return arguments
++	}
++}
++
++// decompScriptableScript writes the code argument. Inline code is a raw string because JavaScript is full of
++// braces, so only the quote needs escaping.
++func decompScriptableScript(value any, rawScript bool) string {
++	if text, ok := value.(string); ok && rawScript {
++		return "'" + strings.ReplaceAll(text, "'", "\\'") + "'"
++	}
++
++	return decompValue(value)
++}
++
++// decompScriptableItems turns the Texts or URLs value, a bare item for one and a list for more, into an array.
++func decompScriptableItems(value any) string {
++	var items, isList = value.([]interface{})
++	if !isList {
++		items = []interface{}{value}
++	}
++
++	var parts = make([]string, 0, len(items))
++	for _, item := range items {
++		if text, ok := item.(string); ok {
++			parts = append(parts, "\""+escapeString(text)+"\"")
++			continue
++		}
++
++		// Text tokens read back as the string with {variable} references in it, so the quotes are added here.
++		var wasDecompilingText = decompilingText
++		decompilingText = true
++		var text = decompValue(item)
++		decompilingText = wasDecompilingText
++		parts = append(parts, "\""+text+"\"")
++	}
++
++	return "[" + strings.Join(parts, ", ") + "]"
++}

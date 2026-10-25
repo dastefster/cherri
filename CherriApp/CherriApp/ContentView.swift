@@ -1,7 +1,7 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.24 BUILD 2026-10-21 16:10
-// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts.
+// v0.0.25 BUILD 2026-10-25 05:05
+// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link and turns it back into Cherri code.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -29,6 +29,10 @@ struct ContentView: View {
     @State private var showingGuide = false
     @State private var showingSettings = false
     @State private var showingClearConfirm = false
+    @State private var showingImport = false
+    // An import waits here while the replace-your-code question is on screen.
+    @State private var pendingImport: ShortcutImporter.Imported?
+    @State private var showingImportReplaceConfirm = false
     @AppStorage(ExportSettings.confirmKey) private var confirmBeforeExport = true
     @State private var confirmingExport = false
     @AppStorage(ExportSettings.tipKey) private var showShareTip = true
@@ -128,12 +132,16 @@ struct ContentView: View {
                     showingActions = true
                 }) {
                     Text("Actions")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
 
                 Button(action: compile) {
                     Text("Compile")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -142,11 +150,27 @@ struct ContentView: View {
                     if confirmBeforeExport { confirmingExport = true } else { exportToShortcuts() }
                 }) {
                     Text("Export")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+
+                Button(action: {
+                    editor.textView?.resignFirstResponder()
+                    showingImport = true
+                }) {
+                    Text("Import")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
             }
             .disabled(working)
+            .sheet(isPresented: $showingImport) {
+                ImportView(onImported: handleImported)
+            }
             .sheet(isPresented: $showingActions) {
                 ActionPickerView(
                     source: source,
@@ -181,6 +205,15 @@ struct ContentView: View {
             }
         } message: {
             Text("Your shortcut is signed. On the next screen, tap Shortcuts in the row of apps (swipe the row if you don't see it), then tap Add Shortcut.")
+        }
+        .alert("Replace Your Code?", isPresented: $showingImportReplaceConfirm) {
+            Button("Replace", role: .destructive) {
+                if let imported = pendingImport { applyImport(imported) }
+                pendingImport = nil
+            }
+            Button("Cancel", role: .cancel) { pendingImport = nil }
+        } message: {
+            Text("Importing \"\(pendingImport?.name ?? "this shortcut")\" will replace everything in the editor.")
         }
         .alert("Clear Editor?", isPresented: $showingClearConfirm) {
             Button("Clear", role: .destructive) {
@@ -282,6 +315,34 @@ struct ContentView: View {
             failed = outcome.failed
             working = false
         }
+    }
+
+    // ===================================
+    // IMPORT
+    // ===================================
+
+    // Empty or untouched starter code is safe to overwrite; anything else gets a question first, since the editor has no undo for a swap.
+    private func handleImported(_ imported: ShortcutImporter.Imported) {
+        showingImport = false
+
+        let current = source.trimmingCharacters(in: .whitespacesAndNewlines)
+        if current.isEmpty || current == StarterCode.text.trimmingCharacters(in: .whitespacesAndNewlines) {
+            applyImport(imported)
+            return
+        }
+
+        pendingImport = imported
+        // Presenting an alert while the sheet is still leaving can drop it, so give the sheet a beat to go.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showingImportReplaceConfirm = true }
+    }
+
+    private func applyImport(_ imported: ShortcutImporter.Imported) {
+        source = imported.code
+        failed = false
+        showDetails = false
+        copied = false
+        let lines = imported.code.split(separator: "\n", omittingEmptySubsequences: false).count
+        status = "Imported \"\(imported.name)\" (\(lines) lines). Tap Compile to check it."
     }
 
     // ===================================
