@@ -1,7 +1,7 @@
 // ===================================
 // Settings
-// v0.0.11 BUILD 2026-10-21 16:10
-// Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses) and a debug-only Developer section. App Icon opens a grid picker (see AppIconView).
+// v0.0.13 BUILD 2026-10-25 07:45
+// Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses, one Send Feedback row that opens a small menu: form or email) and a debug-only Developer section. App Icon opens a grid picker (see AppIconView).
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -171,11 +171,11 @@ struct SettingsView: View {
                 Link(destination: URL(string: "https://dastefster.github.io/cherricuts/privacy.html")!) {
                     SettingsLabel(title: "Privacy Policy", symbol: "hand.raised.fill", color: .blue)
                 }
-                Link(destination: Feedback.url()) {
+                // One row; the form-or-email choice lives on its own screen so the list stays short.
+                NavigationLink {
+                    FeedbackView()
+                } label: {
                     SettingsLabel(title: "Send Feedback", symbol: "text.bubble.fill", color: .green)
-                }
-                Link(destination: Feedback.mailURL) {
-                    SettingsLabel(title: "Email Instead", symbol: "envelope.fill", color: .gray)
                 }
             }
 
