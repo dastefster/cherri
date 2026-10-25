@@ -1,8 +1,34 @@
 diff --git a/action.go b/action.go
-index 2099baf..8a56a26 100644
+index 2099baf..b20d351 100644
 --- a/action.go
 +++ b/action.go
-@@ -484,7 +484,9 @@ func validActionOutput(param *parameterDefinition, value any) {
+@@ -444,7 +444,7 @@ func typeCheck(param *parameterDefinition, argument *actionArgument) {
+ 			return
+ 		}
+ 		if argValueType != param.validType && param.validType != Variable && getVar.variableType != Ask {
+-			if argValueType == Date && param.validType == String {
++			if param.validType == String && convertsToText(argValueType) {
+ 				return
+ 			}
+ 			if argValueType == Float && param.validType == Integer {
+@@ -479,16 +479,30 @@ func typeCheck(param *parameterDefinition, argument *actionArgument) {
+ 	}
+ }
+ 
++// convertsToText reports whether the Shortcuts app turns a value of this type into text by itself when it lands in a
++// text argument. Imported shortcuts lean on that all the time, for example showing a dictionary in an alert, so the
++// compiler has to accept it or the decompiled code can't be compiled again.
++func convertsToText(valueType tokenType) bool {
++	switch valueType {
++	case Date, Integer, Float, Bool, Arr, Dict:
++		return true
++	}
++
++	return false
++}
++
+ // validActionOutput checks the output of an action in the case that the output has been assigned to a variable.
+ func validActionOutput(param *parameterDefinition, value any) {
  	var actionIdent = value.(action).ident
  	if action, found := actions[actionIdent]; found {
  		var actionOutputType = action.outputType
@@ -13,6 +39,11 @@ index 2099baf..8a56a26 100644
  			return
  		}
  		if actionOutputType != param.validType && param.validType != Variable {
+-			if actionOutputType == Date && param.validType == String {
++			if param.validType == String && convertsToText(actionOutputType) {
+ 				return
+ 			}
+ 			parserError(fmt.Sprintf("Invalid variable value of action '%v' (%s) for argument '%s' (%s).\n%s",
 diff --git a/actions_scriptable.go b/actions_scriptable.go
 index b397a57..a1ab9d0 100644
 --- a/actions_scriptable.go
@@ -117,3 +148,524 @@ index b397a57..a1ab9d0 100644
 +
 +	return "[" + strings.Join(parts, ", ") + "]"
 +}
+diff --git a/actions_std.go b/actions_std.go
+index 8825c24..0518647 100644
+--- a/actions_std.go
++++ b/actions_std.go
+@@ -736,7 +736,7 @@ var actions = map[string]*actionDefinition{
+ 			},
+ 			{
+ 				name:         "multiline",
+-				validType:    String,
++				validType:    Bool,
+ 				key:          "WFAllowsMultilineText",
+ 				optional:     true,
+ 				defaultValue: true,
+diff --git a/decompile.go b/decompile.go
+index 7a0b752..5c4f0d5 100644
+--- a/decompile.go
++++ b/decompile.go
+@@ -29,13 +29,18 @@ const (
+ var code strings.Builder
+ var specialCharsRegex *regexp.Regexp
+ 
++// controlFlowNames maps a control flow GroupingIdentifier to the constant name its result is referenced by.
++var controlFlowNames map[string]string
++
+ func decompile(b []byte) {
+ 	var _, marshalIndexedErr = plist.Unmarshal(b, &shortcut)
+ 	handle(marshalIndexedErr)
+ 
+ 	variables = make(map[string]varValue)
+ 	uuids = make(map[string]string)
+-	controlFlowGroups = make(map[int]controlFlowGroup)
++	varOutputNames = make(map[string]string)
++	varInputCounts = make(map[string]int)
++	controlFlowNames = make(map[string]string)
+ 
+ 	basename = strings.ReplaceAll(basename, " ", "_")
+ 	outputPath = getOutputPath(basename + ".cherri")
+@@ -84,37 +89,26 @@ func mapIdentifiers() {
+ 	}
+ }
+ 
++// mapControlFlowOutputs records which control flow groups have their result referenced later, keyed by the
++// group's GroupingIdentifier. Positional matching drifts out of step as soon as one group is unnamed.
+ func mapControlFlowOutputs() {
+ 	for _, action := range shortcut.WFWorkflowActions {
+ 		switch action.WFWorkflowActionIdentifier {
+-		case "is.workflow.actions.conditional":
+-			fallthrough
+-		case "is.workflow.actions.choosefrommenu":
+-			fallthrough
+-		case "is.workflow.actions.repeat.count":
+-			fallthrough
+-		case "is.workflow.actions.repeat.each":
++		case "is.workflow.actions.conditional", "is.workflow.actions.choosefrommenu", "is.workflow.actions.repeat.count", "is.workflow.actions.repeat.each":
+ 			var params = action.WFWorkflowActionParameters
+-			if params["WFControlFlowMode"].(uint64) != endStatement {
++			var mode, modeOK = params["WFControlFlowMode"].(uint64)
++			if !modeOK || mode != endStatement {
+ 				continue
+ 			}
+ 
+-			var groupName string
+-			if params["UUID"] != nil {
+-				var endingUUID = params["UUID"].(string)
+-				if uuids[endingUUID] != "" {
+-					groupName = uuids[endingUUID]
+-				}
+-			}
+-
+-			controlFlowGroups[groupingIdx] = controlFlowGroup{
+-				groupType:  Conditional,
+-				identifier: groupName,
++			var endingUUID, uuidOK = params["UUID"].(string)
++			var grouping, groupingOK = params["GroupingIdentifier"].(string)
++			if !uuidOK || !groupingOK || uuids[endingUUID] == "" {
++				continue
+ 			}
+-			groupingIdx++
++			controlFlowNames[grouping] = uuids[endingUUID]
+ 		}
+ 	}
+-	groupingIdx = 0
+ }
+ 
+ // Map out variables in the Shortcut and their UUIDs for later checks.
+@@ -132,6 +126,12 @@ func mapVariables() {
+ 			if action.WFWorkflowActionParameters["WFInput"] != nil {
+ 				var wfInput WFInput
+ 				mapToStruct(action.WFWorkflowActionParameters["WFInput"], &wfInput)
++				if wfInput.Value.OutputUUID != "" {
++					varInputCounts[wfInput.Value.OutputUUID]++
++					if wfInput.Value.OutputName != "" {
++						varOutputNames[wfInput.Value.OutputUUID] = wfInput.Value.OutputName
++					}
++				}
+ 				if _, found := uuids[wfInput.Value.OutputUUID]; !found {
+ 					varUUIDs = append(varUUIDs, wfInput.Value.OutputUUID)
+ 				}
+@@ -427,6 +427,45 @@ func decompileActions() {
+ var varUUIDs []string
+ var constUUIDs []string
+ 
++// varOutputNames is what the Shortcuts app called an action's output, keyed by the action's UUID, and
++// varInputCounts is how many Set Variable actions read that output. Both come from the Set Variable inputs.
++var varOutputNames map[string]string
++var varInputCounts map[string]int
++
++// readsOutputNext reports whether the very next action is the only Set Variable that reads this action's output.
++// Only then can the action be written as the variable's value (@name = action()). Otherwise the code would be held
++// while other actions run, and overwritten before the variable ever used it.
++func readsOutputNext(uuid string) bool {
++	if varInputCounts[uuid] != 1 || actionIndex+1 >= len(shortcut.WFWorkflowActions) {
++		return false
++	}
++
++	var next = peekActions(1)
++	if next.WFWorkflowActionIdentifier != SetVariableIdentifier && next.WFWorkflowActionIdentifier != AppendVariableIdentifier {
++		return false
++	}
++	if next.WFWorkflowActionParameters["WFInput"] == nil {
++		return false
++	}
++
++	var wfInput WFInput
++	mapToStruct(next.WFWorkflowActionParameters["WFInput"], &wfInput)
++
++	return wfInput.Value.OutputUUID == uuid
++}
++
++// nameVariableInput gives an output that a Set Variable reads a constant of its own, so the Set Variable can refer
++// to it by name. The Shortcuts app doesn't name most outputs, and the decompiler only knew names it had already seen.
++func nameVariableInput(uuid string) {
++	varUUIDs = slices.DeleteFunc(varUUIDs, func(u string) bool { return u == uuid })
++
++	var name = varOutputNames[uuid]
++	if name == "" {
++		name = "Output"
++	}
++	mapUUID(uuid, name)
++}
++
+ // checkConstantLiteral determines if action should be written out on a new line as a constant and clear the current variable value.
+ func checkConstantLiteral(action *ShortcutAction) {
+ 	if _, found := action.WFWorkflowActionParameters[UUID]; !found {
+@@ -434,7 +473,10 @@ func checkConstantLiteral(action *ShortcutAction) {
+ 	}
+ 	var actionUUID = action.WFWorkflowActionParameters[UUID].(string)
+ 	if slices.Contains(varUUIDs, actionUUID) && !slices.Contains(constUUIDs, actionUUID) {
+-		return
++		if readsOutputNext(actionUUID) {
++			return
++		}
++		nameVariableInput(actionUUID)
+ 	}
+ 	if outputName, found := uuids[actionUUID]; found {
+ 		newCodeLine(fmt.Sprintf("const %s = ", outputName))
+@@ -482,16 +524,71 @@ var decompilingText = false
+ 
+ func decompTextValue(action *ShortcutAction) {
+ 	decompilingText = true
+-	currentVariableValue = decompValue(action.WFWorkflowActionParameters["WFTextActionText"])
+-	if currentVariableValue == "" {
+-		currentVariableValue = "\"\""
++	currentVariableValue = fmt.Sprintf("\"%s\"", decompTextContents(action.WFWorkflowActionParameters["WFTextActionText"]))
++	if endsBranch() && !hasNamedOutput(action) {
++		// The last action of a branch is that branch's result, even though nothing reads it by name. Dropping it
++		// as an unused literal would leave the branch (and the If/Menu result) empty.
++		newCodeLine(fmt.Sprintf("text(%s)\n", currentVariableValue))
++		currentVariableValue = ""
+ 	} else {
+-		currentVariableValue = fmt.Sprintf("\"%s\"", escapeString(strings.Trim(currentVariableValue, "\"")))
++		checkConstantLiteral(action)
+ 	}
+-	checkConstantLiteral(action)
+ 	decompilingText = false
+ }
+ 
++// endsBranch reports whether the current action is the last one before a control flow part or end.
++func endsBranch() bool {
++	if actionIndex+1 >= len(shortcut.WFWorkflowActions) {
++		return false
++	}
++
++	var next = peekActions(1)
++	switch actionIdentifierEnd(next.WFWorkflowActionIdentifier) {
++	case "conditional", "repeat.each", "repeat.count", "choosefrommenu":
++		var mode, _ = next.WFWorkflowActionParameters["WFControlFlowMode"].(uint64)
++		return mode == endStatement || mode == statementPart
++	}
++
++	return false
++}
++
++func hasNamedOutput(action *ShortcutAction) bool {
++	var actionUUID, found = action.WFWorkflowActionParameters[UUID].(string)
++	if !found {
++		return false
++	}
++	var _, named = uuids[actionUUID]
++
++	return named
++}
++
++// decompTextContents returns the text of a Text action escaped for a double-quoted string, escaping it exactly once.
++// decompValue already escapes plain strings and strings with variables in them, so escaping its result again turned
++// every quote into \\" and made the code unparseable. Trimming quotes off the ends would also eat quotes that belong
++// to the text, so plain strings are escaped directly instead.
++func decompTextContents(value any) string {
++	switch text := value.(type) {
++	case nil:
++		return ""
++	case string:
++		return escapeString(text)
++	case map[string]interface{}:
++		var contents = decompValue(text)
++		var token = text
++		if inner, ok := text["Value"].(map[string]interface{}); ok {
++			token = inner
++		}
++		// A token string with nothing in it to look up comes back as the bare string, still unescaped.
++		if token["attachmentsByRange"] == nil && token["Aggrandizements"] == nil {
++			return escapeString(contents)
++		}
++
++		return contents
++	}
++
++	return escapeString(strings.Trim(decompValue(value), "\""))
++}
++
+ func decompNumberValue(action *ShortcutAction) (nonLiteral bool) {
+ 	var value = action.WFWorkflowActionParameters["WFNumberActionNumber"]
+ 	if reflect.TypeOf(value).Kind() == reflect.Map {
+@@ -626,10 +723,9 @@ func checkControlFlowOutput(action *ShortcutAction) bool {
+ 		fallthrough
+ 	case "is.workflow.actions.repeat.each":
+ 		if action.WFWorkflowActionParameters["WFControlFlowMode"].(uint64) == startStatement {
+-			var group = controlFlowGroups[groupingIdx]
+-			if group.identifier != "" {
+-				newCodeLine(fmt.Sprintf("const %s = ", group.identifier))
+-				groupingIdx++
++			var grouping, _ = action.WFWorkflowActionParameters["GroupingIdentifier"].(string)
++			if name := controlFlowNames[grouping]; name != "" {
++				newCodeLine(fmt.Sprintf("const %s = ", name))
+ 				return true
+ 			}
+ 		}
+@@ -687,6 +783,20 @@ func decompMenu(action *ShortcutAction) {
+ 	}
+ }
+ 
++// decompVariableReference names a Type "Variable" reference. Repeat Index and Repeat Item are built-in magic
++// variables that Cherri exposes as globals, so they take no @ prefix and are not user-defined variables.
++func decompVariableReference(name string) string {
++	switch name {
++	case "Repeat Index":
++		return "RepeatIndex"
++	case "Repeat Item":
++		return "RepeatItem"
++	}
++
++	sanitizeIdentifier(&name)
++	return "@" + name
++}
++
+ func decompRepeat(action *ShortcutAction) {
+ 	var controlFlowMode = action.WFWorkflowActionParameters["WFControlFlowMode"].(uint64)
+ 	switch controlFlowMode {
+@@ -797,6 +907,9 @@ func decompCondition(condition map[string]interface{}, action *ShortcutAction) {
+ 		}
+ 	} else if _, foundStr := condition["WFConditionalActionString"]; foundStr {
+ 		code.WriteString(decompValue(condition["WFConditionalActionString"]))
++	} else {
++		// The Shortcuts app stores nothing when a comparison was left without a value, which means an empty one.
++		code.WriteString("\"\"")
+ 	}
+ }
+ 
+@@ -955,10 +1068,7 @@ func decompValueObject(value map[string]interface{}) string {
+ 	switch value["Type"] {
+ 	case "Variable":
+ 		if _, found := value["VariableName"]; found {
+-			var variableName = value["VariableName"].(string)
+-			sanitizeIdentifier(&variableName)
+-
+-			return fmt.Sprintf("@%s", variableName)
++			return decompVariableReference(value["VariableName"].(string))
+ 		}
+ 
+ 		var variableValue = value["Variable"].(map[string]interface{})
+@@ -1049,7 +1159,7 @@ func decompAttachmentString(attachmentString *string, attachments map[string]int
+ 				}
+ 			}
+ 		} else {
+-			variableName = fmt.Sprintf("@%s", variableName)
++			variableName = decompVariableReference(attachment.VariableName)
+ 		}
+ 
+ 		if len(attachment.Aggrandizements) != 0 {
+@@ -1174,6 +1284,14 @@ func checkOutputType(action *ShortcutAction) (isConstant bool, isVariableValue b
+ 		return
+ 	}
+ 	var uuid = action.WFWorkflowActionParameters[UUID].(string)
++	if slices.Contains(varUUIDs, uuid) && !slices.Contains(constUUIDs, uuid) {
++		if readsOutputNext(uuid) {
++			return false, true
++		}
++		nameVariableInput(uuid)
++
++		return true, false
++	}
+ 	if _, found := uuids[uuid]; !found {
+ 		return
+ 	}
+@@ -1196,7 +1314,8 @@ func skipDecompAction(action *ShortcutAction) bool {
+ 		return true
+ 	}
+ 
+-	if identifier == "nothing" {
++	// A trailing Nothing action has no next action to peek at.
++	if identifier == "nothing" && actionIndex+1 < len(shortcut.WFWorkflowActions) {
+ 		var nextAction = peekActions(1)
+ 		var controlflowActionIdentifiers = []string{"conditional", "repeat.each", "repeat.count", "choosefrommenu"}
+ 		var nextActionIdentifier = actionIdentifierEnd(nextAction.WFWorkflowActionIdentifier)
+@@ -1216,6 +1335,10 @@ func actionIdentifierEnd(identifier string) string {
+ }
+ 
+ func decompActionArguments(actionCallCode *strings.Builder, matchedAction *actionDefinition, action *ShortcutAction) {
++	// Arguments are positional, so every one has to stay in its own slot. A parameter that is absent from the plist, or
++	// has no plist key of its own, used to be skipped outright and pulled all the later arguments one place to the
++	// left, into the wrong parameters. Gaps are now filled with nil, which skips an optional argument.
++	var arguments = make([]string, len(matchedAction.parameters))
+ 	for i, param := range matchedAction.parameters {
+ 		if param.key == "" {
+ 			continue
+@@ -1236,14 +1359,20 @@ func decompActionArguments(actionCallCode *strings.Builder, matchedAction *actio
+ 			argValue = strings.Trim(argValue, "\"")
+ 		}
+ 
+-		if argValue != "" {
+-			if i == 0 {
+-				actionCallCode.WriteString(argValue)
+-			} else {
+-				actionCallCode.WriteString(fmt.Sprintf(", %s", argValue))
+-			}
++		arguments[i] = argValue
++	}
++
++	var last = len(arguments) - 1
++	for last >= 0 && arguments[last] == "" {
++		last--
++	}
++	for i := 0; i <= last; i++ {
++		if arguments[i] == "" {
++			arguments[i] = "nil"
+ 		}
+ 	}
++
++	actionCallCode.WriteString(strings.Join(arguments[:last+1], ", "))
+ }
+ 
+ func makeDefaultValue(param parameterDefinition) string {
+@@ -1272,18 +1401,15 @@ func makeDefaultValue(param parameterDefinition) string {
+ }
+ 
+ func makeRawAction(action *ShortcutAction) string {
+-	var paramsSize = len(action.WFWorkflowActionParameters)
+-	var onlyUUIDParam = false
+-	var onlyOutputNameParam = false
+-	if paramsSize > 1 {
+-		if _, found := action.WFWorkflowActionParameters[UUID]; found {
+-			onlyUUIDParam = found
+-		}
+-		if _, found := action.WFWorkflowActionParameters["CustomOutputName"]; found {
+-			onlyOutputNameParam = found
++	// Only the UUID and output name mean there is nothing to write. Checking that both keys exist, without counting
++	// what else the action has, dropped every real parameter (like AppIntentDescriptor) from actions that had both.
++	var realParams = 0
++	for key := range action.WFWorkflowActionParameters {
++		if key != UUID && key != "CustomOutputName" {
++			realParams++
+ 		}
+ 	}
+-	if paramsSize == 0 || (onlyUUIDParam && onlyOutputNameParam) {
++	if realParams == 0 {
+ 		return fmt.Sprintf("rawAction(\"%s\")", action.WFWorkflowActionIdentifier)
+ 	}
+ 
+@@ -1296,20 +1422,34 @@ func makeRawAction(action *ShortcutAction) string {
+ 	return fmt.Sprintf("rawAction(%s)", arguments)
+ }
+ 
++// processRawParameters builds the parameters written into a rawAction call. It works on a copy: the action keeps its
++// UUID, because that decides whether the action is written as a constant, and deleting it here left later lines
++// referring to a constant that was never defined.
+ func processRawParameters(params map[string]any) map[string]any {
++	var processed = make(map[string]any, len(params))
+ 	for key, value := range params {
+ 		if key == UUID || key == "CustomOutputName" {
+-			delete(params, key)
++			continue
+ 		}
+ 
+-		if reflect.TypeOf(value).Kind() == reflect.Map {
++		// Shortcuts stores the descriptor of an app's action as a plain dictionary, not as a dictionary field value,
++		// so decompValueObject would flatten it to "" and the action would no longer load.
++		if key == appIntentDescriptorKey {
++			processed[key] = value
++			continue
++		}
++
++		if value != nil && reflect.TypeOf(value).Kind() == reflect.Map {
+ 			decompilingDictionary = true
+-			params[key] = decompValueObject(value.(map[string]interface{}))
++			processed[key] = decompValueObject(value.(map[string]interface{}))
+ 			decompilingDictionary = false
++			continue
+ 		}
++
++		processed[key] = value
+ 	}
+ 
+-	return params
++	return processed
+ }
+ 
+ func matchAction(action *ShortcutAction) (name string, definition actionDefinition) {
+diff --git a/parser.go b/parser.go
+index 8e88d5b..5e7eca9 100644
+--- a/parser.go
++++ b/parser.go
+@@ -1398,6 +1398,13 @@ func checkConditionalTypes(conditional *tokenType, variableType tokenType, value
+ 		variableType = Integer
+ 	}
+ 
++	// A generic variable, or an action with no declared output type, could hold anything. Shortcuts settles that when
++	// it runs, so only a type that is definitely wrong for the comparison is an error. Decompiled shortcuts compare
++	// action results like this all the time.
++	if variableType == Variable || variableType == "" {
++		return
++	}
++
+ 	if len(allowedConditionalTypes[*conditional]) != 0 && !slices.Contains(allowedConditionalTypes[*conditional], variableType) {
+ 		parserError(
+ 			fmt.Sprintf("Invalid type '%s' for conditional '%s'\nAllowed types: %s",
+diff --git a/raw_actions.go b/raw_actions.go
+index d3f0b31..dfcd87d 100644
+--- a/raw_actions.go
++++ b/raw_actions.go
+@@ -33,8 +33,16 @@ func defineRawAction() {
+ 	}
+ }
+ 
++// appIntentDescriptorKey is the parameter that tells Shortcuts which app's action a raw action is.
++const appIntentDescriptorKey = "AppIntentDescriptor"
++
+ func handleRawParams(params map[string]any) {
+ 	for key, value := range params {
++		// Shortcuts reads the descriptor as a plain dictionary. Converting it to the dictionary field format used for
++		// other nested values makes Shortcuts (and its own signing tool) reject the action.
++		if _, plain := value.(map[string]any); plain && key == appIntentDescriptorKey {
++			continue
++		}
+ 		params[key] = normalizeRawActionParamValue(value)
+ 	}
+ }
+diff --git a/shortcut.go b/shortcut.go
+index 75acf5d..c8fd5a6 100644
+--- a/shortcut.go
++++ b/shortcut.go
+@@ -45,7 +45,7 @@ type Value struct {
+ 	Value                       any                          `plist:",omitempty"`
+ 	Variable                    any                          `plist:",omitempty"`
+ 	WFDictionaryFieldValueItems []WFDictionaryFieldValueItem `plist:",omitempty"`
+-	AttachmentsByRange          map[string]Value             `plist:",omitempty"`
++	AttachmentsByRange          map[string]Value             `plist:"attachmentsByRange,omitempty"`
+ 	String                      string                       `plist:",omitempty"`
+ 	Aggrandizements             []Aggrandizement             `plist:",omitempty"`
+ 	Prompt                      string                       `plist:",omitempty"`
+diff --git a/shortcutgen.go b/shortcutgen.go
+index fa1d778..7c80f31 100644
+--- a/shortcutgen.go
++++ b/shortcutgen.go
+@@ -95,10 +95,7 @@ func generateActions() {
+ 			if actions[tokenAction.ident] == nil {
+ 				exit(fmt.Sprintf("Undefined action '%s'", tokenAction.ident))
+ 			}
+-			setCurrentAction(tokenAction.ident, actions[tokenAction.ident])
+-			if tokenAction.ident == "rawAction" && len(tokenAction.args) > 0 {
+-				currentAction.definition.overrideIdentifier = getArgValue(tokenAction.args[0]).(string)
+-			}
++			selectAction(tokenAction)
+ 			makeAction(tokenAction.args, &WFActionReference{})
+ 		case Repeat:
+ 			makeRepeatAction(&t)
+@@ -114,6 +111,16 @@ func generateActions() {
+ 	}
+ }
+ 
++// selectAction makes the action being called the current action. A raw action takes its identifier from its first
++// argument. That used to be applied only to a bare call, so `const x = rawAction(...)` and `@x = rawAction(...)`
++// were written as the generic raw action and Shortcuts could not run them.
++func selectAction(call action) {
++	setCurrentAction(call.ident, actions[call.ident])
++	if call.ident == "rawAction" && len(call.args) > 0 {
++		currentAction.definition.overrideIdentifier = getArgValue(call.args[0]).(string)
++	}
++}
++
+ func makeCommentAction(comment string) {
+ 	if args.Using("comments") {
+ 		addStdAction("comment", map[string]any{
+@@ -222,7 +229,7 @@ func makeVariableValue(reference *WFActionReference, valueType tokenType, value
+ 	case Action:
+ 		var valuePtr = *value
+ 		var action = valuePtr.(action)
+-		setCurrentAction(action.ident, actions[action.ident])
++		selectAction(action)
+ 		makeAction(action.args, reference)
+ 	case Dict:
+ 		addStdAction("dictionary", attachReferenceToParams(map[string]any{

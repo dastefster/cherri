@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Library Wrapper Tests
-// v0.0.5 BUILD 2026-10-25 04:50
+// v0.0.9 BUILD 2026-10-25 06:40
 // Runs upstream's Cherri test files through Compile() and checks errors come back instead of killing the process. Also round-trips Decompile().
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -203,6 +203,70 @@ func TestDecompileRepeatedUnknownAction(t *testing.T) {
 	}
 }
 
+// The Shortcuts app gives every output the name of its action, so imports are full of outputs with the same name.
+// Cherri can't redefine a constant, so each one needs its own name or the import won't compile.
+func TestDecompileDuplicateOutputNames(t *testing.T) {
+	var action = func(text string, uuid string) string {
+		return `<dict><key>WFWorkflowActionIdentifier</key><string>is.workflow.actions.gettext</string>` +
+			`<key>WFWorkflowActionParameters</key><dict><key>WFTextActionText</key><string>` + text + `</string>` +
+			`<key>UUID</key><string>` + uuid + `</string><key>CustomOutputName</key><string>Text</string></dict></dict>`
+	}
+	var plist = []byte(`<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict>` +
+		`<key>WFWorkflowActions</key><array>` +
+		action("one", "11111111-1111-1111-1111-111111111111") +
+		action("two", "22222222-2222-2222-2222-222222222222") +
+		action("three", "33333333-3333-3333-3333-333333333333") +
+		`</array><key>WFWorkflowClientVersion</key><string>5037.111</string>` +
+		`<key>WFWorkflowIcon</key><dict><key>WFWorkflowIconGlyphNumber</key><integer>61440</integer><key>WFWorkflowIconStartColor</key><integer>946986751</integer></dict>` +
+		`<key>WFWorkflowMinimumClientVersion</key><integer>900</integer><key>WFWorkflowTypes</key><array/></dict></plist>`)
+
+	var code, err = Decompile(plist, "Dupes")
+	if err != nil {
+		t.Fatalf("decompile failed: %v", err)
+	}
+	t.Logf("decompiled:\n%s", code)
+
+	if strings.Count(code, "const Text =") > 1 {
+		t.Fatalf("the same constant name was written more than once:\n%s", code)
+	}
+	if _, err := Compile(code, "Dupes"); err != nil {
+		t.Fatalf("decompiled code does not recompile: %v", err)
+	}
+}
+
+// Text with quotes in it, with and without variables, was escaped twice so every quote became \\" and the imported
+// code wouldn't parse. Round-trip the shape that broke a real shortcut: a JSON blob built around a variable.
+func TestDecompileTextWithQuotes(t *testing.T) {
+	var source = "#define name Quotes\n@who = \"Stef\"\n" +
+		"const json = \"{\\n  \\\"mode\\\": \\\"share\\\",\\n  \\\"who\\\": \\\"{@who}\\\"\\n}\"\n" +
+		"const plain = \"\\\"quoted\\\"\"\n" +
+		"alert(\"{json}{plain}\", \"Quotes\")\n"
+
+	var compiled, compileErr = Compile(source, "Quotes")
+	if compileErr != nil {
+		t.Fatalf("compile failed: %v", compileErr)
+	}
+
+	var code, decompileErr = Decompile(compiled, "Quotes")
+	if decompileErr != nil {
+		t.Fatalf("decompile failed: %v", decompileErr)
+	}
+	t.Logf("decompiled:\n%s", code)
+
+	if strings.Contains(code, "\\\\\"") {
+		t.Fatalf("quotes were escaped twice:\n%s", code)
+	}
+
+	var again, recompileErr = Compile(code, "Quotes")
+	if recompileErr != nil {
+		t.Fatalf("decompiled code does not recompile: %v", recompileErr)
+	}
+	var redecompiled, _ = Decompile(again, "Quotes")
+	if redecompiled != code {
+		t.Fatalf("decompile is not stable across a recompile:\n--- first\n%s\n--- second\n%s", code, redecompiled)
+	}
+}
+
 func TestDecompileRejectsGarbageAndSigned(t *testing.T) {
 	if _, err := Decompile([]byte("nope"), "x"); err == nil {
 		t.Fatal("expected an error for too-short input")
@@ -236,4 +300,80 @@ func TestDecompileUpstreamShortcuts(t *testing.T) {
 		_ = code
 	}
 	t.Logf("decompiled %d of %d sample shortcuts", passed, passed+failed)
+}
+
+// References embedded in text (a control flow result, the repeat index) used to decompile to names that were never
+// declared: the attachment structs read their ranges with the wrong plist keys, so nothing inside text was
+// registered, and an If result declared by position drifted once any other group went unnamed.
+func TestDecompileTextReferences(t *testing.T) {
+	var source = "#define name Refs\n@n = 3\n" +
+		"repeat i for 2 {\n    @n += 1\n}\n" +
+		"const picked = if @n > 2 {\n    text(\"big\")\n} else {\n    text(\"small\")\n}\n" +
+		"repeat i for 2 {\n    alert(\"{picked} {RepeatIndex}\", \"Refs\")\n}\n"
+
+	var compiled, compileErr = Compile(source, "Refs")
+	if compileErr != nil {
+		t.Fatalf("compile failed: %v", compileErr)
+	}
+
+	var code, decompileErr = Decompile(compiled, "Refs")
+	if decompileErr != nil {
+		t.Fatalf("decompile failed: %v", decompileErr)
+	}
+	t.Logf("decompiled:\n%s", code)
+
+	if !strings.Contains(code, "= if ") {
+		t.Fatalf("the If result referenced later was not declared as a constant:\n%s", code)
+	}
+	if !strings.Contains(code, "text(\"big\")") || !strings.Contains(code, "text(\"small\")") {
+		t.Fatalf("a branch result was dropped:\n%s", code)
+	}
+	if strings.Contains(code, "@RepeatIndex") {
+		t.Fatalf("Repeat Index was written as a user variable:\n%s", code)
+	}
+
+	if _, recompileErr := Compile(code, "Refs"); recompileErr != nil {
+		t.Fatalf("decompiled code does not recompile: %v\n%s", recompileErr, code)
+	}
+}
+
+// The descriptor that says which app an action belongs to must stay a plain dictionary through a decompile and
+// recompile. It used to come back as "" (and later as a dictionary field value), which Shortcuts and Apple's own
+// signing tool reject.
+func TestRawActionAppIntentDescriptorRoundTrip(t *testing.T) {
+	var source = "#define name Descriptor\n" +
+		"const active = rawAction(\"com.sindresorhus.Actions.IsCallActive\", {\n" +
+		"\t\"AppIntentDescriptor\": {\n" +
+		"\t\t\"AppIntentIdentifier\": \"IsCallActive\",\n" +
+		"\t\t\"BundleIdentifier\": \"com.sindresorhus.Actions\",\n" +
+		"\t\t\"Name\": \"Actions\",\n" +
+		"\t\t\"TeamIdentifier\": \"YG56YK5RN5\"\n" +
+		"\t}\n})\n"
+
+	var compiled, compileErr = Compile(source, "Descriptor")
+	if compileErr != nil {
+		t.Fatalf("compile failed: %v", compileErr)
+	}
+	if !strings.Contains(string(compiled), "<string>com.sindresorhus.Actions.IsCallActive</string>") {
+		t.Fatalf("a raw action assigned to a constant lost its identifier:\n%s", compiled)
+	}
+	if strings.Contains(string(compiled), "WFDictionaryFieldValueItems") {
+		t.Fatalf("descriptor was written as a dictionary field value:\n%s", compiled)
+	}
+
+	var code, decompileErr = Decompile(compiled, "Descriptor")
+	if decompileErr != nil {
+		t.Fatalf("decompile failed: %v", decompileErr)
+	}
+	if strings.Contains(code, "\"AppIntentDescriptor\": \"\"") || !strings.Contains(code, "\"AppIntentIdentifier\": \"IsCallActive\"") {
+		t.Fatalf("descriptor was lost on decompile:\n%s", code)
+	}
+
+	var again, recompileErr = Compile(code, "Descriptor")
+	if recompileErr != nil {
+		t.Fatalf("decompiled code does not recompile: %v\n%s", recompileErr, code)
+	}
+	if strings.Contains(string(again), "WFDictionaryFieldValueItems") || !strings.Contains(string(again), "<key>AppIntentIdentifier</key>") {
+		t.Fatalf("descriptor did not survive the round trip:\n%s", again)
+	}
 }

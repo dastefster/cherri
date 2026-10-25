@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Library Wrapper
-// v0.0.5 BUILD 2026-10-25 04:50
+// v0.0.7 BUILD 2026-10-25 05:35
 // Exposes the Cherri compiler as a library so gomobile can bind it into a Swift app.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -178,6 +178,9 @@ func prepareArgs(sourcePath string) {
 	}
 	args.Args["no-ansi"] = ""
 	args.Args["skip-sign"] = ""
+	// The toolkit database is a macOS file the compiler consults when it meets an action it doesn't know. The phone
+	// has no such file, so skip it everywhere and every platform behaves the same.
+	args.Args["no-toolkit"] = ""
 }
 
 // ===================================
@@ -217,6 +220,9 @@ func Decompile(shortcutBytes []byte, name string) (result string, err error) {
 		prepareArgs(filepath.Join(dir, name+".cherri"))
 		// decompile() writes its result to a file, so point that at the temp folder.
 		args.Args["output"] = dir + "/"
+		// The Shortcuts app names every output after its action, so one shortcut often has many outputs called
+		// "Dictionary". The compiler only renames duplicates when this flag is set, which the CLI's own import does.
+		args.Args["import"] = ""
 		ensureStandardActions()
 
 		// Meeting an action it doesn't know makes the decompiler load another action file, which registers that
