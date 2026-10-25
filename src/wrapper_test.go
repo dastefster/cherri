@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Library Wrapper Tests
-// v0.0.4 BUILD 2026-10-25 05:40
+// v0.0.5 BUILD 2026-10-25 04:50
 // Runs upstream's Cherri test files through Compile() and checks errors come back instead of killing the process. Also round-trips Decompile().
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -169,6 +169,37 @@ func TestDecompileScriptableRoundTrip(t *testing.T) {
 	var redecompiled, _ = Decompile(again, "Scriptable")
 	if redecompiled != code {
 		t.Fatalf("decompile is not stable across a recompile:\n--- first\n%s\n--- second\n%s", code, redecompiled)
+	}
+}
+
+// Decompiling a shortcut with an action the compiler doesn't know loads an extra action file. That used to leave
+// its enums behind, so the next import of the same kind failed with "Duplicate enumeration".
+func TestDecompileRepeatedUnknownAction(t *testing.T) {
+	var unknown = []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+<key>WFWorkflowActions</key><array><dict>
+<key>WFWorkflowActionIdentifier</key><string>AsheKube.app.a-Shell.ExecuteCommandIntent</string>
+<key>WFWorkflowActionParameters</key><dict><key>UUID</key><string>5D879823-DF04-43BC-A34A-F582298CE7EF</string></dict>
+</dict></array>
+<key>WFWorkflowClientVersion</key><string>5037.111</string>
+<key>WFWorkflowIcon</key><dict><key>WFWorkflowIconGlyphNumber</key><integer>61440</integer><key>WFWorkflowIconStartColor</key><integer>946986751</integer></dict>
+<key>WFWorkflowMinimumClientVersion</key><integer>900</integer>
+<key>WFWorkflowTypes</key><array/>
+</dict></plist>`)
+
+	for i := 0; i < 4; i++ {
+		var code, err = Decompile(unknown, "Execute Command")
+		if err != nil {
+			t.Fatalf("import %d failed: %v", i+1, err)
+		}
+		if !strings.Contains(code, "ExecuteCommandIntent") {
+			t.Fatalf("import %d lost the action: %s", i+1, code)
+		}
+	}
+
+	// Compiling afterwards must still work with the state restored.
+	if _, err := Compile("#define name After\nalert(\"x\")\n", "After"); err != nil {
+		t.Fatalf("compile after repeated imports failed: %v", err)
 	}
 }
 

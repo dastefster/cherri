@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Library Wrapper
-// v0.0.4 BUILD 2026-10-25 04:15
+// v0.0.5 BUILD 2026-10-25 04:50
 // Exposes the Cherri compiler as a library so gomobile can bind it into a Swift app.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -10,9 +10,11 @@ package cherrilib
 import (
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 
@@ -83,8 +85,20 @@ var standardIncludeLine = regexp.MustCompile(`(?m)^[ \t]*#include[ \t]+'actions/
 func ensureStandardActions() {
 	if !standardActionsLoaded {
 		loadStandardActions()
+		baselineIncluded = slices.Clone(included)
 		standardActionsLoaded = true
 	}
+}
+
+// baselineIncluded is the list of action files the compiler counts as already included once the standard library
+// has loaded. The compiler skips those when it goes looking for an unknown action, so a reset that empties the list
+// makes the next run include them a second time and fail with "Duplicate enumeration".
+var baselineIncluded []string
+
+// resetState clears the compiler's global state between runs, but keeps what the loaded standard library needs.
+func resetState() {
+	resetParser()
+	included = slices.Clone(baselineIncluded)
 }
 
 // CompilerVersion returns the version of the Cherri compiler this library was built from.
@@ -129,7 +143,7 @@ func Compile(source string, name string) (result []byte, err error) {
 	var output = strings.TrimSpace(restoreOutput())
 
 	// A failed compile leaves half-built state behind, so reset either way like the test suite does.
-	resetParser()
+	resetState()
 
 	if failure != nil {
 		if exit, exited := failure.(exitSignal); !exited || exit.code != 0 {
@@ -204,12 +218,23 @@ func Decompile(shortcutBytes []byte, name string) (result string, err error) {
 		// decompile() writes its result to a file, so point that at the temp folder.
 		args.Args["output"] = dir + "/"
 		ensureStandardActions()
+
+		// Meeting an action it doesn't know makes the decompiler load another action file, which registers that
+		// file's enums and actions in globals the reset below never clears. The next import that reaches the same
+		// file then fails with "Duplicate enumeration", so put both back the way they were when this import ends.
+		var actionsBefore = maps.Clone(actions)
+		var enumerationsBefore = maps.Clone(enumerations)
+		defer func() {
+			actions = actionsBefore
+			enumerations = enumerationsBefore
+		}()
+
 		basename = name
 		decompile(shortcutBytes)
 	}()
 	var output = strings.TrimSpace(restoreOutput())
 
-	resetParser()
+	resetState()
 
 	if failure != nil {
 		if exit, exited := failure.(exitSignal); !exited || exit.code != 0 {
