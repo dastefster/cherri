@@ -1,6 +1,6 @@
 // ===================================
 // In-App Guide
-// v0.0.10 BUILD 2026-10-20 18:15
+// v0.0.11 BUILD 2026-10-25 07:25
 // Basic documentation sheet: getting started, Cherri syntax basics, the Actions picker, Compile vs Export, troubleshooting, beta limitations, and credits. Content lives in the guideSections array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -35,6 +35,7 @@ let guideSections: [GuideSection] = [
         .text("**2. Compile.** Checks your code. Success shows the size of the shortcut. Errors appear under the editor."),
         .text("**3. Export.** Signs the shortcut and opens the share sheet. Choose the **Shortcuts** icon (swipe the row if you don't see it) then tap the blue **Add Shortcut** button in the Shortcuts app to add it to your library."),
         .text("**4. Clear.** Tap the red trash icon to instantly clear the editor. A safety alert ensures you don't accidentally erase your work."),
+        .text("**Import.** Already have a shortcut? Tap **Import** to turn it back into code you can read and change. See *Importing a shortcut* below."),
         .code("alert(\"Hello from Cherri\")"),
     ]),
     GuideSection(id: "syntax", title: "Cherri basics", symbol: "chevron.left.forwardslash.chevron.right", blocks: [
@@ -66,6 +67,14 @@ let guideSections: [GuideSection] = [
         .text("**Export** needs an internet connection. iOS only imports signed shortcuts, so your shortcut is sent to RoutineHub's HubSign service to be signed, then returned to you."),
         .text("In the share sheet, choose the **Shortcuts** icon (swipe the row if you don't see it). Shortcuts opens with an Add Shortcut screen. Tap the blue **Add Shortcut** button at the bottom."),
     ]),
+    GuideSection(id: "import", title: "Importing a shortcut", symbol: "square.and.arrow.down", blocks: [
+        .text("**Import** turns a shortcut you already have into Cherri code, so you can read it, change it and export it again. There are two ways to start."),
+        .text("**From the app.** In the Shortcuts app, open a shortcut's share menu and tap **Copy iCloud Link**. Come back here, tap **Import**, tap **Paste**, then tap **Import** again."),
+        .text("**From the share sheet.** In the Shortcuts app, tap **Share** on a shortcut and choose **Cherri Shortcuts** in the share sheet (swipe the row, or tap More, if you don't see it). Cherri Shortcuts opens and imports the shortcut by itself."),
+        .text("If your editor already has code, the app asks before replacing it. An empty editor, or the untouched starter code, is replaced without asking."),
+        .text("Import needs an internet connection, because the app asks iCloud for the shortcut behind the link."),
+        .tip("Shortcuts may ask you to **Create iCloud Link** first. Tap **Share** to continue. Anyone who has that link can view the shortcut."),
+    ]),
     GuideSection(id: "style", title: "Name, color and icon", symbol: "paintpalette", blocks: [
         .text("Put these lines at the very top of your code to style the shortcut you export:"),
         .code("#define name My Shortcut\n#define color blue\n#define glyph hammer"),
@@ -79,6 +88,8 @@ let guideSections: [GuideSection] = [
         .text("**Shortcuts shows an \"Unknown action\" with an Update Shortcuts button.** The action needs a newer iOS than the one you're running. Some Photos actions need iOS 27."),
         .text("**A third-party action shows an install prompt.** Install that app from the App Store, then add the shortcut again."),
         .text("**An action asks you to choose something when it runs** (a space, folder, list or album). That's expected. These choices are specific to your device, so the shortcut asks you at run time."),
+        .text("**Import says iCloud couldn't find the shortcut.** The link may be old, or sharing may be off. Copy a fresh iCloud link and try again. A link you shared a moment ago can take a few seconds to appear, so the app waits and tries again before it gives up."),
+        .text("**Import says some actions aren't supported yet.** The shortcut still imports. The actions Cherri Shortcuts doesn't know are kept in your code as `rawAction` lines. They may lose their settings or not work once compiled. Tap **Tell Support** to report them."),
         .text("**Error messages are long.** The red line under the editor is the important one. Tap **Show details** for the rest, or **Copy full message** to send it to me."),
     ]),
     GuideSection(id: "beta", title: "Known beta limitations", symbol: "exclamationmark.triangle", blocks: [
@@ -87,6 +98,7 @@ let guideSections: [GuideSection] = [
         .text("• Very large scripts may be slow. They are stored in the app's settings for now."),
         .text("• Some actions haven't been checked against the latest iOS. If an action misbehaves, tell me which one."),
         .text("• Export always goes through HubSign. If it's down, Export won't work, but Compile will."),
+        .text("• Import can't read every action yet. Unsupported ones are kept as `rawAction` lines and may not work after you compile."),
     ]),
     GuideSection(id: "about", title: "About", symbol: "info.circle", blocks: [
         .text("Cherri Shortcuts is made by Stefan Hottel (@dastefster) 🍒🔨"),

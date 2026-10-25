@@ -1,6 +1,6 @@
 // ===================================
 // Documentation
-// v0.0.7 BUILD 2026-10-20 18:15
+// v0.0.8 BUILD 2026-10-25 07:25
 // In-app reference for everything Cherri Shortcuts does in beta 1: the editor, the Actions picker, Compile, Export, third-party app actions, Settings, and what stays on your device. Content lives in the docTopics array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -14,7 +14,7 @@ import SwiftUI
 let docTopics: [GuideSection] = [
     GuideSection(id: "overview", title: "What Cherri Shortcuts does", symbol: "sparkles", blocks: [
         .text("Cherri Shortcuts lets you build Apple Shortcuts by writing code instead of dragging blocks. You write in **Cherri**, a language made for Shortcuts, and the app turns it into a real shortcut you can add to your library and run like any other."),
-        .text("Everything runs from one screen: an editor, an **Actions** button, **Compile** and **Export**."),
+        .text("Everything runs from one screen: an editor, an **Actions** button, **Compile**, **Export** and **Import**."),
         .tip("New to Cherri? The Guide has a short tour of the language. This documentation covers what the app itself can do."),
     ]),
     GuideSection(id: "editor", title: "The editor", symbol: "square.and.pencil", blocks: [
@@ -45,6 +45,16 @@ let docTopics: [GuideSection] = [
         .text("By default Cherri Shortcuts asks before exporting, because your shortcut is sent to HubSign. You can turn that question off in Settings, under **Ask Before Exporting**. Once your shortcut is signed, a short tip reminds you to tap **Shortcuts** in the share sheet; you can turn it off under **Show Import Tip**."),
         .tip("If Export seems stuck after choosing Save to Files, force-quit Cherri Shortcuts, reopen it, and pick the Shortcuts icon instead."),
     ]),
+    GuideSection(id: "import", title: "Import", symbol: "square.and.arrow.down", blocks: [
+        .text("**Import** is Export in reverse. It takes a shortcut you already have in the Shortcuts app and turns it into Cherri code in the editor, so you can read it, change it, and export it again."),
+        .text("**Method 1: from the app.** In the Shortcuts app, open a shortcut's share menu and tap **Copy iCloud Link**. In Cherri Shortcuts tap **Import**, tap **Paste** (Apple's Paste button, so there's no permission prompt), then tap **Import**. You can also type or paste the link into the field yourself."),
+        .text("**Method 2: from the share sheet.** In the Shortcuts app, tap **Share** on a shortcut and choose **Cherri Shortcuts** in the share sheet. If you don't see it, swipe the row of apps or tap More. Cherri Shortcuts opens and imports the shortcut automatically. If the app can't open by itself, it tells you to open Cherri Shortcuts by hand, and the link is kept for 15 minutes."),
+        .text("**Replacing your code.** Import puts the shortcut in the editor. If the editor already has your code, the app asks before replacing it, and there is no undo. An empty editor, or the untouched starter code, is replaced without asking."),
+        .text("**Actions that aren't supported yet.** The shortcut still imports. Any action Cherri Shortcuts doesn't know is kept in your code as a `rawAction` line, and the app lists them. Those lines may lose their settings or not work once compiled. **Tell Support** opens the feedback form with the action names and your link filled in."),
+        .text("**When iCloud can't find the shortcut.** The link may be old, or sharing may be off. Copy a fresh link and try again. A link from the share sheet can take a few seconds to be published, so the app waits and retries before showing an error. Tap **Copy full message** on the error to send me the details."),
+        .text("After an import, tap **Compile** to check the code, then **Export** if you want it back in your library."),
+        .tip("Shortcuts may ask you to Create iCloud Link before it shares. Anyone who has that link can view the shortcut, so only share links you're happy for others to see."),
+    ]),
     GuideSection(id: "style", title: "Name, color and icon", symbol: "paintpalette", blocks: [
         .text("Three optional lines at the top of your code control how the exported shortcut looks:"),
         .code("#define name My Shortcut\n#define color blue\n#define glyph hammer"),
@@ -71,6 +81,7 @@ let docTopics: [GuideSection] = [
         .text("Your code is stored only on your device."),
         .text("**Compile** never leaves your device."),
         .text("**Export** sends the compiled shortcut to RoutineHub's HubSign service so it can be signed, and nothing else. Cherri Shortcuts has no accounts, no ads and no analytics."),
+        .text("**Import** looks up the iCloud link you give it on Apple's iCloud servers to download that shortcut, and nothing else. The shortcut is turned into code on your device. The Share sheet option only reads the link and hands it to the app. It doesn't use the internet itself."),
         .text("If you install the app through TestFlight, Apple collects its own crash and usage data for testing."),
         .tip("The full privacy policy is in Settings, under About."),
     ]),
@@ -80,6 +91,7 @@ let docTopics: [GuideSection] = [
         .text("• Very large scripts may feel slow, since your code is kept in the app's settings."),
         .text("• Some actions haven't been checked against every iOS version."),
         .text("• Export needs HubSign to be online. Compile always works."),
+        .text("• Import can't read every action yet. Unsupported ones are kept as `rawAction` lines, and a few of those may not survive a round trip."),
         .tip("If something misbehaves, tell me which action and what happened, and copy the full error message if there is one."),
     ]),
 ]
