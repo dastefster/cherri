@@ -119,12 +119,12 @@ struct SettingsView: View {
                 }
 
                 Toggle(isOn: $showShareTip) {
-                    SettingsLabel(title: "Show Import Tip", symbol: "lightbulb.fill", color: .orange)
+                    SettingsLabel(title: "Show Export Tip", symbol: "lightbulb.fill", color: .orange)
                 }
             } header: {
                 Text("Export")
             } footer: {
-                Text("Export sends your shortcut to RoutineHub's HubSign service to be signed. Compile stays on your device. The import tip reminds you to tap Shortcuts in the share sheet.")
+                Text("Export sends your shortcut to RoutineHub's HubSign service to be signed. Compile stays on your device. The export tip reminds you to tap Shortcuts in the share sheet.")
             }
 
             Section("Your Code") {
