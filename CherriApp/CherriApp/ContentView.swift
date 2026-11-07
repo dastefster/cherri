@@ -1,7 +1,7 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.30 BUILD 2026-11-07 14:15
-// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the Cherri signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three.
+// v0.0.31 BUILD 2026-11-07 16:58
+// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the Cherri signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -16,6 +16,8 @@ import Cherri
 struct ContentView: View {
     // Kept in UserDefaults so closing the app never loses work. A file will replace this if scripts get large.
     @AppStorage("cherriSource") private var source = StarterCode.text
+    // The code from the last Clear, kept on disk so Restore still works after the app closes. It is dropped as soon as new code is typed, so it can never be offered against work that came after it.
+    @AppStorage("clearedBackup") private var clearedBackup = ""
     @State private var status = "Cherri \(CherriCompilerVersion())"
     @State private var failed = false
     @State private var showDetails = false
@@ -147,6 +149,22 @@ struct ContentView: View {
         VStack(spacing: 12) {
             CodeEditor(text: $source, controller: editor, style: editorStyle)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .overlay {
+                    // Only while the editor is empty, so it sits in the blank space and never covers code.
+                    if source.isEmpty && !clearedBackup.isEmpty {
+                        Button {
+                            source = clearedBackup
+                            clearedBackup = ""
+                        } label: {
+                            Label("Restore cleared code", systemImage: "arrow.uturn.backward")
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                }
+                .onChange(of: source) { _, newValue in
+                    // New code means the old backup is stale, and keeping it would let an empty editor offer to bring back something unrelated.
+                    if !newValue.isEmpty && !clearedBackup.isEmpty { clearedBackup = "" }
+                }
 
             HStack(spacing: 12) {
                 Button(action: {
@@ -266,6 +284,8 @@ struct ContentView: View {
         }
         .alert("Clear Editor?", isPresented: $showingClearConfirm) {
             Button("Clear", role: .destructive) {
+                // Saved before the editor is emptied, and only when there is something to save, so clearing an already empty editor never wipes the backup.
+                if !source.isEmpty { clearedBackup = source }
                 source = ""
             }
             Button("Cancel", role: .cancel) {}
