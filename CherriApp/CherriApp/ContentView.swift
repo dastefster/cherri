@@ -1,7 +1,7 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.29 BUILD 2026-11-07 12:10
-// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the Cherri signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code.
+// v0.0.30 BUILD 2026-11-07 14:15
+// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the Cherri signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -30,6 +30,7 @@ struct ContentView: View {
     @State private var showingSettings = false
     @State private var showingClearConfirm = false
     @State private var showingImport = false
+    @State private var showingStyle = false
     // An import waits here while the replace-your-code question is on screen.
     @State private var pendingImport: ShortcutImporter.Imported?
     @State private var showingImportReplaceConfirm = false
@@ -84,6 +85,16 @@ struct ContentView: View {
                 .navigationTitle("Cherri Shortcuts")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+                    // Replaces the plain title with the shortcut's own icon and name, like the Shortcuts editor. The navigationTitle above stays so pushed screens keep a sensible back label.
+                    ToolbarItem(placement: .principal) {
+                        Button {
+                            editor.textView?.resignFirstResponder()
+                            showingStyle = true
+                        } label: {
+                            ShortcutHeaderLabel(style: ShortcutStyleEditor.parse(source))
+                        }
+                        .buttonStyle(.plain)
+                    }
                     ToolbarItem(placement: .topBarLeading) {
                         Button(action: {
                             editor.textView?.resignFirstResponder()
@@ -183,11 +194,15 @@ struct ContentView: View {
             .sheet(isPresented: $showingImport) {
                 ImportView(onImported: handleImported)
             }
+            .sheet(isPresented: $showingStyle) {
+                ShortcutStyleSheet(style: ShortcutStyleEditor.parse(source), onApply: applyStyle)
+            }
             .sheet(isPresented: $showingActions) {
                 ActionPickerView(
                     source: source,
                     onInsert: { editor.insertStatement($0) },
-                    onInsertValue: { editor.insertInline($0) }
+                    onInsertValue: { editor.insertInline($0) },
+                    onStyle: applyStyle
                 )
             }
 
@@ -425,6 +440,15 @@ struct ContentView: View {
         unsupportedImport = imported
         // The import sheet or the replace alert may still be leaving, and an alert presented over them can be dropped.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { showingUnsupportedNotice = true }
+    }
+
+    // ===================================
+    // STYLE
+    // ===================================
+
+    // Writes the chosen name, color and icon back into the code's '#define' lines. The editor picks up the changed source on its own.
+    private func applyStyle(_ style: ShortcutStyle) {
+        source = ShortcutStyleEditor.apply(style, to: source)
     }
 
     // ===================================
