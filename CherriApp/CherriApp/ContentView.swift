@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.28 BUILD 2026-10-25 07:40
+// v0.0.29 BUILD 2026-11-07 12:10
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the Cherri signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -199,6 +199,16 @@ struct ContentView: View {
             statusArea
         }
         .padding()
+        // The buttons and the empty space around the editor are not a scroll view, so a swipe down there needs its own handler.
+        .contentShape(Rectangle())
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 24)
+                .onEnded { value in
+                    if value.translation.height > 60 && abs(value.translation.width) < value.translation.height {
+                        editor.textView?.resignFirstResponder()
+                    }
+                }
+        )
         .sheet(item: $exportFile) { file in
             ShareSheet(url: file.url)
         }

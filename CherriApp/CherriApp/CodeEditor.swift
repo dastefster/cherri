@@ -1,7 +1,7 @@
 // ===================================
 // Code Editor
-// v0.0.4 BUILD 2026-10-16 03:30
-// Cursor-aware text editor (a UIKit text view inside SwiftUI) so actions and values land where the cursor is, not at the end.
+// v0.0.5 BUILD 2026-11-07 12:10
+// Cursor-aware text editor (a UIKit text view inside SwiftUI) so actions and values land where the cursor is, not at the end. A quick swipe down on the editor dismisses the keyboard.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -105,6 +105,12 @@ struct CodeEditor: UIViewRepresentable {
         textView.alwaysBounceVertical = true
         textView.keyboardDismissMode = .interactive
 
+        // .interactive only dismisses once the finger reaches the keyboard, which is far below a short editor, so a plain swipe down did nothing.
+        let swipeDown = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.dismissKeyboard))
+        swipeDown.direction = .down
+        swipeDown.delegate = context.coordinator
+        textView.addGestureRecognizer(swipeDown)
+
         // Code, not prose: smart quotes would turn "text" into curly quotes the compiler rejects.
         textView.autocorrectionType = .no
         textView.autocapitalizationType = .none
@@ -139,7 +145,7 @@ struct CodeEditor: UIViewRepresentable {
     }
 
     @MainActor
-    final class Coordinator: NSObject, UITextViewDelegate {
+    final class Coordinator: NSObject, UITextViewDelegate, UIGestureRecognizerDelegate {
         var text: Binding<String>
         var style: EditorStyle
         var appliedStyleKey = ""
@@ -147,6 +153,21 @@ struct CodeEditor: UIViewRepresentable {
         init(text: Binding<String>, style: EditorStyle) {
             self.text = text
             self.style = style
+        }
+
+        @objc func dismissKeyboard(_ gesture: UISwipeGestureRecognizer) {
+            gesture.view?.endEditing(true)
+        }
+
+        // Only count the swipe when the text is already at the top. Otherwise a quick flick up through long code would also drop the keyboard.
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard let textView = gestureRecognizer.view as? UITextView else { return true }
+            return textView.contentOffset.y <= -textView.adjustedContentInset.top + 1
+        }
+
+        // The text view's own scrolling and cursor gestures have to keep working next to the swipe.
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
+            true
         }
 
         func restyle(_ textView: UITextView) {
