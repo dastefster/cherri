@@ -1,7 +1,7 @@
 // ===================================
 // Cherri App Main Screen
 // v0.0.28 BUILD 2026-10-25 07:40
-// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via HubSign and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code.
+// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the Cherri signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -191,7 +191,7 @@ struct ContentView: View {
                 )
             }
 
-            Text("Export sends your shortcut to RoutineHub's HubSign service to be signed.")
+            Text("Export sends your shortcut to the Cherri Shortcuts signing server to be signed.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -206,7 +206,7 @@ struct ContentView: View {
             Button("Export") { exportToShortcuts() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Your shortcut will be sent to RoutineHub's HubSign service to be signed. You can turn this prompt off in Settings.")
+            Text("Your shortcut will be sent to the Cherri Shortcuts signing server to be signed. You can turn this prompt off in Settings.")
         }
         .alert("Add It to Shortcuts", isPresented: $showingShareTip) {
             Button("Continue") {
@@ -435,7 +435,7 @@ struct ContentView: View {
         return cleaned.isEmpty ? fallback : String(cleaned.prefix(80))
     }
 
-    // Compile, sign with HubSign, write a .shortcut file, then show the share sheet where "Shortcuts" imports it.
+    // Compile, sign with the Cherri signing server, write a .shortcut file, then show the share sheet where "Shortcuts" imports it.
     private func exportToShortcuts() {
         let code = source.trimmingCharacters(in: .whitespacesAndNewlines)
         let name = Self.shortcutName(from: code)
@@ -455,8 +455,8 @@ struct ContentView: View {
                     return data
                 }.value
 
-                status = "Signing with HubSign…"
-                let signed = try await HubSign.sign(plist: plist, name: name, compilerVersion: CherriCompilerVersion())
+                status = "Signing your shortcut…"
+                let signed = try await ShortcutSigner.sign(plist: plist, name: name, compilerVersion: CherriCompilerVersion())
 
                 let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(name).shortcut")
                 try signed.write(to: url, options: .atomic)

@@ -104,7 +104,7 @@ struct WelcomeView: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Beta notice", systemImage: "info.circle")
                 .font(.headline)
-            Text("This is an early beta, so expect rough edges. When you tap Export, your shortcut is sent to RoutineHub's HubSign service to be signed, because iOS only imports signed shortcuts. When you import, the iCloud link is looked up on iCloud to fetch that shortcut. Nothing is sent until you tap Export or start an import.")
+            Text("This is an early beta, so expect rough edges. When you tap Export, your shortcut is sent to the Cherri Shortcuts signing server to be signed, because iOS only imports signed shortcuts. When you import, the iCloud link is looked up on iCloud to fetch that shortcut. Nothing is sent until you tap Export or start an import.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

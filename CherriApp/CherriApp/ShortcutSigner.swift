@@ -1,7 +1,7 @@
 // ===================================
-// HubSign Client
-// v0.0.5 BUILD 2026-10-25 06:05
-// Sends a compiled (unsigned) Shortcut plist to RoutineHub's HubSign service and returns the signed .shortcut bytes.
+// Shortcut Signer Client
+// v0.0.6 BUILD 2026-11-06 22:10
+// Sends a compiled (unsigned) Shortcut plist to the Cherri Shortcuts signing server and returns the signed .shortcut bytes.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -11,7 +11,7 @@ import Foundation
 // ERRORS
 // ===================================
 
-enum HubSignError: LocalizedError {
+enum ShortcutSignerError: LocalizedError {
     case notText
     case network(String)
     case timedOut
@@ -24,23 +24,25 @@ enum HubSignError: LocalizedError {
         case .notText:
             return "The compiled Shortcut was not valid text, so it could not be sent for signing."
         case .network(let message):
-            return "Could not reach HubSign: \(message)"
+            return "Could not reach the signing server: \(message) The server may be offline. Your code is safe. Try Export again in a minute."
         case .timedOut:
-            return "HubSign did not answer within 60 seconds. The service may be busy or briefly down. Wait a minute and tap Export again. Your code is safe. If it keeps happening, tap Send Feedback about this error."
+            return "The signing server did not answer within 60 seconds. It may be busy or offline. Wait a minute and tap Export again. Your code is safe. If it keeps happening, tap Send Feedback about this error."
         case .badStatus(let code, let detail):
             let suffix = detail.map { " Server said: \($0)" } ?? ""
             switch code {
             case 429:
-                return "HubSign is limiting requests right now (HTTP 429). Wait a minute and try Export again.\(suffix)"
+                return "The signing server is limiting requests right now (HTTP 429). Wait a minute and try Export again.\(suffix)"
+            case 503:
+                return "The signing server is busy right now (HTTP 503) and the app already retried. Wait a moment and try Export again.\(suffix)"
             case 500...599:
-                return "HubSign had a problem on its end (HTTP \(code)) and the app already retried. Wait a moment and try Export again. If it keeps happening, tap Send Feedback in Settings.\(suffix)"
+                return "The signing server had a problem (HTTP \(code)) and the app already retried. It may be offline. Wait a moment and try Export again. If it keeps happening, tap Send Feedback in Settings.\(suffix)"
             default:
-                return "HubSign refused to sign the Shortcut (HTTP \(code)).\(suffix)"
+                return "The signing server refused to sign the Shortcut (HTTP \(code)).\(suffix)"
             }
         case .badContentType(let type):
-            return "HubSign sent back an unexpected response type: \(type)"
+            return "The signing server sent back an unexpected response type: \(type)"
         case .notAShortcut:
-            return "HubSign's response does not look like a signed Shortcut file."
+            return "The signing server's response does not look like a signed Shortcut file."
         }
     }
 }
@@ -49,10 +51,12 @@ enum HubSignError: LocalizedError {
 // CLIENT
 // ===================================
 
-enum HubSign {
-    static let endpoint = URL(string: "https://hubsign.routinehub.services/sign")!
+enum ShortcutSigner {
+    // The signing server is a small service on the developer's Mac, reached through a Tailscale Funnel address.
+    // The address stays the same across restarts, so changing it means shipping a new build.
+    static let endpoint = URL(string: "https://macbook-pro.tail9f62f6.ts.net/sign")!
 
-    // Same three types the Cherri command line accepts from this service.
+    // The server answers with raw bytes, so this is the type it sends. The other two stay accepted in case that changes.
     private static let allowedTypes = ["application/octet-stream", "application/x-plist", "application/x-apple-shortcut"]
 
     // Signed Shortcuts are AEA archives, which always begin with these four bytes.
@@ -60,10 +64,10 @@ enum HubSign {
 
     static func sign(plist: Data, name: String, compilerVersion: String) async throws -> Data {
         guard let xml = String(data: plist, encoding: .utf8) else {
-            throw HubSignError.notText
+            throw ShortcutSignerError.notText
         }
 
-        // Increased timeout to 60 seconds to accommodate server latency or network drops
+        // Signing takes a few seconds, and a cold start can take longer, so 60 seconds leaves room.
         var request = URLRequest(url: endpoint, timeoutInterval: 60)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -73,10 +77,9 @@ enum HubSign {
             "shortcut": xml
         ])
 
-        // HubSign is a free community service and its 500s come in bursts that can last a minute (a tiny shortcut
-        // failed twice in a row while a big one went through right after), so a server error or a rate limit gets
-        // four retries spread over about 20 seconds before the user sees a failure. Client errors and timeouts are
-        // not retried.
+        // Server errors, a busy server and rate limits get four retries spread over about 20 seconds before the user
+        // sees a failure, because a single sign occasionally fails and then works on the next try. Client errors and
+        // timeouts are not retried.
         let maxAttempts = 5
         var attempt = 1
         var result: (Data, URLResponse)
@@ -91,12 +94,12 @@ enum HubSign {
                     attempt += 1
                     continue
                 }
-                if (error as? URLError)?.code == .timedOut { throw HubSignError.timedOut }
-                throw HubSignError.network(error.localizedDescription)
+                if (error as? URLError)?.code == .timedOut { throw ShortcutSignerError.timedOut }
+                throw ShortcutSignerError.network(error.localizedDescription)
             }
 
             guard let http = result.1 as? HTTPURLResponse else {
-                throw HubSignError.network("No response from the server.")
+                throw ShortcutSignerError.network("No response from the server.")
             }
             if http.statusCode == 200 { break }
 
@@ -105,22 +108,22 @@ enum HubSign {
                 attempt += 1
                 continue
             }
-            throw HubSignError.badStatus(http.statusCode, diagnostics(http, body: result.0, attempt: attempt, since: started))
+            throw ShortcutSignerError.badStatus(http.statusCode, diagnostics(body: result.0, attempt: attempt, since: started))
         }
 
         guard let http = result.1 as? HTTPURLResponse else {
-            throw HubSignError.network("No response from the server.")
+            throw ShortcutSignerError.network("No response from the server.")
         }
 
         // The header can carry extras like "; charset=binary", so compare only the type itself.
         let rawType = http.value(forHTTPHeaderField: "Content-Type") ?? ""
         let type = rawType.split(separator: ";").first.map { $0.trimmingCharacters(in: .whitespaces).lowercased() } ?? ""
         guard allowedTypes.contains(type) else {
-            throw HubSignError.badContentType(rawType.isEmpty ? "none" : rawType)
+            throw ShortcutSignerError.badContentType(rawType.isEmpty ? "none" : rawType)
         }
 
         guard result.0.starts(with: signedMagic) else {
-            throw HubSignError.notAShortcut
+            throw ShortcutSignerError.notAShortcut
         }
 
         return result.0
@@ -139,12 +142,9 @@ enum HubSign {
         try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
     }
 
-    // What the server said plus how the request went, so a failure someone reports can be traced on HubSign's side.
-    // The Cloudflare ray ID identifies this exact request.
-    private static func diagnostics(_ http: HTTPURLResponse, body: Data, attempt: Int, since started: Date) -> String {
-        var parts = [bodySnippet(body) ?? "no message"]
-        parts.append("try \(attempt), \(Int(Date().timeIntervalSince(started))) s")
-        if let ray = http.value(forHTTPHeaderField: "cf-ray") { parts.append("ray \(ray)") }
+    // What the server said plus how the request went, so a failure someone reports can be matched to the server log.
+    private static func diagnostics(body: Data, attempt: Int, since started: Date) -> String {
+        let parts = [bodySnippet(body) ?? "no message", "try \(attempt), \(Int(Date().timeIntervalSince(started))) s"]
         return parts.joined(separator: " · ")
     }
 
@@ -155,4 +155,3 @@ enum HubSign {
         return text
     }
 }
-

@@ -64,7 +64,7 @@ let guideSections: [GuideSection] = [
     ]),
     GuideSection(id: "export", title: "Compile vs. Export", symbol: "square.and.arrow.up", blocks: [
         .text("**Compile** runs entirely on your device and sends nothing anywhere."),
-        .text("**Export** needs an internet connection. iOS only imports signed shortcuts, so your shortcut is sent to RoutineHub's HubSign service to be signed, then returned to you."),
+        .text("**Export** needs an internet connection. iOS only imports signed shortcuts, so your shortcut is sent to the Cherri Shortcuts signing server to be signed, then returned to you."),
         .text("In the share sheet, choose the **Shortcuts** icon (swipe the row if you don't see it). Shortcuts opens with an Add Shortcut screen. Tap the blue **Add Shortcut** button at the bottom."),
     ]),
     GuideSection(id: "import", title: "Importing a shortcut", symbol: "square.and.arrow.down", blocks: [
@@ -97,12 +97,12 @@ let guideSections: [GuideSection] = [
         .text("• No autocomplete yet. Use the Actions picker to insert actions."),
         .text("• Very large scripts may be slow. They are stored in the app's settings for now."),
         .text("• Some actions haven't been checked against the latest iOS. If an action misbehaves, tell me which one."),
-        .text("• Export always goes through HubSign. If it's down, Export won't work, but Compile will."),
+        .text("• Export always goes through the signing server. If it's down, Export won't work, but Compile will."),
         .text("• Import can't read every action yet. Unsupported ones are kept as `rawAction` lines and may not work after you compile."),
     ]),
     GuideSection(id: "about", title: "About", symbol: "info.circle", blocks: [
         .text("Cherri Shortcuts is made by Stefan Hottel (@dastefster) 🍒🔨"),
-        .text("It's built on **Cherri**, the open source Shortcuts language created by electrikmilk. Shortcut signing is provided by RoutineHub's HubSign."),
+        .text("It's built on **Cherri**, the open source Shortcuts language created by electrikmilk."),
     ]),
 ]
 

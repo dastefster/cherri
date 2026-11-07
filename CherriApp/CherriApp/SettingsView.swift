@@ -124,7 +124,7 @@ struct SettingsView: View {
             } header: {
                 Text("Export")
             } footer: {
-                Text("Export sends your shortcut to RoutineHub's HubSign service to be signed. Compile stays on your device. The export tip reminds you to tap Shortcuts in the share sheet.")
+                Text("Export sends your shortcut to the Cherri Shortcuts signing server to be signed. Compile stays on your device. The export tip reminds you to tap Shortcuts in the share sheet.")
             }
 
             Section("Your Code") {
@@ -218,7 +218,7 @@ struct LicensesView: View {
             }
 
             Section("Signing") {
-                Text("Shortcut signing is provided by RoutineHub's HubSign service.")
+                Text("Shortcuts are signed by the Cherri Shortcuts signing server, which is run by the app's developer.")
             }
 
             Section {

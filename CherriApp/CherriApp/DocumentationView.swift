@@ -40,9 +40,9 @@ let docTopics: [GuideSection] = [
         .tip("Compile as you go. Small steps make errors easy to spot."),
     ]),
     GuideSection(id: "export", title: "Export", symbol: "square.and.arrow.up", blocks: [
-        .text("**Export** compiles your code, gets the shortcut signed, and opens the share sheet. iOS only accepts signed shortcuts, and signing is done by RoutineHub's **HubSign** service, so Export needs an internet connection."),
+        .text("**Export** compiles your code, gets the shortcut signed, and opens the share sheet. iOS only accepts signed shortcuts, and signing is done by the Cherri Shortcuts signing server, so Export needs an internet connection."),
         .text("In the share sheet, choose the **Shortcuts** icon (swipe the row if you don't see it). Shortcuts opens with an Add Shortcut screen. Tap the blue **Add Shortcut** button at the bottom and the shortcut joins your library."),
-        .text("By default Cherri Shortcuts asks before exporting, because your shortcut is sent to HubSign. You can turn that question off in Settings, under **Ask Before Exporting**. Once your shortcut is signed, a short tip reminds you to tap **Shortcuts** in the share sheet; you can turn it off under **Show Export Tip**."),
+        .text("By default Cherri Shortcuts asks before exporting, because your shortcut is sent to the signing server. You can turn that question off in Settings, under **Ask Before Exporting**. Once your shortcut is signed, a short tip reminds you to tap **Shortcuts** in the share sheet; you can turn it off under **Show Export Tip**."),
         .tip("If Export seems stuck after choosing Save to Files, force-quit Cherri Shortcuts, reopen it, and pick the Shortcuts icon instead."),
     ]),
     GuideSection(id: "import", title: "Import", symbol: "square.and.arrow.down", blocks: [
@@ -61,7 +61,7 @@ let docTopics: [GuideSection] = [
         .text("**name** sets the shortcut's name, which is also used for the exported file. Without it, the name is Shortcut."),
         .text("**color** sets the shortcut's color. Choose from `red`, `darkorange`, `orange`, `yellow`, `green`, `teal`, `lightblue`, `blue`, `darkblue`, `violet`, `purple`, `pink`, `darkgray`, `gray` or `taupe`."),
         .text("**glyph** sets the icon on the shortcut. `apple` and `hammer` are two examples."),
-        .tip("Your shortcut's name is sent to HubSign along with the shortcut when you Export."),
+        .tip("Your shortcut's name is sent to the signing server along with the shortcut when you Export."),
     ]),
     GuideSection(id: "thirdparty", title: "Third-party app actions", symbol: "square.grid.2x2", blocks: [
         .text("The **Third-Party Apps** category holds actions for other apps, such as **Scriptable**, **Pythonista** and **Menu Box**. Other categories include actions for apps like Craft, Photos and Reminders."),
@@ -80,7 +80,7 @@ let docTopics: [GuideSection] = [
     GuideSection(id: "privacy", title: "Your code and your privacy", symbol: "lock.shield", blocks: [
         .text("Your code is stored only on your device."),
         .text("**Compile** never leaves your device."),
-        .text("**Export** sends the compiled shortcut to RoutineHub's HubSign service so it can be signed, and nothing else. Cherri Shortcuts has no accounts, no ads and no analytics."),
+        .text("**Export** sends the compiled shortcut and its name to the Cherri Shortcuts signing server, run by the app's developer, so it can be signed, and nothing else. The server doesn't keep a copy. Cherri Shortcuts has no accounts, no ads and no analytics."),
         .text("**Import** looks up the iCloud link you give it on Apple's iCloud servers to download that shortcut, and nothing else. The shortcut is turned into code on your device. The Share sheet option only reads the link and hands it to the app. It doesn't use the internet itself."),
         .text("If you install the app through TestFlight, Apple collects its own crash and usage data for testing."),
         .tip("The full privacy policy is in Settings, under About."),
@@ -90,7 +90,7 @@ let docTopics: [GuideSection] = [
         .text("• No autocomplete while typing yet. Use the Actions picker for now."),
         .text("• Very large scripts may feel slow, since your code is kept in the app's settings."),
         .text("• Some actions haven't been checked against every iOS version."),
-        .text("• Export needs HubSign to be online. Compile always works."),
+        .text("• Export needs the signing server to be online. Compile always works."),
         .text("• Import can't read every action yet. Unsupported ones are kept as `rawAction` lines, and a few of those may not survive a round trip."),
         .tip("If something misbehaves, tell me which action and what happened, and copy the full error message if there is one."),
     ]),

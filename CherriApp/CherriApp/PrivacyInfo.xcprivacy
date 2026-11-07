@@ -14,7 +14,7 @@
 	<false/>
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
-	<!-- The only data that leaves the device: the compiled shortcut sent to HubSign to be signed on Export. -->
+	<!-- The only data that leaves the device: the compiled shortcut sent to the Cherri Shortcuts signing server to be signed on Export. -->
 	<key>NSPrivacyCollectedDataTypes</key>
 	<array>
 		<dict>
