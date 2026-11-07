@@ -223,6 +223,8 @@ func Decompile(shortcutBytes []byte, name string) (result string, err error) {
 		// The Shortcuts app names every output after its action, so one shortcut often has many outputs called
 		// "Dictionary". The compiler only renames duplicates when this flag is set, which the CLI's own import does.
 		args.Args["import"] = ""
+		// Comment actions are part of a Shortcut, so keep them as comment() calls instead of '//' comments the compiler would drop.
+		args.Args["comments"] = ""
 		ensureStandardActions()
 
 		// Meeting an action it doesn't know makes the decompiler load another action file, which registers that
