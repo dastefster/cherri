@@ -1,6 +1,6 @@
 // ===================================
 // Shortcut Signer Client
-// v0.0.6 BUILD 2026-11-06 22:10
+// v0.0.7 BUILD 2026-11-09 21:38
 // Sends a compiled (unsigned) Shortcut plist to the Cherri Shortcuts signing server and returns the signed .shortcut bytes.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -54,7 +54,13 @@ enum ShortcutSignerError: LocalizedError {
 enum ShortcutSigner {
     // The signing server is a small service on the developer's Mac, reached through a Tailscale Funnel address.
     // The address stays the same across restarts, so changing it means shipping a new build.
-    static let endpoint = URL(string: "https://macbook-pro.tail9f62f6.ts.net/sign")!
+    static let server = URL(string: "https://macbook-pro.tail9f62f6.ts.net")!
+    static let endpoint = server.appendingPathComponent("sign")
+
+    // The server turns away anything that doesn't start with "CherriApp/", and the detail in brackets only helps tell requests apart in its log.
+    static func userAgent(detail: String) -> String {
+        "CherriApp/0.0.2 (\(detail))"
+    }
 
     // The server answers with raw bytes, so this is the type it sends. The other two stay accepted in case that changes.
     private static let allowedTypes = ["application/octet-stream", "application/x-plist", "application/x-apple-shortcut"]
@@ -71,11 +77,12 @@ enum ShortcutSigner {
         var request = URLRequest(url: endpoint, timeoutInterval: 60)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("CherriApp/0.0.2 (cherri/\(compilerVersion))", forHTTPHeaderField: "User-Agent")
-        request.httpBody = try JSONSerialization.data(withJSONObject: [
+        request.setValue(userAgent(detail: "cherri/\(compilerVersion)"), forHTTPHeaderField: "User-Agent")
+        let body = try JSONSerialization.data(withJSONObject: [
             "shortcutName": name,
             "shortcut": xml
         ])
+        request.httpBody = body
 
         // Server errors, a busy server and rate limits get four retries spread over about 20 seconds before the user
         // sees a failure, because a single sign occasionally fails and then works on the next try. Client errors and
@@ -86,8 +93,14 @@ enum ShortcutSigner {
         let started = Date()
 
         while true {
+            // Each attempt needs its own proof, because a challenge works only once. This never fails, it just comes back empty when proof isn't possible.
+            var attemptRequest = request
+            for (header, value) in await AppAttest.shared.headers(for: body) {
+                attemptRequest.setValue(value, forHTTPHeaderField: header)
+            }
+
             do {
-                result = try await URLSession.shared.data(for: request)
+                result = try await URLSession.shared.data(for: attemptRequest)
             } catch {
                 if attempt < maxAttempts, isRetryable(error) {
                     try await pause(attempt: attempt)
