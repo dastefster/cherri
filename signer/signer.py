@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================
 # Cherri Shortcuts Signer
-# v0.0.3 BUILD 2026-11-06 22:44
+# v0.0.4 BUILD 2026-11-09 21:04
 # Small local web service that signs Shortcuts with macOS's own `shortcuts sign`, using the same JSON-in, signed-bytes-out protocol HubSign used.
 # dev by @dastefster 🍒🔨
 # ===================================
@@ -10,6 +10,7 @@ import ipaddress
 import json
 import os
 import plistlib
+import secrets
 import subprocess
 import tempfile
 import threading
@@ -47,6 +48,11 @@ DEBUG = os.environ.get("SIGNER_DEBUG") == "1"
 
 SIGNED_MAGIC = b"AEA1"
 
+# Rejected requests are counted and summed up once a minute, so a scanner hammering the URL can't flood the log file.
+rejected_count = 0
+rejected_reported = time.time()
+rejected_lock = threading.Lock()
+
 sign_slots = threading.BoundedSemaphore(MAX_CONCURRENT_SIGNS)
 recent_hits = {}
 recent_hits_lock = threading.Lock()
@@ -59,6 +65,16 @@ recent_hits_lock = threading.Lock()
 # Never logs shortcut contents or names, only sizes and outcomes, so there is nothing sensitive on disk.
 def log(message):
     print(time.strftime("%Y-%m-%d %H:%M:%S"), message, flush=True)
+
+
+def note_rejected():
+    global rejected_count, rejected_reported
+    with rejected_lock:
+        rejected_count += 1
+        if time.time() - rejected_reported >= 60:
+            log("403 rejected {} request(s) without the app header in the last minute".format(rejected_count))
+            rejected_count = 0
+            rejected_reported = time.time()
 
 
 # ===================================
@@ -193,6 +209,7 @@ class Handler(BaseHTTPRequestHandler):
 
         # The app always identifies itself, so generic scanners and bots are turned away before they cost anything.
         if not (self.headers.get("User-Agent") or "").startswith("CherriApp/"):
+            note_rejected()
             self.reply(403, "Not allowed.")
             return
 
@@ -236,8 +253,11 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(503, "Signing is busy right now. Try again in a moment.", extra={"Retry-After": "10"})
             return
         except RuntimeError as error:
-            log("502 sign failed: {}".format(error))
-            self.reply(502, "Signing failed: {}".format(error))
+            # The tool's own message can name paths or crash details, so it stays in the private log. The person gets a short
+            # code instead, which is enough for them to report and for the log to be searched.
+            code = secrets.token_hex(3)
+            log("502 sign failed [{}]: {}".format(code, error))
+            self.reply(502, "Signing failed. Try again, and if it keeps happening send feedback and mention code {}.".format(code))
             return
 
         log("200 signed {} bytes in, {} bytes out, {:.1f}s".format(len(xml_bytes), len(signed), time.time() - started))
