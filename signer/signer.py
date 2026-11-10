@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # ===================================
 # Cherri Shortcuts Signer
-# v0.0.4 BUILD 2026-11-09 21:04
-# Small local web service that signs Shortcuts with macOS's own `shortcuts sign`, using the same JSON-in, signed-bytes-out protocol HubSign used.
+# v0.0.5 BUILD 2026-11-09 21:32
+# Small local web service that signs Shortcuts with macOS's own `shortcuts sign`, using the same JSON-in, signed-bytes-out protocol HubSign used. App Attest is wired in log-only: requests are checked and the result is logged, but nothing is refused for lacking it yet.
 # dev by @dastefster 🍒🔨
 # ===================================
 
@@ -16,6 +16,13 @@ import tempfile
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+# Attestation is optional while it is rolled out, so a missing library or a broken database must never stop signing.
+try:
+    import attest
+except Exception as import_error:
+    attest = None
+    ATTEST_IMPORT_ERROR = "{}: {}".format(type(import_error).__name__, import_error)
 
 
 # ===================================
@@ -43,6 +50,16 @@ RATE_LIMIT_WINDOW = 60
 GLOBAL_LIMIT_COUNT = 60
 GLOBAL_KEY = "*all*"
 
+# Each kind of request counts against its own limits, so asking for challenges can never use up the signing allowance. Registering a device is the costly one (it parses certificates), so it is the tightest.
+# Pairs are (per client, everybody) per minute.
+LIMITS = {
+    "sign": (RATE_LIMIT_COUNT, GLOBAL_LIMIT_COUNT),
+    "challenge": (30, 300),
+    "attest": (6, 60),
+}
+
+MAX_ATTEST_BODY_BYTES = 64 * 1024
+
 # Set SIGNER_DEBUG=1 to log the address headers each request arrives with. Off by default.
 DEBUG = os.environ.get("SIGNER_DEBUG") == "1"
 
@@ -52,6 +69,9 @@ SIGNED_MAGIC = b"AEA1"
 rejected_count = 0
 rejected_reported = time.time()
 rejected_lock = threading.Lock()
+
+# Set up at startup. None means attestation is off, and requests are handled exactly as before.
+attest_store = None
 
 sign_slots = threading.BoundedSemaphore(MAX_CONCURRENT_SIGNS)
 recent_hits = {}
@@ -81,28 +101,48 @@ def note_rejected():
 # RATE LIMITING
 # ===================================
 
-def rate_limited(client):
+def rate_limited(client, scope="sign"):
+    per_client, per_everyone = LIMITS[scope]
+    client_key = "{}:{}".format(scope, client)
+    global_key = "{}:{}".format(scope, GLOBAL_KEY)
     now = time.time()
     with recent_hits_lock:
-        everyone = [t for t in recent_hits.get(GLOBAL_KEY, []) if now - t < RATE_LIMIT_WINDOW]
-        if len(everyone) >= GLOBAL_LIMIT_COUNT:
-            recent_hits[GLOBAL_KEY] = everyone
+        everyone = [t for t in recent_hits.get(global_key, []) if now - t < RATE_LIMIT_WINDOW]
+        if len(everyone) >= per_everyone:
+            recent_hits[global_key] = everyone
             return True
 
-        hits = [t for t in recent_hits.get(client, []) if now - t < RATE_LIMIT_WINDOW]
-        if len(hits) >= RATE_LIMIT_COUNT:
-            recent_hits[client] = hits
+        hits = [t for t in recent_hits.get(client_key, []) if now - t < RATE_LIMIT_WINDOW]
+        if len(hits) >= per_client:
+            recent_hits[client_key] = hits
             return True
         hits.append(now)
-        recent_hits[client] = hits
+        recent_hits[client_key] = hits
         everyone.append(now)
-        recent_hits[GLOBAL_KEY] = everyone
+        recent_hits[global_key] = everyone
 
         # Keeps the table from growing forever.
         if len(recent_hits) > 5000:
             for key in [k for k, v in recent_hits.items() if not v or now - v[-1] >= RATE_LIMIT_WINDOW]:
                 recent_hits.pop(key, None)
     return False
+
+
+# ===================================
+# APP ATTEST SETUP
+# ===================================
+
+def start_attestation():
+    global attest_store
+    if attest is None:
+        log("App Attest is off: {}".format(ATTEST_IMPORT_ERROR))
+        return
+    try:
+        attest_store = attest.AttestStore()
+        log("App Attest is on (log only), {} registered device(s)".format(attest_store.count_keys()))
+    except Exception as error:
+        attest_store = None
+        log("App Attest is off: {}: {}".format(type(error).__name__, error))
 
 
 # ===================================
@@ -193,24 +233,109 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    # The app always identifies itself, so generic scanners and bots are turned away before they cost anything.
+    def from_app(self):
+        if (self.headers.get("User-Agent") or "").startswith("CherriApp/"):
+            return True
+        note_rejected()
+        self.reply(403, "Not allowed.")
+        return False
+
     def do_GET(self):
         if self.path == "/health":
             self.reply(200, "ok")
+        elif self.path == "/challenge":
+            self.handle_challenge()
         else:
             self.reply(404, "Not found")
+
+    # Hands out a one-time challenge for the app to sign. A 503 tells a newer app that attestation isn't available, and it carries on without.
+    def handle_challenge(self):
+        client = self.client_id()
+        if not self.from_app():
+            return
+        if attest_store is None:
+            self.reply(503, "Not available.")
+            return
+        if rate_limited(client, "challenge"):
+            self.reply(429, "Too many requests. Wait a minute and try again.", extra={"Retry-After": "30"})
+            return
+        try:
+            challenge = attest_store.new_challenge()
+        except attest.AttestError:
+            self.reply(503, "Busy right now. Try again in a moment.", extra={"Retry-After": "10"})
+            return
+        self.reply(200, json.dumps({"challenge": challenge}), content_type="application/json")
+
+    # Registers a device from its attestation. The reason a check failed goes to the log only.
+    def handle_attest(self):
+        client = self.client_id()
+        if not self.from_app():
+            return
+        if attest_store is None:
+            self.reply(503, "Not available.")
+            return
+        if rate_limited(client, "attest"):
+            log("429 attest rate limited")
+            self.reply(429, "Too many requests. Wait a minute and try again.", extra={"Retry-After": "30"})
+            return
+
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        if length <= 0 or length > MAX_ATTEST_BODY_BYTES:
+            self.reply(400, "Attestation failed.")
+            return
+
+        try:
+            payload = json.loads(self.rfile.read(length))
+            environment = attest_store.register(payload["keyId"], payload["attestation"], payload["challenge"])
+        except attest.AttestError as error:
+            log("400 attest failed [{}] {}".format(error.code, error.detail[:160]))
+            if error.code == "busy":
+                self.reply(503, "Busy right now. Try again in a moment.", extra={"Retry-After": "10"})
+            else:
+                self.reply(400, "Attestation failed.")
+            return
+        except Exception:
+            log("400 attest bad request")
+            self.reply(400, "Attestation failed.")
+            return
+
+        log("200 registered a {} device, {} known".format(environment, attest_store.count_keys()))
+        self.reply(200, json.dumps({"ok": True}), content_type="application/json")
+
+    # Log-only for now: says whether the request proved it came from the real app, and never refuses anything.
+    def attestation_result(self, raw_body):
+        key = self.headers.get("X-Attest-Key")
+        assertion = self.headers.get("X-Attest-Assertion")
+        challenge = self.headers.get("X-Attest-Challenge")
+        if not (key and assertion and challenge):
+            return "unattested"
+        if attest_store is None:
+            return "unattested (attestation off)"
+        try:
+            key_id, counter = attest_store.check_assertion(key, assertion, challenge, raw_body)
+        except attest.AttestError as error:
+            return "attest failed [{}]".format(error.code)
+        except Exception as error:
+            return "attest error [{}]".format(type(error).__name__)
+        return "attested {} #{}".format(key_id.hex()[:8], counter)
 
     def do_POST(self):
         started = time.time()
         client = self.client_id()
 
+        if self.path == "/attest":
+            self.handle_attest()
+            return
+
         if self.path != "/sign":
             self.reply(404, "Not found")
             return
 
-        # The app always identifies itself, so generic scanners and bots are turned away before they cost anything.
-        if not (self.headers.get("User-Agent") or "").startswith("CherriApp/"):
-            note_rejected()
-            self.reply(403, "Not allowed.")
+        if not self.from_app():
             return
 
         if rate_limited(client):
@@ -230,7 +355,8 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         try:
-            payload = json.loads(self.rfile.read(length))
+            raw_body = self.rfile.read(length)
+            payload = json.loads(raw_body)
             name = payload["shortcutName"]
             xml = payload["shortcut"]
             if not isinstance(name, str) or not isinstance(xml, str) or len(name) > MAX_NAME_LENGTH:
@@ -246,21 +372,23 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(400, "That does not look like a compiled Shortcut.")
             return
 
+        proof = self.attestation_result(raw_body)
+
         try:
             signed = sign_plist(xml_bytes)
         except TimeoutError:
-            log("503 busy")
+            log("503 busy ({})".format(proof))
             self.reply(503, "Signing is busy right now. Try again in a moment.", extra={"Retry-After": "10"})
             return
         except RuntimeError as error:
             # The tool's own message can name paths or crash details, so it stays in the private log. The person gets a short
             # code instead, which is enough for them to report and for the log to be searched.
             code = secrets.token_hex(3)
-            log("502 sign failed [{}]: {}".format(code, error))
+            log("502 sign failed [{}] ({}): {}".format(code, proof, error))
             self.reply(502, "Signing failed. Try again, and if it keeps happening send feedback and mention code {}.".format(code))
             return
 
-        log("200 signed {} bytes in, {} bytes out, {:.1f}s".format(len(xml_bytes), len(signed), time.time() - started))
+        log("200 signed {} bytes in, {} bytes out, {:.1f}s, {}".format(len(xml_bytes), len(signed), time.time() - started, proof))
         self.reply(200, signed, content_type="application/octet-stream")
 
 
@@ -269,6 +397,7 @@ class Handler(BaseHTTPRequestHandler):
 # ===================================
 
 if __name__ == "__main__":
+    start_attestation()
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     log("Cherri signer listening on http://{}:{}".format(HOST, PORT))
     try:

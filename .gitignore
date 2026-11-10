@@ -7,3 +7,9 @@ DerivedData/
 .DS_Store
 *.xcuserstate
 backups/
+
+# Signer
+signer/.venv/
+signer/__pycache__/
+signer/attest.db*
+signer/*.bak*
