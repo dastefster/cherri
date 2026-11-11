@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.31 BUILD 2026-11-07 16:58
+// v0.0.32 BUILD 2026-11-10 19:52
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the Cherri signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -347,14 +347,21 @@ struct ContentView: View {
                 }
             }
         } else {
-            ScrollView {
-                Text(status)
-                    .font(.system(.footnote, design: .monospaced))
-                    .foregroundStyle(Color.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .textSelection(.enabled)
+            // The spinner shows for the whole compile, sign or import, so a quick failure still reads as "it tried" and a 4 to 5 second sign doesn't look frozen.
+            HStack(alignment: .top, spacing: 8) {
+                if working {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+                ScrollView {
+                    Text(status)
+                        .font(.system(.footnote, design: .monospaced))
+                        .foregroundStyle(Color.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .textSelection(.enabled)
+                }
+                .frame(maxHeight: 140)
             }
-            .frame(maxHeight: 140)
         }
     }
 
@@ -510,7 +517,7 @@ struct ContentView: View {
                 }.value
 
                 status = "Signing your shortcut…"
-                let signed = try await ShortcutSigner.sign(plist: plist, name: name, compilerVersion: CherriCompilerVersion())
+                let signed = try await ShortcutSigner.sign(plist: plist, name: name, compilerVersion: CherriCompilerVersion(), onRetry: { status = $0 })
 
                 let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(name).shortcut")
                 try signed.write(to: url, options: .atomic)

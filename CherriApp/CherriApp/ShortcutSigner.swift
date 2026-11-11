@@ -1,6 +1,6 @@
 // ===================================
 // Shortcut Signer Client
-// v0.0.7 BUILD 2026-11-09 21:38
+// v0.0.10 BUILD 2026-11-10 19:46
 // Sends a compiled (unsigned) Shortcut plist to the Cherri Shortcuts signing server and returns the signed .shortcut bytes.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -13,8 +13,9 @@ import Foundation
 
 enum ShortcutSignerError: LocalizedError {
     case notText
+    case offline
+    case unavailable
     case network(String)
-    case timedOut
     case badStatus(Int, String?)
     case badContentType(String)
     case notAShortcut
@@ -25,8 +26,10 @@ enum ShortcutSignerError: LocalizedError {
             return "The compiled Shortcut was not valid text, so it could not be sent for signing."
         case .network(let message):
             return "Could not reach the signing server: \(message) The server may be offline. Your code is safe. Try Export again in a minute."
-        case .timedOut:
-            return "The signing server did not answer within 60 seconds. It may be busy or offline. Wait a minute and tap Export again. Your code is safe. If it keeps happening, tap Send Feedback about this error."
+        case .offline:
+            return "Your device looks offline, so the Shortcut could not be sent for signing. Check your connection and tap Export again. Your code is safe."
+        case .unavailable:
+            return "Signing is temporarily unavailable. The signing service can't be reached right now, and it's not a problem with your code. Your code is safe. Try Export again in a little while."
         case .badStatus(let code, let detail):
             let suffix = detail.map { " Server said: \($0)" } ?? ""
             switch code {
@@ -68,7 +71,8 @@ enum ShortcutSigner {
     // Signed Shortcuts are AEA archives, which always begin with these four bytes.
     private static let signedMagic = Array("AEA1".utf8)
 
-    static func sign(plist: Data, name: String, compilerVersion: String) async throws -> Data {
+    // onRetry lets the caller show what is happening, because a retry after a failed connection can take several seconds and a frozen "Signing…" looks stuck.
+    static func sign(plist: Data, name: String, compilerVersion: String, onRetry: (@MainActor (String) -> Void)? = nil) async throws -> Data {
         guard let xml = String(data: plist, encoding: .utf8) else {
             throw ShortcutSignerError.notText
         }
@@ -86,9 +90,11 @@ enum ShortcutSigner {
 
         // Server errors, a busy server and rate limits get four retries spread over about 20 seconds before the user
         // sees a failure, because a single sign occasionally fails and then works on the next try. Client errors and
-        // timeouts are not retried.
+        // timeouts are not retried. A connection that gets cut twice in a row gets one retry only: with the Mac offline
+        // the tunnel resets every request, and five rounds of that kept the user waiting about a minute.
         let maxAttempts = 5
         var attempt = 1
+        var droppedConnections = 0
         var result: (Data, URLResponse)
         let started = Date()
 
@@ -101,13 +107,19 @@ enum ShortcutSigner {
 
             do {
                 result = try await URLSession.shared.data(for: attemptRequest)
+                droppedConnections = 0
             } catch {
-                if attempt < maxAttempts, isRetryable(error) {
+                if isRetryable(error) { droppedConnections += 1 }
+                if attempt < maxAttempts, droppedConnections < 2, isRetryable(error) {
+                    await onRetry?("Having trouble reaching the signing server, trying again…")
                     try await pause(attempt: attempt)
                     attempt += 1
                     continue
                 }
-                if (error as? URLError)?.code == .timedOut { throw ShortcutSignerError.timedOut }
+                if let urlError = error as? URLError {
+                    if offlineCodes.contains(urlError.code) { throw ShortcutSignerError.offline }
+                    if unreachableCodes.contains(urlError.code) { throw ShortcutSignerError.unavailable }
+                }
                 throw ShortcutSignerError.network(error.localizedDescription)
             }
 
@@ -117,9 +129,14 @@ enum ShortcutSigner {
             if http.statusCode == 200 { break }
 
             if attempt < maxAttempts, http.statusCode == 429 || http.statusCode >= 500 {
+                await onRetry?("The signing server is busy, trying again…")
                 try await pause(attempt: attempt, retryAfter: http.value(forHTTPHeaderField: "Retry-After"))
                 attempt += 1
                 continue
+            }
+            // The signer's own 502 carries a plain-text reason. A 502 or 504 with none came from the tunnel, which means the signer is not answering.
+            if http.statusCode == 502 || http.statusCode == 504, bodySnippet(result.0) == nil {
+                throw ShortcutSignerError.unavailable
             }
             throw ShortcutSignerError.badStatus(http.statusCode, diagnostics(body: result.0, attempt: attempt, since: started))
         }
@@ -141,6 +158,12 @@ enum ShortcutSigner {
 
         return result.0
     }
+
+    // The phone itself has no usable connection.
+    private static let offlineCodes: Set<URLError.Code> = [.notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff]
+
+    // The phone is online but the signer never answered. The Mac may be asleep, offline or restarting.
+    private static let unreachableCodes: Set<URLError.Code> = [.timedOut, .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed, .networkConnectionLost, .secureConnectionFailed]
 
     // A dropped connection is worth another try. A timeout already cost 60 seconds, so it is not.
     private static func isRetryable(_ error: Error) -> Bool {
