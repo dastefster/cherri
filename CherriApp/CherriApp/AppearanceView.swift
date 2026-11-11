@@ -1,6 +1,6 @@
 // ===================================
 // Appearance Settings
-// v0.0.7 BUILD 2026-10-22 00:50
+// v0.0.10 BUILD 2026-11-11 16:58
 // Live code preview, light and dark theme pickers (they follow the system appearance), font picker, font size stepper, and App Icon picker.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -49,6 +49,7 @@ struct AppearanceView: View {
                 Text("Editor Theme")
             } footer: {
                 Text("Your iPhone's light or dark appearance decides which theme the editor uses.")
+                    .foregroundStyle(Color.helperText)
             }
 
             Section {
@@ -132,18 +133,23 @@ struct CodePreview: UIViewRepresentable {
     """
 
     func makeUIView(context: Context) -> UITextView {
-        let textView = UITextView()
+        let textView = FramedTextView()
         textView.isEditable = false
         textView.isSelectable = false
         textView.isScrollEnabled = false
+        // The list row clips its contents to the system's rounded card shape (about 26pt, continuous). Matching it here lets a theme's border follow the same curve instead of being cut off at the corners.
+        textView.layer.cornerRadius = 26
+        textView.layer.cornerCurve = .continuous
         textView.textContainerInset = UIEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
         textView.text = Self.sample
+        textView.hidesFrame = style.theme.id == EditorSettings.defaultThemeID
 
         CherriHighlighter.style(textView, with: style)
         return textView
     }
 
     func updateUIView(_ uiView: UITextView, context: Context) {
+        (uiView as? FramedTextView)?.hidesFrame = style.theme.id == EditorSettings.defaultThemeID
         CherriHighlighter.style(uiView, with: style)
     }
 

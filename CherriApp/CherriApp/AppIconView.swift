@@ -1,6 +1,6 @@
 // ===================================
 // App Icon Picker
-// v0.0.4 BUILD 2026-10-21 16:10
+// v0.0.5 BUILD 2026-11-11 16:58
 // Grid of the available app icons with a preview of each; tapping one switches the Home Screen icon.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -56,7 +56,7 @@ struct AppIconView: View {
 
             Text("Default and Glass follow your iPhone's light and dark appearance. If they don't switch, check your Home Screen icon style under Edit → Customize. Purple stays as chosen.")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.helperText)
                 .padding(.horizontal)
                 .padding(.bottom)
         }
@@ -98,7 +98,7 @@ struct AppIconView: View {
                     }
                 Text(option.title)
                     .font(.footnote)
-                    .foregroundStyle(selected ? .primary : .secondary)
+                    .foregroundStyle(selected ? Color.primary : Color.helperText)
             }
         }
         .buttonStyle(.plain)

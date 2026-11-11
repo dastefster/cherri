@@ -1,6 +1,6 @@
 // ===================================
 // Import View
-// v0.0.2 BUILD 2026-10-25 05:20
+// v0.0.4 BUILD 2026-11-11 16:58
 // The Import sheet: paste a Shortcuts iCloud link (with Apple's no-prompt Paste button), import it into the editor, and reach support if the shortcut can't be read.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -22,6 +22,7 @@ struct ImportView: View {
     @State private var working = false
     @State private var failure: ShortcutImporter.Failure?
 
+
     // ===================================
     // BODY
     // ===================================
@@ -32,11 +33,11 @@ struct ImportView: View {
                 Section {
                     Text("In the Shortcuts app, open a shortcut's share menu and tap Copy iCloud Link. Then come back here and tap Paste.")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.helperText)
                 }
 
-                Section("iCloud link") {
-                    TextField("https://www.icloud.com/shortcuts/…", text: $link)
+                Section {
+                    TextField("", text: $link, prompt: Text("https://www.icloud.com/shortcuts/…").foregroundStyle(Color.primary.opacity(0.45)))
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .keyboardType(.URL)
@@ -56,8 +57,11 @@ struct ImportView: View {
                     if clipboardMayHaveLink {
                         Label("There's a link on your clipboard. Tap Paste to use it.", systemImage: "doc.on.clipboard")
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.helperText)
                     }
+                } header: {
+                    Text("iCloud link")
+                        .foregroundStyle(Color.helperText)
                 }
 
                 Section {
@@ -108,7 +112,7 @@ struct ImportView: View {
                 }
                 Text("This opens the feedback form with the error and your shortcut's link filled in, so you can review it before sending.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.helperText)
                 Link(destination: Feedback.mailURL) {
                     Label("Email instead", systemImage: "envelope")
                 }

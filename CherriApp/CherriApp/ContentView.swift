@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.32 BUILD 2026-11-10 19:52
+// v0.0.35 BUILD 2026-11-11 16:58
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the Cherri signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -167,6 +167,7 @@ struct ContentView: View {
                 }
 
             HStack(spacing: 12) {
+                // Only Compile takes the accent color. The other three are neutral so nothing but the primary action competes for attention.
                 Button(action: {
                     // Drop the keyboard first so the first tap opens the picker instead of fighting the text view for focus.
                     editor.textView?.resignFirstResponder()
@@ -178,6 +179,7 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+                .tint(.primary)
 
                 Button(action: compile) {
                     Text("Compile")
@@ -196,6 +198,7 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+                .tint(.primary)
 
                 Button(action: {
                     editor.textView?.resignFirstResponder()
@@ -207,6 +210,7 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+                .tint(.primary)
             }
             .disabled(working)
             .sheet(isPresented: $showingImport) {
@@ -226,7 +230,7 @@ struct ContentView: View {
 
             Text("Export sends your shortcut to the Cherri Shortcuts signing server to be signed.")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.helperText)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             statusArea
@@ -313,8 +317,9 @@ struct ContentView: View {
         if failed {
             VStack(alignment: .leading, spacing: 8) {
                 Text(headline)
-                    .font(.system(.footnote, design: .monospaced))
-                    .foregroundStyle(Color.red)
+                    // System red is too pale on white for small text (about 3.6:1), so errors use the darker Cherri red, which also keeps red meaning one thing in the app.
+                    .font(.system(.footnote, design: .monospaced).weight(.medium))
+                    .foregroundStyle(Color("CherriRed"))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
 
@@ -331,15 +336,18 @@ struct ContentView: View {
                     }
                 }
                 .font(.footnote)
+                // Neutral so the red error line stays the only red thing here and these still read as buttons.
+                .tint(.primary)
 
                 Link("Send Feedback about this error", destination: Feedback.url(error: headline))
                     .font(.footnote)
+                    .tint(.primary)
 
                 if showDetails {
                     ScrollView {
                         Text(status)
-                            .font(.system(.footnote, design: .monospaced))
-                            .foregroundStyle(Color.red.opacity(0.7))
+                            .font(.system(.footnote, design: .monospaced).weight(.medium))
+                            .foregroundStyle(Color("CherriRed").opacity(0.85))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .textSelection(.enabled)
                     }
@@ -356,7 +364,7 @@ struct ContentView: View {
                 ScrollView {
                     Text(status)
                         .font(.system(.footnote, design: .monospaced))
-                        .foregroundStyle(Color.secondary)
+                        .foregroundStyle(Color.helperText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)
                 }

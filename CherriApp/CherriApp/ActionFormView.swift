@@ -1,6 +1,6 @@
 // ===================================
 // Action Form
-// v0.0.9 BUILD 2026-11-07 14:20
+// v0.0.13 BUILD 2026-11-11 16:58
 // Fill-in form for one action: a field per parameter in plain words, a live preview of the Cherri call, and an Insert button that writes the call with nil in any skipped slot. A list slot, or any slot that can be repeated (List, Email Address, URL, ...), takes its items in rows like the Shortcuts app's List action. An action that returns something can be given a name, so later actions can use that result.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -44,6 +44,7 @@ struct ActionFormView: View {
                         Toggle(variant.switchTitle, isOn: $useAlternate)
                     } footer: {
                         Text(variant.switchNote)
+                            .foregroundStyle(Color.helperText)
                     }
                 }
 
@@ -64,6 +65,7 @@ struct ActionFormView: View {
                 } footer: {
                     if action.params.contains(where: { $0.isOptional }) {
                         Text("Leave an optional field empty to use its default.")
+                            .foregroundStyle(Color.helperText)
                     }
                 }
 
@@ -99,6 +101,7 @@ struct ActionFormView: View {
                 }
             }
             .scrollDismissesKeyboard(.interactively)
+            .scrollBounceBehavior(.always)
             .navigationTitle(action.displayName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -112,6 +115,7 @@ struct ActionFormView: View {
                 }
             }
         }
+        .dismissesKeyboard()
     }
 
     private func binding(for param: CatalogParam) -> Binding<String> {
@@ -185,7 +189,7 @@ private struct ItemRowsEditor: View {
                 HStack(spacing: 10) {
                     Image(systemName: "plus.circle.fill")
                         .font(.title3)
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Color("CherriGreen"))
                     Text("Add New Item")
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -233,7 +237,7 @@ private struct ParamField: View {
                 Spacer()
                 Text(param.isOptional ? "optional" : "required")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.helperText)
             }
 
             control

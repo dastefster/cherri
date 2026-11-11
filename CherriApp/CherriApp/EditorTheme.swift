@@ -1,6 +1,6 @@
 // ===================================
 // Editor Themes, Fonts and Settings Keys
-// v0.0.8 BUILD 2026-10-22 00:55
+// v0.0.10 BUILD 2026-11-11 16:16
 // Color themes (each with light or dark use), monospaced font choices, and the saved-settings keys shared by the editor and the Settings screens.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -80,13 +80,23 @@ extension EditorTheme {
         all.first(where: { $0.id == id }) ?? standard
     }
 
-    // Follows the system light and dark appearance with the system's own colors.
+    // Follows the system light and dark appearance. Dark mode keeps the system's own colors. Light mode gets a white card with a thin purple frame
+    // and darker syntax colors, because the system colors are tuned for dark and wash out on white (teal and cyan sit near 2.3:1).
     static var standard: EditorTheme {
         EditorTheme(
             id: EditorSettings.defaultThemeID, name: "Default",
-            background: .secondarySystemBackground, text: .label, comment: .systemGray,
-            string: .systemRed, number: .systemPurple, keyword: .systemPink,
-            variable: .systemTeal, action: .systemBlue, type: .systemCyan, caret: .systemBlue
+            background: UIColor { $0.userInterfaceStyle == .dark ? .secondarySystemBackground : .systemBackground },
+            text: .label,
+            comment: UIColor { $0.userInterfaceStyle == .dark ? .systemGray : UIColor(hex: 0x6E6E73) },
+            string: UIColor { $0.userInterfaceStyle == .dark ? .systemRed : UIColor(hex: 0xC43226) },
+            number: UIColor { $0.userInterfaceStyle == .dark ? .systemPurple : UIColor(hex: 0x8944AB) },
+            keyword: UIColor { $0.userInterfaceStyle == .dark ? .systemPink : UIColor(hex: 0xC2185B) },
+            variable: UIColor { $0.userInterfaceStyle == .dark ? .systemTeal : UIColor(hex: 0x00747F) },
+            action: UIColor { $0.userInterfaceStyle == .dark ? .systemBlue : UIColor(hex: 0x0A4FD6) },
+            type: UIColor { $0.userInterfaceStyle == .dark ? .systemCyan : UIColor(hex: 0x00708F) },
+            caret: UIColor(named: "AccentColor") ?? .systemBlue,
+            // Clear in dark mode: the frame only exists to separate a white card from a white screen.
+            border: UIColor { $0.userInterfaceStyle == .dark ? .clear : UIColor(hex: 0x8E3B8F) }
         )
     }
 

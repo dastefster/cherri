@@ -1,6 +1,6 @@
 // ===================================
 // Documentation
-// v0.0.8 BUILD 2026-10-25 07:25
+// v0.0.9 BUILD 2026-11-11 16:58
 // In-app reference for everything Cherri Shortcuts does in beta 1: the editor, the Actions picker, Compile, Export, third-party app actions, Settings, and what stays on your device. Content lives in the docTopics array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -115,6 +115,7 @@ struct DocumentationView: View {
                 }
             } footer: {
                 Text("What Cherri Shortcuts can do in beta 1. More will be added as the app grows.")
+                    .foregroundStyle(Color.helperText)
             }
 
             Section("Cherri language") {

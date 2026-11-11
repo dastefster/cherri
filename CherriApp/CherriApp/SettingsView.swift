@@ -1,6 +1,6 @@
 // ===================================
 // Settings
-// v0.0.13 BUILD 2026-10-25 07:45
+// v0.0.15 BUILD 2026-11-11 16:58
 // Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses, one Send Feedback row that opens a small menu: form or email) and a debug-only Developer section. App Icon opens a grid picker (see AppIconView).
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -125,6 +125,7 @@ struct SettingsView: View {
                 Text("Export")
             } footer: {
                 Text("Export sends your shortcut to the Cherri Shortcuts signing server to be signed. Compile stays on your device. The export tip reminds you to tap Shortcuts in the share sheet.")
+                    .foregroundStyle(Color.helperText)
             }
 
             Section("Your Code") {
@@ -147,6 +148,8 @@ struct SettingsView: View {
                 Button(action: onShowWelcome) {
                     SettingsLabel(title: "Show Welcome Screen", symbol: "hand.wave.fill", color: .orange)
                 }
+                // Brandon's purple is too dim as text on dark rows, so link text uses a lighter purple in dark mode only.
+                .tint(Color("CherriPurpleText"))
             }
 
             Section("About") {
@@ -163,6 +166,7 @@ struct SettingsView: View {
                 Link(destination: URL(string: "https://cherrilang.org")!) {
                     SettingsLabel(title: "Cherri Language", symbol: "globe", color: .blue)
                 }
+                .tint(Color("CherriPurpleText"))
                 NavigationLink {
                     LicensesView()
                 } label: {
@@ -171,6 +175,7 @@ struct SettingsView: View {
                 Link(destination: URL(string: "https://dastefster.github.io/cherricuts/privacy.html")!) {
                     SettingsLabel(title: "Privacy Policy", symbol: "hand.raised.fill", color: .blue)
                 }
+                .tint(Color("CherriPurpleText"))
                 // One row; the form-or-email choice lives on its own screen so the list stays short.
                 NavigationLink {
                     FeedbackView()
@@ -200,6 +205,15 @@ struct SettingsView: View {
 }
 
 // ===================================
+// SHARED TEXT COLOR
+// ===================================
+
+extension Color {
+    // The system's secondary gray is about 3.5:1 on white, too faint for text people have to read. 60% of the text color is about 5.7:1 in light mode and still soft in dark mode. Used for helper text, captions and footers app-wide.
+    static let helperText = Color.primary.opacity(0.6)
+}
+
+// ===================================
 // LICENSES VIEW
 // ===================================
 
@@ -209,12 +223,16 @@ struct LicensesView: View {
             Section {
                 Text("Cherri Shortcuts includes the Cherri compiler, created by the Cherri developers (electrikmilk and contributors) and licensed under the GNU General Public License, version 2. Cherri Shortcuts uses a modified build that adds extra actions, and the source for it is available below.")
                 Link("Cherri (original)", destination: URL(string: "https://github.com/electrikmilk/cherri")!)
+                .tint(Color("CherriPurpleText"))
                 Link("Cherri build used by Cherri Shortcuts", destination: URL(string: "https://github.com/dastefster/cherri")!)
+                .tint(Color("CherriPurpleText"))
                 Link("GNU GPL version 2", destination: URL(string: "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html")!)
+                .tint(Color("CherriPurpleText"))
             } header: {
                 Text("Cherri")
             } footer: {
                 Text("This program comes with ABSOLUTELY NO WARRANTY, to the extent permitted by law.")
+                    .foregroundStyle(Color.helperText)
             }
 
             Section("Signing") {

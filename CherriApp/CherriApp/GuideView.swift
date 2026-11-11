@@ -1,6 +1,6 @@
 // ===================================
 // In-App Guide
-// v0.0.11 BUILD 2026-10-25 07:25
+// v0.0.12 BUILD 2026-11-11 16:58
 // Basic documentation sheet: getting started, Cherri syntax basics, the Actions picker, Compile vs Export, troubleshooting, beta limitations, and credits. Content lives in the guideSections array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -200,7 +200,7 @@ struct GuideBlockView: View {
         case .tip(let string):
             Label(string, systemImage: "lightbulb")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.helperText)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }

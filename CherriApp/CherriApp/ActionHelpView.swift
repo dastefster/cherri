@@ -1,6 +1,6 @@
 // ===================================
 // Action Help
-// v0.0.4 BUILD 2026-10-15 18:08
+// v0.0.6 BUILD 2026-11-11 16:58
 // Help sheet for one action: how to call it, what each parameter expects, defaults, and allowed values. Tapping an allowed value inserts it, quoted, at the editor cursor.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -48,7 +48,7 @@ struct ActionHelpView: View {
                 Section {
                     if action.params.isEmpty {
                         Text("This action takes no parameters.")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.helperText)
                     } else {
                         ForEach(action.params, id: \.name) { param in
                             ParamRow(param: param, onInsertValue: onInsertValue)
@@ -67,6 +67,7 @@ struct ActionHelpView: View {
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(action.displayName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -94,12 +95,12 @@ private struct ParamRow: View {
                 Spacer()
                 Text(param.isOptional ? "optional" : "required")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.helperText)
             }
 
             Text(typeLine)
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.helperText)
 
             if let defaultValue = param.defaultValue, !defaultValue.isEmpty {
                 Text("Default: \(param.values?.isEmpty == false ? Self.quoted(defaultValue) : defaultValue)")

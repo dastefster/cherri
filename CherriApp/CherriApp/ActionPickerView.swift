@@ -1,6 +1,6 @@
 // ===================================
 // Action Picker
-// v0.0.8 BUILD 2026-11-07 14:15
+// v0.0.13 BUILD 2026-11-11 16:58
 // Searchable list of every Cherri action. Tapping one opens its fill-in form (or inserts it straight away if it has no parameters), swiping left quick-inserts starter code, and the info button opens its help. A highlighted card at the top opens the shortcut's name, color and icon editor.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -18,6 +18,7 @@ struct ActionPickerView: View {
     let onStyle: (ShortcutStyle) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     @State private var catalog: ActionCatalog?
     @State private var loadError: String?
     @State private var query = ""
@@ -41,6 +42,7 @@ struct ActionPickerView: View {
             }
             .navigationTitle("Actions")
             .navigationBarTitleDisplayMode(.inline)
+            .scrollDismissesKeyboard(.interactively)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
@@ -48,6 +50,7 @@ struct ActionPickerView: View {
             }
             .searchable(text: $query, prompt: "Search actions")
         }
+        .dismissesKeyboard()
         .task { await load() }
         .sheet(item: $sheet) { destination in
             switch destination {
@@ -98,7 +101,7 @@ struct ActionPickerView: View {
                             .buttonStyle(.plain)
 
                             Button {
-                                sheet = .help(action)
+                                present(.help(action))
                             } label: {
                                 Image(systemName: "info.circle")
                                     .font(.title3)
@@ -111,7 +114,7 @@ struct ActionPickerView: View {
                                 onInsert(action.insertionText)
                                 dismiss()
                             }
-                            .tint(.blue)
+                            .tint(.accentColor)
                         }
                     }
                 }
@@ -138,7 +141,7 @@ struct ActionPickerView: View {
         let style = currentStyle
 
         return Button {
-            sheet = .style
+            present(.style)
         } label: {
             HStack(spacing: 12) {
                 ShortcutIconTile(colorName: style.color, glyphName: style.glyph, size: 44)
@@ -148,7 +151,7 @@ struct ActionPickerView: View {
                         .font(.headline)
                     Text(style.displayName)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.helperText)
                         .lineLimit(1)
                 }
 
@@ -159,7 +162,7 @@ struct ActionPickerView: View {
                     .foregroundStyle(.tint)
             }
             .padding(12)
-            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.accentColor.opacity(0.12)))
+            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.accentColor.opacity(colorScheme == .dark ? 0.12 : 0.18)))
             .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.accentColor.opacity(0.7), lineWidth: 1.5))
             .contentShape(Rectangle())
         }
@@ -174,11 +177,11 @@ struct ActionPickerView: View {
                 .font(.body)
             Text(action.name)
                 .font(.system(.caption, design: .monospaced))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.helperText)
             if let description = action.description, !description.isEmpty {
                 Text(description)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.helperText)
                     .lineLimit(2)
             }
         }
@@ -190,13 +193,19 @@ struct ActionPickerView: View {
     // CHOOSE
     // ===================================
 
+    // The search field keeps focus when a sheet opens over it, and a sheet with no text field of its own has nothing that can dismiss that keyboard, so it is dropped first.
+    private func present(_ destination: PickerSheet) {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        sheet = destination
+    }
+
     // An action with parameters opens its form; one without is inserted straight away.
     private func choose(_ action: CatalogAction) {
         if action.params.isEmpty {
             onInsert(action.insertionText)
             dismiss()
         } else {
-            sheet = .form(action)
+            present(.form(action))
         }
     }
 
@@ -235,6 +244,109 @@ private enum PickerSheet: Identifiable {
             return "form-\(action.name)"
         case .style:
             return "style"
+        }
+    }
+}
+
+
+// ===================================
+// KEYBOARD DISMISSAL
+// ===================================
+
+// While the keyboard is up, a downward drag should bring it down instead of dragging the whole sheet away, and a tap on anything that is not a text input should drop it. Once the keyboard is down the sheet closes with a swipe as usual.
+private struct KeyboardDismissing: ViewModifier {
+    @State private var keyboardUp = false
+
+    func body(content: Content) -> some View {
+        content
+            .interactiveDismissDisabled(keyboardUp)
+            .scrollDismissesKeyboard(.interactively)
+            .background(TapToDismissKeyboard())
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+                keyboardUp = true
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+                keyboardUp = false
+            }
+    }
+}
+
+extension View {
+    func dismissesKeyboard() -> some View {
+        modifier(KeyboardDismissing())
+    }
+}
+
+// SwiftUI has no "tap anywhere else" hook, so this watches taps on the window. It never swallows a tap (buttons and toggles still do their job), and it ignores taps on a text field or text view so tapping from one field to another just moves focus.
+private struct TapToDismissKeyboard: UIViewRepresentable {
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    func makeUIView(context: Context) -> AnchorView {
+        let view = AnchorView()
+        view.isUserInteractionEnabled = false
+        view.coordinator = context.coordinator
+        return view
+    }
+
+    func updateUIView(_ uiView: AnchorView, context: Context) {}
+
+    static func dismantleUIView(_ uiView: AnchorView, coordinator: Coordinator) {
+        coordinator.detach()
+    }
+
+    final class AnchorView: UIView {
+        weak var coordinator: Coordinator?
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            if let window {
+                coordinator?.attach(to: window)
+            } else {
+                coordinator?.detach()
+            }
+        }
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        private let recognizer = UITapGestureRecognizer()
+        private weak var window: UIWindow?
+
+        override init() {
+            super.init()
+            recognizer.addTarget(self, action: #selector(tapped))
+            recognizer.cancelsTouchesInView = false
+            recognizer.delegate = self
+        }
+
+        func attach(to window: UIWindow) {
+            guard self.window !== window else { return }
+            detach()
+            window.addGestureRecognizer(recognizer)
+            self.window = window
+        }
+
+        func detach() {
+            window?.removeGestureRecognizer(recognizer)
+            window = nil
+        }
+
+        @objc private func tapped() {
+            window?.endEditing(true)
+        }
+
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+            var view = touch.view
+            while let current = view {
+                if current is UITextField || current is UITextView { return false }
+                view = current.superview
+            }
+            return true
+        }
+
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+            true
         }
     }
 }

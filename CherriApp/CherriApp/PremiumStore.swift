@@ -1,7 +1,7 @@
 
 // ===================================
 // Cherri Premium
-// v0.0.2 BUILD 2026-10-21 18:30
+// v0.0.3 BUILD 2026-11-11 16:58
 // StoreKit 2 one-time unlock: loads the product, handles purchase and restore, watches for transactions that finish outside the app (Ask to Buy, refunds), and caches the result so the editor never waits on the network. Also defines which themes and icons are free.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -222,7 +222,7 @@ struct PremiumView: View {
                         .font(.title2.bold())
                     Text("One purchase, yours forever. No subscription.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.helperText)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
@@ -267,6 +267,7 @@ struct PremiumView: View {
             } footer: {
                 if let message = store.message {
                     Text(message)
+                        .foregroundStyle(Color.helperText)
                 }
             }
         }

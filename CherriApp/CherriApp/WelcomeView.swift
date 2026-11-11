@@ -1,6 +1,6 @@
 // ===================================
 // Welcome Screen
-// v0.0.3 BUILD 2026-10-25 08:00
+// v0.0.4 BUILD 2026-11-11 16:58
 // Shown on first launch (and from the ? button): what Cherri Shortcuts is, the Write, Compile, Export and Import flow, and the privacy facts testers should know before exporting or importing.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -58,7 +58,7 @@ struct WelcomeView: View {
                 .padding(.top, 8)
             Text("Write Apple Shortcuts as code.")
                 .font(.title3)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.helperText)
                 .multilineTextAlignment(.center)
         }
     }
@@ -90,7 +90,7 @@ struct WelcomeView: View {
                 Text(title).font(.headline)
                 Text(detail)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.helperText)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -106,7 +106,7 @@ struct WelcomeView: View {
                 .font(.headline)
             Text("This is an early beta, so expect rough edges. When you tap Export, your shortcut is sent to the Cherri Shortcuts signing server to be signed, because iOS only imports signed shortcuts. When you import, the iCloud link is looked up on iCloud to fetch that shortcut. Nothing is sent until you tap Export or start an import.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.helperText)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding()

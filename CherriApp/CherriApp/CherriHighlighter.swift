@@ -1,11 +1,42 @@
 // ===================================
 // Cherri Syntax Highlighter
-// v0.0.5 BUILD 2026-10-22 00:35
+// v0.0.7 BUILD 2026-11-11 16:36
 // Colors comments, strings, numbers, operators, type names, keywords, #directives, @variables, declared names (const, loop and function parameters) and action calls in a text view using the current theme. Regex passes only, so it stays instant on normal-sized shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
 
 import UIKit
+
+// ===================================
+// FRAMED TEXT VIEW
+// ===================================
+
+// A text view whose frame follows the light or dark appearance by itself. A layer's border color is a plain CGColor that never re-resolves,
+// and the editor only restyles when the theme, font or size changes, so flipping appearance with the same theme would leave a stale frame.
+final class FramedTextView: UITextView {
+    var frameColor: UIColor? {
+        didSet { updateFrame() }
+    }
+
+    // The Appearance preview shows the Default theme without its frame: the card already stands out on that gray screen.
+    var hidesFrame = false {
+        didSet { updateFrame() }
+    }
+
+    private func updateFrame() {
+        let resolved = hidesFrame ? nil : frameColor?.resolvedColor(with: traitCollection)
+        let visible = (resolved?.cgColor.alpha ?? 0) > 0
+        layer.borderWidth = visible ? 2 : 0
+        layer.borderColor = visible ? resolved?.cgColor : nil
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            updateFrame()
+        }
+    }
+}
 
 // ===================================
 // HIGHLIGHTER
@@ -64,8 +95,7 @@ enum CherriHighlighter {
     static func style(_ textView: UITextView, with style: EditorStyle) {
         textView.backgroundColor = style.theme.background
         textView.tintColor = style.theme.caret
-        textView.layer.borderWidth = style.theme.border == nil ? 0 : 2
-        textView.layer.borderColor = style.theme.border?.cgColor
+        (textView as? FramedTextView)?.frameColor = style.theme.border
         textView.font = style.font
         textView.textColor = style.theme.text
 

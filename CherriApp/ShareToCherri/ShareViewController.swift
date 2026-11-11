@@ -1,6 +1,6 @@
 // ===================================
 // Share to Cherri Shortcuts
-// v0.0.2 BUILD 2026-10-25 07:20
+// v0.0.3 BUILD 2026-11-11 16:45
 // Share extension: takes a Shortcuts iCloud link from the share sheet, hands it to Cherri Shortcuts through a shared App Group, and opens the app to import it.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -57,6 +57,13 @@ private final class ShareModel: ObservableObject {
 private struct ShareStatusView: View {
     @ObservedObject var model: ShareModel
 
+    // The extension has no asset catalog of its own, so the app's accent color doesn't reach it and it fell back to iOS blue. Same purple as the app: Brandon's #8E3B8F in light mode, #A24CA3 in dark.
+    private let brandPurple = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0xA2 / 255, green: 0x4C / 255, blue: 0xA3 / 255, alpha: 1)
+            : UIColor(red: 0x8E / 255, green: 0x3B / 255, blue: 0x8F / 255, alpha: 1)
+    })
+
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: icon)
@@ -67,7 +74,7 @@ private struct ShareStatusView: View {
                 .multilineTextAlignment(.center)
             Text(detail)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.primary.opacity(0.6))
                 .multilineTextAlignment(.center)
 
             if model.phase == .working || model.phase == .opening {
@@ -85,6 +92,7 @@ private struct ShareStatusView: View {
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
+        .tint(brandPurple)
     }
 
     private var icon: String {
@@ -97,7 +105,7 @@ private struct ShareStatusView: View {
 
     private var tint: Color {
         switch model.phase {
-        case .working, .opening: return .accentColor
+        case .working, .opening: return brandPurple
         case .openByHand: return .green
         case .notAShortcutLink, .failed: return .orange
         }

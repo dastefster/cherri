@@ -1,6 +1,6 @@
 // ===================================
 // Feedback Menu
-// v0.0.1 BUILD 2026-10-25 07:45
+// v0.0.2 BUILD 2026-11-11 16:58
 // The screen behind Settings → Send Feedback: one row for the Google Form and one for email, each with a colored icon tile like the rest of Settings.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -26,6 +26,7 @@ struct FeedbackView: View {
                 }
             } footer: {
                 Text("The form fills in your app version and iOS version for you. Email opens a new message in Mail.")
+                    .foregroundStyle(Color.helperText)
             }
         }
         .foregroundStyle(.primary)

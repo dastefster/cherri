@@ -1,6 +1,6 @@
 // ===================================
 // Code Editor
-// v0.0.5 BUILD 2026-11-07 12:10
+// v0.0.6 BUILD 2026-11-11 16:36
 // Cursor-aware text editor (a UIKit text view inside SwiftUI) so actions and values land where the cursor is, not at the end. A quick swipe down on the editor dismisses the keyboard.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -95,7 +95,7 @@ struct CodeEditor: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> UITextView {
-        let textView = UITextView()
+        let textView = FramedTextView()
         textView.delegate = context.coordinator
 
         // The font size now comes from Settings, so Dynamic Type scaling is off.
