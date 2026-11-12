@@ -1,7 +1,7 @@
 // ===================================
 // Shortcut Signer Client
-// v0.0.10 BUILD 2026-11-10 19:46
-// Sends a compiled (unsigned) Shortcut plist to the Cherri Shortcuts signing server and returns the signed .shortcut bytes.
+// v0.0.11 BUILD 2026-11-12 15:55
+// Sends a compiled (unsigned) Shortcut plist to the custom signing server and returns the signed .shortcut bytes.
 // dev by @dastefster 🍒🔨
 // ===================================
 

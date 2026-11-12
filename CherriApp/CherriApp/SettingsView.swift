@@ -1,6 +1,6 @@
 // ===================================
 // Settings
-// v0.0.15 BUILD 2026-11-11 16:58
+// v0.0.16 BUILD 2026-11-12 15:55
 // Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses, one Send Feedback row that opens a small menu: form or email) and a debug-only Developer section. App Icon opens a grid picker (see AppIconView).
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -124,7 +124,7 @@ struct SettingsView: View {
             } header: {
                 Text("Export")
             } footer: {
-                Text("Export sends your shortcut to the Cherri Shortcuts signing server to be signed. Compile stays on your device. The export tip reminds you to tap Shortcuts in the share sheet.")
+                Text("Export sends your shortcut to the custom signing server to be signed. Compile stays on your device. The export tip reminds you to tap Shortcuts in the share sheet.")
                     .foregroundStyle(Color.helperText)
             }
 
@@ -235,8 +235,12 @@ struct LicensesView: View {
                     .foregroundStyle(Color.helperText)
             }
 
+            Section("Independent app") {
+                Text("Cherri Shortcuts is an independent app. It is not made or maintained by the Cherri developers, and neither is its signing server.")
+            }
+
             Section("Signing") {
-                Text("Shortcuts are signed by the Cherri Shortcuts signing server, which is run by the app's developer.")
+                Text("Shortcuts are signed by a custom signing server, run by the app's developer. It is not run or maintained by the Cherri developers.")
             }
 
             Section {

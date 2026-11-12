@@ -1,6 +1,6 @@
 // ===================================
 // Welcome Screen
-// v0.0.4 BUILD 2026-11-11 16:58
+// v0.0.5 BUILD 2026-11-12 15:55
 // Shown on first launch (and from the ? button): what Cherri Shortcuts is, the Write, Compile, Export and Import flow, and the privacy facts testers should know before exporting or importing.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -104,7 +104,7 @@ struct WelcomeView: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Beta notice", systemImage: "info.circle")
                 .font(.headline)
-            Text("This is an early beta, so expect rough edges. When you tap Export, your shortcut is sent to the Cherri Shortcuts signing server to be signed, because iOS only imports signed shortcuts. When you import, the iCloud link is looked up on iCloud to fetch that shortcut. Nothing is sent until you tap Export or start an import.")
+            Text("This is an early beta, so expect rough edges. When you tap Export, your shortcut is sent to the custom signing server to be signed, because iOS only imports signed shortcuts. When you import, the iCloud link is looked up on iCloud to fetch that shortcut. Nothing is sent until you tap Export or start an import.")
                 .font(.subheadline)
                 .foregroundStyle(Color.helperText)
                 .fixedSize(horizontal: false, vertical: true)

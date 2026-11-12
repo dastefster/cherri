@@ -1,6 +1,6 @@
 // ===================================
 // In-App Guide
-// v0.0.12 BUILD 2026-11-11 16:58
+// v0.0.13 BUILD 2026-11-12 15:55
 // Basic documentation sheet: getting started, Cherri syntax basics, the Actions picker, Compile vs Export, troubleshooting, beta limitations, and credits. Content lives in the guideSections array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -64,7 +64,7 @@ let guideSections: [GuideSection] = [
     ]),
     GuideSection(id: "export", title: "Compile vs. Export", symbol: "square.and.arrow.up", blocks: [
         .text("**Compile** runs entirely on your device and sends nothing anywhere."),
-        .text("**Export** needs an internet connection. iOS only imports signed shortcuts, so your shortcut is sent to the Cherri Shortcuts signing server to be signed, then returned to you."),
+        .text("**Export** needs an internet connection. iOS only imports signed shortcuts, so your shortcut is sent to the custom signing server to be signed, then returned to you."),
         .text("In the share sheet, choose the **Shortcuts** icon (swipe the row if you don't see it). Shortcuts opens with an Add Shortcut screen. Tap the blue **Add Shortcut** button at the bottom."),
     ]),
     GuideSection(id: "import", title: "Importing a shortcut", symbol: "square.and.arrow.down", blocks: [

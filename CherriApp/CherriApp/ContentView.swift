@@ -1,7 +1,7 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.35 BUILD 2026-11-11 16:58
-// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the Cherri signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
+// v0.0.36 BUILD 2026-11-12 15:55
+// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -228,7 +228,7 @@ struct ContentView: View {
                 )
             }
 
-            Text("Export sends your shortcut to the Cherri Shortcuts signing server to be signed.")
+            Text("Export sends your shortcut to the custom signing server to be signed.")
                 .font(.caption)
                 .foregroundStyle(Color.helperText)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -253,7 +253,7 @@ struct ContentView: View {
             Button("Export") { exportToShortcuts() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Your shortcut will be sent to the Cherri Shortcuts signing server to be signed. You can turn this prompt off in Settings.")
+            Text("Your shortcut will be sent to the custom signing server to be signed. You can turn this prompt off in Settings.")
         }
         .alert("Add It to Shortcuts", isPresented: $showingShareTip) {
             Button("Continue") {
@@ -504,7 +504,7 @@ struct ContentView: View {
         return cleaned.isEmpty ? fallback : String(cleaned.prefix(80))
     }
 
-    // Compile, sign with the Cherri signing server, write a .shortcut file, then show the share sheet where "Shortcuts" imports it.
+    // Compile, sign with the custom signing server, write a .shortcut file, then show the share sheet where "Shortcuts" imports it.
     private func exportToShortcuts() {
         let code = source.trimmingCharacters(in: .whitespacesAndNewlines)
         let name = Self.shortcutName(from: code)
