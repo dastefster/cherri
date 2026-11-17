@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Syntax Highlighter
-// v0.0.7 BUILD 2026-11-11 16:36
+// v0.0.8 BUILD 2026-11-17 11:25
 // Colors comments, strings, numbers, operators, type names, keywords, #directives, @variables, declared names (const, loop and function parameters) and action calls in a text view using the current theme. Regex passes only, so it stays instant on normal-sized shortcuts.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -14,6 +14,22 @@ import UIKit
 // A text view whose frame follows the light or dark appearance by itself. A layer's border color is a plain CGColor that never re-resolves,
 // and the editor only restyles when the theme, font or size changes, so flipping appearance with the same theme would leave a stale frame.
 final class FramedTextView: UITextView {
+    // The code editor keeps its own undo history (EditHistory), so the system's undo, which merges typing by rules we can't set, stays off.
+    // The read-only theme preview never edits, so nothing is lost there.
+    override var undoManager: UndoManager? { nil }
+
+    // With no undo manager the system's shake-to-undo has nothing to act on, so the editor hooks the shake itself.
+    var onShake: (() -> Void)?
+
+    override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+        // The Settings > Accessibility > Touch > Shake to Undo switch has to keep working, since the system only honored it for its own prompt.
+        if motion == .motionShake, UIAccessibility.isShakeToUndoEnabled, let onShake {
+            onShake()
+        } else {
+            super.motionEnded(motion, with: event)
+        }
+    }
+
     var frameColor: UIColor? {
         didSet { updateFrame() }
     }
