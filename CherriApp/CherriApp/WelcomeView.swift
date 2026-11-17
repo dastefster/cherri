@@ -1,7 +1,7 @@
 // ===================================
 // Welcome Screen
-// v0.0.5 BUILD 2026-11-12 15:55
-// Shown on first launch (and from the ? button): what Cherri Shortcuts is, the Write, Compile, Export and Import flow, and the privacy facts testers should know before exporting or importing.
+// v0.0.6 BUILD 2026-11-17 11:45
+// Shown on first launch (and from the ? button): what Cherri Shortcuts is, the Write, Compile, Export and Import flow, and the privacy facts people should know before exporting or importing.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -19,7 +19,7 @@ struct WelcomeView: View {
             VStack(spacing: 28) {
                 header
                 steps
-                betaNotice
+                privacyNotice
             }
             .padding(.horizontal, 24)
             .padding(.top, 48)
@@ -97,14 +97,14 @@ struct WelcomeView: View {
     }
 
     // ===================================
-    // BETA NOTICE
+    // PRIVACY NOTICE
     // ===================================
 
-    private var betaNotice: some View {
+    private var privacyNotice: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Beta notice", systemImage: "info.circle")
+            Label("Your privacy", systemImage: "lock.shield")
                 .font(.headline)
-            Text("This is an early beta, so expect rough edges. When you tap Export, your shortcut is sent to the custom signing server to be signed, because iOS only imports signed shortcuts. When you import, the iCloud link is looked up on iCloud to fetch that shortcut. Nothing is sent until you tap Export or start an import.")
+            Text("When you tap Export, your shortcut is sent to the custom signing server to be signed, because iOS only imports signed shortcuts. When you import, the iCloud link is looked up on iCloud to fetch that shortcut. Nothing is sent until you tap Export or start an import.")
                 .font(.subheadline)
                 .foregroundStyle(Color.helperText)
                 .fixedSize(horizontal: false, vertical: true)

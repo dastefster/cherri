@@ -1,7 +1,7 @@
 // ===================================
 // Documentation
-// v0.0.10 BUILD 2026-11-12 15:55
-// In-app reference for everything Cherri Shortcuts does in beta 1: the editor, the Actions picker, Compile, Export, third-party app actions, Settings, and what stays on your device. Content lives in the docTopics array so it can be edited without touching layout code.
+// v0.0.11 BUILD 2026-11-17 11:45
+// In-app reference for everything Cherri Shortcuts does: the editor, the Actions picker, Compile, Export, third-party app actions, Settings, and what stays on your device. Content lives in the docTopics array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -85,15 +85,6 @@ let docTopics: [GuideSection] = [
         .text("If you install the app through TestFlight, Apple collects its own crash and usage data for testing."),
         .tip("The full privacy policy is in Settings, under About."),
     ]),
-    GuideSection(id: "limits", title: "Beta limits", symbol: "exclamationmark.triangle", blocks: [
-        .text("This is the first beta, so some things are still on the way:"),
-        .text("• No autocomplete while typing yet. Use the Actions picker for now."),
-        .text("• Very large scripts may feel slow, since your code is kept in the app's settings."),
-        .text("• Some actions haven't been checked against every iOS version."),
-        .text("• Export needs the signing server to be online. Compile always works."),
-        .text("• Import can't read every action yet. Unsupported ones are kept as `rawAction` lines, and a few of those may not survive a round trip."),
-        .tip("If something misbehaves, tell me which action and what happened, and copy the full error message if there is one."),
-    ]),
 ]
 
 // ===================================
@@ -114,7 +105,7 @@ struct DocumentationView: View {
                     }
                 }
             } footer: {
-                Text("What Cherri Shortcuts can do in beta 1. More will be added as the app grows.")
+                Text("What Cherri Shortcuts can do. More will be added as the app grows.")
                     .foregroundStyle(Color.helperText)
             }
 

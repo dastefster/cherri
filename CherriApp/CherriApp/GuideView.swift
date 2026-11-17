@@ -1,7 +1,7 @@
 // ===================================
 // In-App Guide
-// v0.0.13 BUILD 2026-11-12 15:55
-// Basic documentation sheet: getting started, Cherri syntax basics, the Actions picker, Compile vs Export, troubleshooting, beta limitations, and credits. Content lives in the guideSections array so it can be edited without touching layout code.
+// v0.0.14 BUILD 2026-11-17 11:45
+// Basic documentation sheet: getting started, Cherri syntax basics, the Actions picker, Compile vs Export, troubleshooting, and credits. Content lives in the guideSections array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -90,15 +90,8 @@ let guideSections: [GuideSection] = [
         .text("**An action asks you to choose something when it runs** (a space, folder, list or album). That's expected. These choices are specific to your device, so the shortcut asks you at run time."),
         .text("**Import says iCloud couldn't find the shortcut.** The link may be old, or sharing may be off. Copy a fresh iCloud link and try again. A link you shared a moment ago can take a few seconds to appear, so the app waits and tries again before it gives up."),
         .text("**Import says some actions aren't supported yet.** The shortcut still imports. The actions Cherri Shortcuts doesn't know are kept in your code as `rawAction` lines. They may lose their settings or not work once compiled. Tap **Tell Support** to report them."),
+        .text("**Export fails or can't reach the signing server.** Export needs the signing server to be online. Compile always works, so you can still check your code."),
         .text("**Error messages are long.** The red line under the editor is the important one. Tap **Show details** for the rest, or **Copy full message** to send it to me."),
-    ]),
-    GuideSection(id: "beta", title: "Known beta limitations", symbol: "exclamationmark.triangle", blocks: [
-        .text("This is an early beta. Here is what to expect:"),
-        .text("• No autocomplete yet. Use the Actions picker to insert actions."),
-        .text("• Very large scripts may be slow. They are stored in the app's settings for now."),
-        .text("• Some actions haven't been checked against the latest iOS. If an action misbehaves, tell me which one."),
-        .text("• Export always goes through the signing server. If it's down, Export won't work, but Compile will."),
-        .text("• Import can't read every action yet. Unsupported ones are kept as `rawAction` lines and may not work after you compile."),
     ]),
     GuideSection(id: "about", title: "About", symbol: "info.circle", blocks: [
         .text("Cherri Shortcuts is made by Stefan Hottel (@dastefster) 🍒🔨"),
