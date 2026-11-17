@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.36 BUILD 2026-11-12 15:55
+// v0.0.37 BUILD 2026-11-17 09:15
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -344,14 +344,13 @@ struct ContentView: View {
                     .tint(.primary)
 
                 if showDetails {
-                    ScrollView {
+                    FittingScrollView(maxHeight: 140) {
                         Text(status)
                             .font(.system(.footnote, design: .monospaced).weight(.medium))
                             .foregroundStyle(Color("CherriRed").opacity(0.85))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .textSelection(.enabled)
                     }
-                    .frame(maxHeight: 140)
                 }
             }
         } else {
@@ -361,14 +360,13 @@ struct ContentView: View {
                     ProgressView()
                         .controlSize(.small)
                 }
-                ScrollView {
+                FittingScrollView(maxHeight: 140) {
                     Text(status)
                         .font(.system(.footnote, design: .monospaced))
                         .foregroundStyle(Color.helperText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)
                 }
-                .frame(maxHeight: 140)
             }
         }
     }
@@ -544,6 +542,30 @@ struct ContentView: View {
             }
             working = false
         }
+    }
+}
+
+// ===================================
+// FITTING SCROLL VIEW
+// ===================================
+
+// A plain ScrollView takes all the height it is offered, so a one-line status still held back a 140pt blank band that the editor could have used. This one is only as tall as its content, up to maxHeight, and scrolls past that.
+private struct FittingScrollView<Content: View>: View {
+    let maxHeight: CGFloat
+    let content: Content
+    @State private var contentHeight: CGFloat = 0
+
+    init(maxHeight: CGFloat, @ViewBuilder content: () -> Content) {
+        self.maxHeight = maxHeight
+        self.content = content()
+    }
+
+    var body: some View {
+        ScrollView {
+            content
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
+        }
+        .frame(height: min(contentHeight, maxHeight))
     }
 }
 
