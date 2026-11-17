@@ -145,11 +145,6 @@ struct SettingsView: View {
                 } label: {
                     SettingsLabel(title: "Documentation", symbol: "text.book.closed.fill", color: .gray)
                 }
-                Button(action: onShowWelcome) {
-                    SettingsLabel(title: "Show Welcome Screen", symbol: "hand.wave.fill", color: .orange)
-                }
-                // Brandon's purple is too dim as text on dark rows, so link text uses a lighter purple in dark mode only.
-                .tint(Color("CherriPurpleText"))
             }
 
             Section("About") {
