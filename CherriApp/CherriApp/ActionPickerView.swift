@@ -1,7 +1,7 @@
 // ===================================
 // Action Picker
-// v0.0.16 BUILD 2026-11-18 16:58
-// Searchable list of every Cherri action. Tapping one opens its fill-in form (or inserts it straight away if it has no parameters), swiping left quick-inserts starter code, and the info button opens its help. A highlighted card at the top opens the shortcut's name, color and icon editor.
+// v0.0.17 BUILD 2026-11-18 18:27
+// Searchable list of every Cherri action. Tapping one opens its fill-in form (or inserts it straight away if it has no parameters), swiping left quick-inserts starter code, swiping right stars it as a favorite, and the info button opens its help. Favorites sit in their own gold section at the top and can be reordered. A highlighted card at the top opens the shortcut's name, color and icon editor.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -25,6 +25,8 @@ struct ActionPickerView: View {
     @State private var loadError: String?
     @State private var query = ""
     @State private var sheet: PickerSheet?
+    @StateObject private var favorites = FavoritesStore()
+    @State private var editMode: EditMode = .inactive
     // The picker's copy of the source is a snapshot, so the card shows a change made from here straight away.
     @State private var styleOverride: ShortcutStyle?
 
@@ -49,8 +51,20 @@ struct ActionPickerView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
                 }
+                ToolbarItem(placement: .confirmationAction) {
+                    if showsFavoritesEdit {
+                        Button(editMode.isEditing ? "Done" : "Edit Favorites") {
+                            withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+                        }
+                    }
+                }
             }
             .searchable(text: $query, prompt: "Search actions")
+            // Reordering only makes sense on the plain list, and it ends on its own once the last favorite is gone.
+            .onChange(of: query) { _, _ in editMode = .inactive }
+            .onChange(of: favorites.names.isEmpty) { _, empty in
+                if empty { editMode = .inactive }
+            }
         }
         .dismissesKeyboard()
         .task { await load() }
@@ -79,6 +93,12 @@ struct ActionPickerView: View {
     // LIST
     // ===================================
 
+    // The Edit button only shows when there is a favorite on screen to edit.
+    private var showsFavoritesEdit: Bool {
+        guard let catalog, query.trimmingCharacters(in: .whitespaces).isEmpty else { return false }
+        return favorites.names.contains { name in catalog.actions.contains { $0.name == name } }
+    }
+
     private func list(for catalog: ActionCatalog) -> some View {
         let search = query.trimmingCharacters(in: .whitespaces).lowercased()
         let sections = catalog.categories.compactMap { category -> (CatalogCategory, [CatalogAction])? in
@@ -86,40 +106,103 @@ struct ActionPickerView: View {
             return matches.isEmpty ? nil : (category, matches)
         }
 
+        // Hidden while searching so nothing shows up twice. Names the catalog no longer has stay saved but aren't listed.
+        let favoriteActions = search.isEmpty
+            ? favorites.names.compactMap { name in catalog.actions.first { $0.name == name && !ActionVariants.isAlternate($0.name) } }
+            : []
+
         return List {
             if showsStyleCard(for: search) {
                 Section { styleCard }
             }
 
+            if !favoriteActions.isEmpty {
+                Section {
+                    ForEach(favoriteActions) { action in
+                        actionRow(for: action)
+                            // Swipe-to-delete would fight Quick Insert, so removing is only offered while editing.
+                            .deleteDisabled(!editMode.isEditing)
+                    }
+                    .onMove { offsets, destination in
+                        favorites.move(visible: favoriteActions.map(\.name), from: offsets, to: destination)
+                    }
+                    .onDelete { offsets in
+                        favorites.remove(visible: favoriteActions.map(\.name), at: offsets)
+                    }
+                    .listRowBackground(FavoritesStore.tint.opacity(colorScheme == .dark ? 0.14 : 0.22))
+                } header: {
+                    Label("Favorites", systemImage: "star.fill")
+                        .foregroundStyle(FavoritesStore.tint)
+                }
+            }
+
             ForEach(sections, id: \.0.id) { section in
                 Section(section.0.title) {
                     ForEach(section.1) { action in
-                        HStack(spacing: 12) {
-                            Button {
-                                choose(action)
-                            } label: {
-                                row(for: action)
-                            }
-                            .buttonStyle(.plain)
-
-                            Button {
-                                present(.help(action))
-                            } label: {
-                                Image(systemName: "info.circle")
-                                    .font(.title3)
-                                    .foregroundStyle(.tint)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button("Quick Insert") {
-                                onInsert(action.insertionText)
-                                dismiss()
-                            }
-                            .tint(.accentColor)
-                        }
+                        actionRow(for: action)
                     }
                 }
+            }
+        }
+        .environment(\.editMode, $editMode)
+        .sensoryFeedback(.selection, trigger: favorites.names)
+    }
+
+    // ===================================
+    // ACTION ROW
+    // ===================================
+
+    // Tapping only ever inserts. Starring lives on a swipe and the long-press menu, away from anything small to miss.
+    private func actionRow(for action: CatalogAction) -> some View {
+        let isFavorite = favorites.contains(action.name)
+        let editing = editMode.isEditing
+
+        return HStack(spacing: 12) {
+            Button {
+                if !editing { choose(action) }
+            } label: {
+                row(for: action)
+            }
+            .buttonStyle(.plain)
+
+            if !editing {
+                Button {
+                    present(.help(action))
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.title3)
+                        .foregroundStyle(.tint)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .swipeActions(edge: .trailing) {
+            Button("Quick Insert") {
+                onInsert(action.insertionText)
+                dismiss()
+            }
+            .tint(.accentColor)
+        }
+        // No full swipe, so a long drag can't star something by accident.
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            Button {
+                favorites.toggle(action.name)
+            } label: {
+                Label(isFavorite ? "Unfavorite" : "Favorite", systemImage: isFavorite ? "star.slash" : "star.fill")
+            }
+            .tint(FavoritesStore.tint)
+        }
+        .contextMenu {
+            Button {
+                favorites.toggle(action.name)
+            } label: {
+                Label(isFavorite ? "Remove from Favorites" : "Add to Favorites", systemImage: isFavorite ? "star.slash" : "star")
+            }
+
+            Button {
+                present(.help(action))
+            } label: {
+                Label("Help", systemImage: "info.circle")
             }
         }
     }
