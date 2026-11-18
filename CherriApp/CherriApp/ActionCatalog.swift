@@ -1,6 +1,6 @@
-// ===================================
+ // ===================================
 // Action Catalog
-// v0.0.4 BUILD 2026-10-15 18:35
+// v0.0.5 BUILD 2026-11-18 08:50
 // Loads the list of every Cherri action from the embedded compiler, gives each a readable name, and turns an action into starter code to insert.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -84,6 +84,7 @@ extension CatalogAction {
         name.lowercased().contains(query)
             || displayName.lowercased().contains(query)
             || (ActionVariants.variant(for: name)?.alternate.lowercased().contains(query) ?? false)
+            || VariableActions.aliases(for: name).contains { $0.contains(query) }
             || (title ?? "").lowercased().contains(query)
             || (description ?? "").lowercased().contains(query)
     }
@@ -99,6 +100,11 @@ extension CatalogAction {
 
     // Starter code with every required argument filled by a placeholder of the right kind. Optional ones are left out.
     var insertionText: String {
+        // Set Variable and Add to Variable are syntax, so their starter code is a statement, not a call.
+        if let statement = variableStatement(with: [:], takenNames: []) {
+            return statement.text
+        }
+
         let required = params.filter { !$0.isOptional }
         if required.isEmpty {
             return "\(name)()"

@@ -1,6 +1,6 @@
 // ===================================
 // Settings
-// v0.0.16 BUILD 2026-11-12 15:55
+// v0.0.17 BUILD 2026-11-18 16:05
 // Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses, one Send Feedback row that opens a small menu: form or email) and a debug-only Developer section. App Icon opens a grid picker (see AppIconView).
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -30,10 +30,12 @@ enum ExportSettings {
 struct SettingsIcon: View {
     let symbol: String
     let color: Color
+    // Thin symbols like plus.forwardslash.minus need more weight than the settings rows use to stay legible on a colored tile.
+    var weight: Font.Weight = .semibold
 
     var body: some View {
         Image(systemName: symbol)
-            .font(.system(size: 15, weight: .semibold))
+            .font(.system(size: 15, weight: weight))
             .foregroundStyle(.white)
             .frame(width: 29, height: 29)
             .background(color, in: RoundedRectangle(cornerRadius: 7, style: .continuous))

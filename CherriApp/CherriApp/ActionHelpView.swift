@@ -1,6 +1,6 @@
 // ===================================
 // Action Help
-// v0.0.6 BUILD 2026-11-11 16:58
+// v0.0.7 BUILD 2026-11-18 08:50
 // Help sheet for one action: how to call it, what each parameter expects, defaults, and allowed values. Tapping an allowed value inserts it, quoted, at the editor cursor.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -159,6 +159,10 @@ private struct ParamRow: View {
 extension CatalogAction {
     // Matches Cherri's own notation: ? marks an optional parameter and ... one that can be repeated.
     var signature: String {
+        if let syntax = VariableActions.syntax(for: name) {
+            return syntax
+        }
+
         let list = params.map { param -> String in
             var text = param.isOptional ? "?\(param.name)" : param.name
             if param.repeats == true {

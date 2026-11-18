@@ -1,6 +1,6 @@
 // ===================================
 // Action Picker
-// v0.0.13 BUILD 2026-11-11 16:58
+// v0.0.15 BUILD 2026-11-18 16:05
 // Searchable list of every Cherri action. Tapping one opens its fill-in form (or inserts it straight away if it has no parameters), swiping left quick-inserts starter code, and the info button opens its help. A highlighted card at the top opens the shortcut's name, color and icon editor.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -175,7 +175,7 @@ struct ActionPickerView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(action.displayName)
                 .font(.body)
-            Text(action.name)
+            Text(action.listSubtitle)
                 .font(.system(.caption, design: .monospaced))
                 .foregroundStyle(Color.helperText)
             if let description = action.description, !description.isEmpty {
@@ -218,7 +218,7 @@ struct ActionPickerView: View {
 
         do {
             catalog = try await Task.detached(priority: .userInitiated) {
-                try ActionCatalog.load()
+                try ActionCatalog.load().addingVariableActions()
             }.value
         } catch {
             loadError = error.localizedDescription
@@ -275,6 +275,11 @@ extension View {
     func dismissesKeyboard() -> some View {
         modifier(KeyboardDismissing())
     }
+}
+
+// A control that edits a text field (like the plus/minus button on a number) reports its frame here, so tapping it does not drop the keyboard the person is still typing on.
+enum KeyboardKeepers {
+    static var frame: CGRect = .zero
 }
 
 // SwiftUI has no "tap anywhere else" hook, so this watches taps on the window. It never swallows a tap (buttons and toggles still do their job), and it ignores taps on a text field or text view so tapping from one field to another just moves focus.
@@ -337,6 +342,11 @@ private struct TapToDismissKeyboard: UIViewRepresentable {
         }
 
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+            // A little slack around the frame, because fingers land on edges.
+            if KeyboardKeepers.frame != .zero, KeyboardKeepers.frame.insetBy(dx: -6, dy: -6).contains(touch.location(in: nil)) {
+                return false
+            }
+
             var view = touch.view
             while let current = view {
                 if current is UITextField || current is UITextView { return false }

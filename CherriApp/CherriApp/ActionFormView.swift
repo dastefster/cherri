@@ -1,6 +1,6 @@
 // ===================================
 // Action Form
-// v0.0.13 BUILD 2026-11-11 16:58
+// v0.0.18 BUILD 2026-11-18 16:20
 // Fill-in form for one action: a field per parameter in plain words, a live preview of the Cherri call, and an Insert button that writes the call with nil in any skipped slot. A list slot, or any slot that can be repeated (List, Email Address, URL, ...), takes its items in rows like the Shortcuts app's List action. An action that returns something can be given a name, so later actions can use that result.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -57,7 +57,9 @@ struct ActionFormView: View {
                             listEntry: param.takesTypedList
                                 ? ListEntryBindings(mode: binding(forKey: "\(param.name)#mode"), items: binding(forKey: "\(param.name)#items"))
                                 : nil,
-                            repeatItems: param.isRepeatingText ? binding(forKey: "\(param.name)#items") : nil
+                            repeatItems: param.isRepeatingText ? binding(forKey: "\(param.name)#items") : nil,
+                            valueKind: action.isVariableAction && param.name == "value" ? valueKindBinding : nil,
+                            nameChoices: action.isVariableAction && param.name == "name" ? mutableVariableNames : nil
                         )
                     }
                 } header: {
@@ -116,6 +118,28 @@ struct ActionFormView: View {
             }
         }
         .dismissesKeyboard()
+    }
+
+    // Only mutable variables can be set again or added to, and they are written without the @ in the name field.
+    private var mutableVariableNames: [String] {
+        EditorVariables.names(in: source)
+            .filter { $0.hasPrefix("@") }
+            .map { String($0.dropFirst()) }
+    }
+
+    // Text, Number and Variable each keep their own value. Switching types parks the current entry under its type and brings back whatever that type held, so nothing carries over and nothing is lost.
+    private var valueKindBinding: Binding<String> {
+        Binding(
+            get: { values["value#kind"] ?? "" },
+            set: { newKind in
+                let oldKind = values["value#kind"] ?? ""
+                guard newKind != oldKind else { return }
+
+                values["value#kept.\(oldKind)"] = values["value"] ?? ""
+                values["value"] = values["value#kept.\(newKind)"] ?? ""
+                values["value#kind"] = newKind
+            }
+        )
     }
 
     private func binding(for param: CatalogParam) -> Binding<String> {
@@ -228,6 +252,9 @@ private struct ParamField: View {
     let variables: [String]
     var listEntry: ListEntryBindings?
     var repeatItems: Binding<String>?
+    // Set Variable and Add to Variable: whether the value is typed as text, a number or a variable, and the variables the name can be picked from.
+    var valueKind: Binding<String>?
+    var nameChoices: [String]?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -248,7 +275,9 @@ private struct ParamField: View {
     // A list of options or a yes/no becomes a menu, everything else a text field.
     @ViewBuilder
     private var control: some View {
-        if let repeatItems {
+        if let valueKind {
+            valueControl(valueKind)
+        } else if let repeatItems {
             ItemRowsEditor(text: repeatItems)
         } else if let listEntry {
             listControl(listEntry)
@@ -280,14 +309,87 @@ private struct ParamField: View {
         HStack(spacing: 8) {
             TextField(param.name, text: $value, prompt: Text(prompt), axis: isMultiline ? .vertical : .horizontal)
                 .lineLimit(isMultiline ? 1...12 : 1...1)
-                .keyboardType(isNumeric ? .numbersAndPunctuation : .default)
+                .keyboardType(keyboard)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .font(.system(.body, design: usesCode ? .monospaced : .default))
+                // A focused field keeps the keyboard it opened with, so switching Text/Number/Variable would leave the wrong one up. A new identity rebuilds the field with the right keyboard.
+                .id(valueKind?.wrappedValue ?? "")
+                // Some regions' decimal pads type a comma, and Cherri only reads a period.
+                .onChange(of: value) { _, typed in
+                    if isNumberValue, typed.contains(",") {
+                        value = typed.replacingOccurrences(of: ",", with: ".")
+                    }
+                }
 
-            if param.type == "variable" {
+            if isNumberValue {
+                signButton
+            }
+
+            if showsVariableMenu {
                 variableMenu
             }
+
+            if let nameChoices, !nameChoices.isEmpty {
+                nameMenu(nameChoices)
+            }
+        }
+    }
+
+    // The value of a variable can be text, a number or another variable, and each is written differently in Cherri.
+    @ViewBuilder
+    private func valueControl(_ kind: Binding<String>) -> some View {
+        Picker("Value type", selection: kind) {
+            Text("Text").tag("")
+            Text("Number").tag("number")
+            Text("Variable").tag("variable")
+        }
+        .pickerStyle(.segmented)
+
+        textControl
+    }
+
+    private var isNumberValue: Bool {
+        valueKind?.wrappedValue == "number"
+    }
+
+    // A Set Variable number gets the plain digit pad with a decimal point, like the Ask for Input action in Shortcuts. Other numeric parameters keep the numbers-and-punctuation keyboard.
+    private var keyboard: UIKeyboardType {
+        if isNumberValue {
+            return .decimalPad
+        }
+
+        return isNumeric ? .numbersAndPunctuation : .default
+    }
+
+    // The decimal pad has no minus key, so the sign flips from here, next to the field instead of floating above the keyboard. It wears the same tile as the settings rows and keeps the keyboard up, so it can be tapped repeatedly.
+    private var signButton: some View {
+        Button {
+            value = value.hasPrefix("-") ? String(value.dropFirst()) : "-" + value
+        } label: {
+            SettingsIcon(symbol: "plus.forwardslash.minus", color: .accentColor, weight: .heavy)
+        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel("Make negative or positive")
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { KeyboardKeepers.frame = $0 }
+        .onDisappear { KeyboardKeepers.frame = .zero }
+    }
+
+    private var showsVariableMenu: Bool {
+        param.type == "variable" || valueKind?.wrappedValue == "variable"
+    }
+
+    // Reusing a name sets the variable again, so the ones already in the code are one tap away.
+    private func nameMenu(_ choices: [String]) -> some View {
+        Menu {
+            Section("In your code") {
+                ForEach(choices, id: \.self) { name in
+                    Button(name) { value = name }
+                }
+            }
+        } label: {
+            Image(systemName: "chevron.down.circle")
+                .font(.title3)
         }
     }
 
@@ -342,6 +444,21 @@ private struct ParamField: View {
             return "Default: \(defaultValue)"
         }
 
+        if let valueKind {
+            switch valueKind.wrappedValue {
+            case "number":
+                return "Number, like 5"
+            case "variable":
+                return "Variable, like @count"
+            default:
+                return "Text, like Hello {@name}"
+            }
+        }
+
+        if nameChoices != nil {
+            return "Name, like count"
+        }
+
         switch param.type {
         case "variable":
             return "Variable, like @name"
@@ -357,11 +474,11 @@ private struct ParamField: View {
     }
 
     private var isNumeric: Bool {
-        param.type == "number" || param.type == "float"
+        param.type == "number" || param.type == "float" || valueKind?.wrappedValue == "number"
     }
 
     private var usesCode: Bool {
-        ["variable", "dictionary", "array", "rawtext"].contains(param.type)
+        ["variable", "dictionary", "array", "rawtext"].contains(param.type) || ["number", "variable"].contains(valueKind?.wrappedValue ?? "")
     }
 
     // A single-line field flattens pasted newlines into spaces, which turns a whole script into one // comment.
@@ -377,6 +494,11 @@ private struct ParamField: View {
 extension CatalogAction {
     // Skipped optional slots become nil and trailing empty ones are dropped, because Cherri arguments are positional.
     func call(with entered: [String: String], named override: String? = nil, takenNames: [String] = [], resultName: String = "") -> (text: String, placeholders: Int) {
+        // Set Variable and Add to Variable are Cherri syntax, not calls, so they write their own statement.
+        if let statement = variableStatement(with: entered, takenNames: takenNames) {
+            return statement
+        }
+
         // Typed list items become a variable on the line above the call, named so it never clashes with one already in the code.
         var preamble: [String] = []
 
@@ -429,7 +551,7 @@ extension CatalogAction {
     }
 
     // The compiler leaves most of its own actions without a declared return type (List is one), so the catalog cannot say which actions give something back. Offering the field everywhere is harmless because it is optional.
-    var canNameResult: Bool { true }
+    var canNameResult: Bool { !isVariableAction }
 
     // Only letters, digits and underscores make a name Cherri accepts, and a leading digit would not parse.
     static func cleanedResultName(_ typed: String) -> String {
