@@ -1,6 +1,6 @@
 // ===================================
 // Action Form
-// v0.0.18 BUILD 2026-11-18 16:20
+// v0.0.20 BUILD 2026-11-18 17:20
 // Fill-in form for one action: a field per parameter in plain words, a live preview of the Cherri call, and an Insert button that writes the call with nil in any skipped slot. A list slot, or any slot that can be repeated (List, Email Address, URL, ...), takes its items in rows like the Shortcuts app's List action. An action that returns something can be given a name, so later actions can use that result.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -14,6 +14,8 @@ import SwiftUI
 struct ActionFormView: View {
     let action: CatalogAction
     let source: String
+    // Variables only count for lines after they are set, so the menus draw from the code above the insertion point. The whole source is still used to avoid name clashes and to know what exists at all.
+    let codeAbove: String
     let onInsert: (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -25,6 +27,8 @@ struct ActionFormView: View {
         let variant = ActionVariants.variant(for: action.name)
         let taken = EditorVariables.names(in: source)
         let preview = action.call(with: values, named: useAlternate ? variant?.alternate : nil, takenNames: taken, resultName: resultName)
+        let blockReason = action.blockReason(with: values, knownNames: taken)
+        let warnings = action.warnings(with: values, codeAbove: codeAbove)
 
         // Cherri does not allow a second constant with the same name, so a clash is renamed and the person is told.
         let cleanedName = CatalogAction.cleanedResultName(resultName)
@@ -53,7 +57,7 @@ struct ActionFormView: View {
                         ParamField(
                             param: param,
                             value: binding(for: param),
-                            variables: EditorVariables.names(in: source),
+                            variables: EditorVariables.names(in: codeAbove),
                             listEntry: param.takesTypedList
                                 ? ListEntryBindings(mode: binding(forKey: "\(param.name)#mode"), items: binding(forKey: "\(param.name)#items"))
                                 : nil,
@@ -96,9 +100,20 @@ struct ActionFormView: View {
                 } header: {
                     Text("Your code")
                 } footer: {
-                    if preview.placeholders > 0 {
-                        Text("Empty required fields get a placeholder you can edit in the code afterwards.")
-                            .foregroundStyle(.orange)
+                    if let blockReason {
+                        Text(blockReason)
+                            .foregroundStyle(.red)
+                    } else if !warnings.isEmpty || preview.placeholders > 0 {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(warnings, id: \.self) { warning in
+                                Text(warning)
+                            }
+
+                            if preview.placeholders > 0 {
+                                Text("Empty required fields get a placeholder you can edit in the code afterwards.")
+                            }
+                        }
+                        .foregroundStyle(.orange)
                     }
                 }
             }
@@ -114,6 +129,7 @@ struct ActionFormView: View {
                     Button("Insert") {
                         onInsert(preview.text)
                     }
+                    .disabled(blockReason != nil)
                 }
             }
         }
@@ -122,7 +138,7 @@ struct ActionFormView: View {
 
     // Only mutable variables can be set again or added to, and they are written without the @ in the name field.
     private var mutableVariableNames: [String] {
-        EditorVariables.names(in: source)
+        EditorVariables.names(in: codeAbove)
             .filter { $0.hasPrefix("@") }
             .map { String($0.dropFirst()) }
     }

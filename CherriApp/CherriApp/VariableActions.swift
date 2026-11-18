@@ -1,6 +1,6 @@
 // ===================================
 // Variable Actions
-// v0.0.1 BUILD 2026-11-18 08:50
+// v0.0.3 BUILD 2026-11-18 17:20
 // Set Variable and Add to Variable for the action picker. In Cherri these are not actions you call but syntax (@name = value and @name += value), so the compiler's catalog does not list them. These hand-made entries sit in their own Variables section, appear in the picker, search and forms like any other action, and write the syntax.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -112,6 +112,47 @@ extension CatalogAction {
     // The picker row shows the call name for a real action, and the syntax for these.
     var listSubtitle: String {
         VariableActions.syntax(for: name) ?? name
+    }
+
+    // Cherri cannot compile text added to a variable that is set nowhere in the code, because it has nothing to tell it what kind of variable to add to. Stopping it here means the error never shows up later. A variable set only further down still compiles, so that is not blocked. An empty name is not blocked either, since it gets an editable placeholder.
+    func blockReason(with entered: [String: String], knownNames: [String]) -> String? {
+        guard name == VariableActions.addName else { return nil }
+        guard (entered["value#kind"] ?? "").isEmpty else { return nil }
+
+        let variable = CatalogAction.cleanedResultName(entered["name"] ?? "")
+        guard !variable.isEmpty, !knownNames.contains("@" + variable) else { return nil }
+
+        return "@\(variable) isn't set anywhere in your code yet. Text can only be added to a variable that already exists, so use Set Variable for it first."
+    }
+
+    // Things that compile but give a result the person would not expect, found by running them in Shortcuts. Cherri picks the action from the value being added, not from the variable: a number becomes Math, text becomes joined text, and a variable becomes a plain Set Variable (except on lists, which append). So the trouble comes from the combinations. Anything that works as expected, like text added to anything or items added to a list, stays quiet, and so does a variable whose kind cannot be told.
+    func warnings(with entered: [String: String], codeAbove: String) -> [String] {
+        guard name == VariableActions.addName else { return [] }
+
+        let variable = CatalogAction.cleanedResultName(entered["name"] ?? "")
+        guard !variable.isEmpty else { return [] }
+
+        let setAbove = EditorVariables.names(in: codeAbove).contains("@" + variable)
+        let held = setAbove ? EditorVariables.kind(of: variable, in: codeAbove) : nil
+
+        switch entered["value#kind"] ?? "" {
+        case "number":
+            if !setAbove {
+                return ["@\(variable) isn't set above this point, so the math has nothing to start from and the result will be blank."]
+            }
+
+            if held == .text {
+                return ["@\(variable) holds text. Adding a number replaces the text with just the number."]
+            }
+        case "variable":
+            if held == .text || held == .number {
+                return ["Adding a variable replaces @\(variable) instead of adding to it. Only lists add."]
+            }
+        default:
+            break
+        }
+
+        return []
     }
 
     // Writes @name = value or @name += value from what the form collected. Empty slots get a placeholder the person can edit in the code, like every other action.

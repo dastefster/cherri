@@ -1,6 +1,6 @@
 // ===================================
 // Code Editor
-// v0.0.11 BUILD 2026-11-17 11:25
+// v0.0.12 BUILD 2026-11-18 16:58
 // Cursor-aware text editor (a UIKit text view inside SwiftUI) so actions and values land where the cursor is, not at the end. A quick swipe down on the editor dismisses the keyboard. Undo and redo buttons ride above the keyboard and shaking the phone asks to undo, like everywhere else in iOS. The editor keeps its own undo history: a line, a paste or a picker insert is one step.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -16,6 +16,19 @@ import UIKit
 final class EditorController {
     weak var textView: UITextView?
     let history = EditHistory()
+
+    // The code above the spot a new statement would land on. A variable only exists for the lines after it is set, so the action forms offer only what is in here.
+    var codeAboveInsertion: String? {
+        guard let textView else { return nil }
+
+        let current = textView.text as NSString
+        let location = min(textView.selectedRange.location, current.length)
+        let lineRange = current.lineRange(for: NSRange(location: location, length: 0))
+        let line = current.substring(with: lineRange).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // A blank line is filled in, so only what comes before it counts. Otherwise the statement goes below this line, so this line counts too.
+        return current.substring(to: line.isEmpty ? lineRange.location : lineRange.upperBound)
+    }
 
     // A whole statement (an action call) goes on its own line below the cursor's line, so a tap mid-line never splits existing code.
     func insertStatement(_ text: String) {

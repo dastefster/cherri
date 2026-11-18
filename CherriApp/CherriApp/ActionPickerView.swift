@@ -1,6 +1,6 @@
 // ===================================
 // Action Picker
-// v0.0.15 BUILD 2026-11-18 16:05
+// v0.0.16 BUILD 2026-11-18 16:58
 // Searchable list of every Cherri action. Tapping one opens its fill-in form (or inserts it straight away if it has no parameters), swiping left quick-inserts starter code, and the info button opens its help. A highlighted card at the top opens the shortcut's name, color and icon editor.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -13,6 +13,8 @@ import SwiftUI
 
 struct ActionPickerView: View {
     let source: String
+    // Only the code above where an inserted statement will land, for the variable menus. Nil means use all of the source.
+    var codeAbove: String? = nil
     let onInsert: (String) -> Void
     let onInsertValue: (String) -> Void
     let onStyle: (ShortcutStyle) -> Void
@@ -60,7 +62,7 @@ struct ActionPickerView: View {
                     dismiss()
                 }
             case .form(let action):
-                ActionFormView(action: action, source: source) { text in
+                ActionFormView(action: action, source: source, codeAbove: codeAbove ?? source) { text in
                     onInsert(text)
                     dismiss()
                 }

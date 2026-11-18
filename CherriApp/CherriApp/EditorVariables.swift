@@ -1,6 +1,6 @@
 // ===================================
 // Editor Variables
-// v0.0.2 BUILD 2026-10-15 22:35
+// v0.0.3 BUILD 2026-11-18 17:20
 // Finds the variables the code in the editor declares, written the way Cherri needs them referenced, so the action form can offer them in a menu instead of making people type them.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -42,4 +42,43 @@ enum EditorVariables {
 
         return names
     }
+
+    // What a variable was last given, read from the line that set it: quotes mean text, a bracket a list, a digit a number. Nil when the line is something this cannot judge (an action call, say), so callers stay quiet instead of guessing.
+    static func kind(of name: String, in source: String) -> VariableKind? {
+        let escaped = NSRegularExpression.escapedPattern(for: name)
+        let pattern = #"^[ \t]*@"# + escaped + #"[ \t]*(?::[ \t]*(\w+)|=(?!=)[ \t]*(.*?))[ \t]*$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.anchorsMatchLines]) else { return nil }
+
+        let whole = NSRange(source.startIndex..., in: source)
+        guard let match = regex.matches(in: source, range: whole).last else { return nil }
+
+        // "@x: type" declares the kind without a value.
+        if let range = Range(match.range(at: 1), in: source) {
+            switch String(source[range]) {
+            case "text":
+                return .text
+            case "number", "float":
+                return .number
+            case "array":
+                return .list
+            default:
+                return nil
+            }
+        }
+
+        guard let range = Range(match.range(at: 2), in: source) else { return nil }
+        let value = String(source[range])
+
+        if value.hasPrefix("\"") || value.hasPrefix("'") { return .text }
+        if value.hasPrefix("[") { return .list }
+        if let first = value.first, first.isNumber || first == "-" || first == "(" { return .number }
+
+        return nil
+    }
+}
+
+enum VariableKind {
+    case text
+    case number
+    case list
 }

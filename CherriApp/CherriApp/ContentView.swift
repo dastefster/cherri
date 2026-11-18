@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.37 BUILD 2026-11-17 09:15
+// v0.0.38 BUILD 2026-11-18 16:58
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -222,6 +222,7 @@ struct ContentView: View {
             .sheet(isPresented: $showingActions) {
                 ActionPickerView(
                     source: source,
+                    codeAbove: editor.codeAboveInsertion,
                     onInsert: { editor.insertStatement($0) },
                     onInsertValue: { editor.insertInline($0) },
                     onStyle: applyStyle
