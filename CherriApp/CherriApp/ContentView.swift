@@ -236,11 +236,16 @@ struct ContentView: View {
             statusArea
         }
         .padding()
-        // The buttons and the empty space around the editor are not a scroll view, so a swipe down there needs its own handler.
+        // The buttons and the empty space around the editor are not a scroll view, so a swipe down there needs its own handler. Drags that start inside the editor are skipped: the editor has its own swipe, and dragging a selection handle straight down looks the same as a swipe, which dropped the keyboard and wiped the selection.
         .contentShape(Rectangle())
         .simultaneousGesture(
-            DragGesture(minimumDistance: 24)
+            DragGesture(minimumDistance: 24, coordinateSpace: .global)
                 .onEnded { value in
+                    if let textView = editor.textView, textView.window != nil {
+                        let editorFrame = textView.convert(textView.bounds, to: nil)
+                        if editorFrame.contains(value.startLocation) { return }
+                    }
+
                     if value.translation.height > 60 && abs(value.translation.width) < value.translation.height {
                         editor.textView?.resignFirstResponder()
                     }

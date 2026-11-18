@@ -549,12 +549,17 @@ struct CodeEditor: UIViewRepresentable {
         }
 
         @objc func dismissKeyboard(_ gesture: UISwipeGestureRecognizer) {
+            // Checked again here because a swipe only fires when the finger lifts, and by then a fast downward drag of a selection handle has already made a selection. Dropping the keyboard would wipe it.
+            if let textView = gesture.view as? UITextView, textView.selectedRange.length > 0 { return }
+
             gesture.view?.endEditing(true)
         }
 
-        // Only count the swipe when the text is already at the top. Otherwise a quick flick up through long code would also drop the keyboard.
+        // Only count the swipe when the text is already at the top. Otherwise a quick flick up through long code would also drop the keyboard. It also stays out of the way while text is selected, since dragging a selection handle down looks just like a swipe down.
         func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
             guard let textView = gestureRecognizer.view as? UITextView else { return true }
+            guard textView.selectedRange.length == 0 else { return false }
+
             return textView.contentOffset.y <= -textView.adjustedContentInset.top + 1
         }
 
