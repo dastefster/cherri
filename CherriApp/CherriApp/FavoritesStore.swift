@@ -1,6 +1,6 @@
 // ===================================
 // Favorites
-// v0.0.2 BUILD 2026-11-18 19:01
+// v0.0.3 BUILD 2026-11-18 19:55
 // Remembers which actions are starred and in what order. Saved by action name in its own small file with one backup copy, so a catalog update can never touch it.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -75,6 +75,13 @@ final class FavoritesStore: ObservableObject {
     // A softer gold than the Premium crown, so a star and a crown don't read as the same thing.
     private static let tintUIColor = UIColor(red: 1.0, green: 0.78, blue: 0.15, alpha: 1)
     static let tint = Color(tintUIColor)
+
+    // The page behind the picker's rows. Spelled out instead of left to the system so a row can fill itself with exactly the same color.
+    static let pageBackground = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 28 / 255, green: 28 / 255, blue: 30 / 255, alpha: 1)
+            : UIColor(red: 229 / 255, green: 229 / 255, blue: 234 / 255, alpha: 1)
+    })
 
     // The tint mixed into the normal row color. It's solid on purpose: a see-through tint lets the row underneath show through while one is being dragged.
     static let rowBackground = Color(UIColor { traits in

@@ -1,6 +1,6 @@
 // ===================================
 // Action Picker
-// v0.0.21 BUILD 2026-11-18 19:42
+// v0.0.22 BUILD 2026-11-18 19:55
 // Searchable list of every Cherri action. Tapping one opens its fill-in form (or inserts it straight away if it has no parameters), swiping left quick-adds starter code, swiping right stars it as a favorite, and the info button opens its help. Favorites sit in their own gold section at the top and can be reordered. A highlighted card at the top opens the shortcut's name, color and icon editor.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -141,10 +141,14 @@ struct ActionPickerView: View {
                         favorites.remove(visible: favoriteActions.map(\.name), at: offsets)
                     }
                     // Each favorite is its own rounded card. The list clips a row's outer corners by its position, with a bigger radius than ours, and a lifted row keeps that clip. The card sits a few points inside the row so the clip never reaches it, which leaves all four corners the same.
+                    // The row is filled with the page color behind the card, so the square lift rectangle iOS draws around a dragged row blends into the page instead of showing.
                     .listRowBackground(
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .fill(FavoritesStore.rowBackground)
-                            .padding(Self.favoriteCardInset)
+                        ZStack {
+                            FavoritesStore.pageBackground
+                            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                .fill(FavoritesStore.rowBackground)
+                                .padding(Self.favoriteCardInset)
+                        }
                     )
                     .listRowSeparator(.hidden)
                 } header: {
@@ -169,9 +173,9 @@ struct ActionPickerView: View {
             }
         }
         .environment(\.editMode, $editMode)
-        // White rows on the pale default page barely show their edges in light mode, so the page behind them is a step darker there.
-        .scrollContentBackground(colorScheme == .light ? .hidden : .automatic)
-        .background(colorScheme == .light ? Color(UIColor.systemGray5) : Color.clear)
+        // White rows on the pale default page barely show their edges in light mode, so the page is a step darker there. It's set in both modes so the favorites rows can fill themselves with this exact color.
+        .scrollContentBackground(.hidden)
+        .background(FavoritesStore.pageBackground)
         .sensoryFeedback(.selection, trigger: favorites.names)
     }
 
