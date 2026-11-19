@@ -1,6 +1,6 @@
 // ===================================
 // Action Picker
-// v0.0.18 BUILD 2026-11-18 19:01
+// v0.0.19 BUILD 2026-11-18 19:29
 // Searchable list of every Cherri action. Tapping one opens its fill-in form (or inserts it straight away if it has no parameters), swiping left quick-adds starter code, swiping right stars it as a favorite, and the info button opens its help. Favorites sit in their own gold section at the top and can be reordered. A highlighted card at the top opens the shortcut's name, color and icon editor.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -53,8 +53,13 @@ struct ActionPickerView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     if showsFavoritesEdit {
-                        Button(editMode.isEditing ? "Done" : "Edit Favorites") {
+                        Button {
                             withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+                        } label: {
+                            // Without this the two titles cross-fade on top of each other while the button resizes.
+                            Text(editMode.isEditing ? "Done" : "Edit Favorites")
+                                .contentTransition(.identity)
+                                .transaction { $0.animation = nil }
                         }
                     }
                 }
@@ -136,7 +141,8 @@ struct ActionPickerView: View {
                         SettingsIcon(symbol: "star.fill", color: FavoritesStore.tint, weight: .bold)
                         Text("Favorites")
                             .font(.title3.bold())
-                            .foregroundStyle(.primary)
+                            // An explicit color, because a section header turns .primary into a muted gray.
+                            .foregroundStyle(Color(UIColor.label))
                     }
                     .textCase(nil)
                 }
