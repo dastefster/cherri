@@ -1,6 +1,6 @@
 // ===================================
 // In-App Guide
-// v0.0.14 BUILD 2026-11-17 11:45
+// v0.0.15 BUILD 2026-11-18 19:01
 // Basic documentation sheet: getting started, Cherri syntax basics, the Actions picker, Compile vs Export, troubleshooting, and credits. Content lives in the guideSections array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -57,7 +57,8 @@ let guideSections: [GuideSection] = [
     ]),
     GuideSection(id: "picker", title: "Using the Actions picker", symbol: "list.bullet.rectangle", blocks: [
         .text("Tap **Actions** to search or browse. Choose an action to open its form. Fill in what you need and leave the rest empty, because optional parameters can be skipped."),
-        .text("**Swipe left** on an action and tap **Quick Insert** to skip the form and drop the action into your code right away."),
+        .text("**Swipe left** on an action and tap **Quick Add** to skip the form and drop the action into your code right away."),
+        .text("**Swipe right** on an action to star it as a favorite. Favorites sit at the top of the list, and **Edit Favorites** lets you put them in your own order."),
         .text("The **i** button explains what each parameter accepts. Tapping an allowed value in the help inserts it at your cursor."),
         .text("The variable menu in a form lists the variables in your code, newest first, plus Cherri's built-ins, so you can drop one in without typing it."),
         .tip("Actions are inserted where your cursor is. Tap in the editor first to choose the spot."),

@@ -1,6 +1,6 @@
 // ===================================
 // Documentation
-// v0.0.11 BUILD 2026-11-17 11:45
+// v0.0.12 BUILD 2026-11-18 19:01
 // In-app reference for everything Cherri Shortcuts does: the editor, the Actions picker, Compile, Export, third-party app actions, Settings, and what stays on your device. Content lives in the docTopics array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -29,7 +29,8 @@ let docTopics: [GuideSection] = [
         .text("**The variable menu** lists the variables and constants in your code, newest first, plus Cherri's built-ins: `ShortcutInput`, `Clipboard`, `CurrentDate` and `Device`."),
         .text("**Your code** at the bottom of the form is a live preview of what will be inserted. Leave an optional field empty and it's skipped for you. If a required field is empty, a placeholder is inserted that you can edit afterwards."),
         .text("Tap **Insert** to add it at your cursor. Actions with no parameters are inserted as soon as you tap them."),
-        .text("**Quick Insert:** swipe left on an action and tap **Quick Insert** to drop in starter code without opening the form."),
+        .text("**Quick Add:** swipe left on an action and tap **Quick Add** to drop in starter code without opening the form."),
+        .text("**Favorites:** swipe right on an action and tap **Favorite**, or press and hold it, to star it. Favorites get their own section at the top of the list. Tap **Edit Favorites** to drag them into your own order or remove one."),
         .text("**The i button** opens the action's help: its signature, what it does, any iOS or app requirements, and every parameter with its type and default. Tap an allowed value to insert it at your cursor."),
         .text("**Show cancel button:** the Alert action has a switch that adds a Cancel button. It's written as `confirm` in your code instead of `alert`."),
     ]),

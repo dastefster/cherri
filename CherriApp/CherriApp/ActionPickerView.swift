@@ -1,7 +1,7 @@
 // ===================================
 // Action Picker
-// v0.0.17 BUILD 2026-11-18 18:27
-// Searchable list of every Cherri action. Tapping one opens its fill-in form (or inserts it straight away if it has no parameters), swiping left quick-inserts starter code, swiping right stars it as a favorite, and the info button opens its help. Favorites sit in their own gold section at the top and can be reordered. A highlighted card at the top opens the shortcut's name, color and icon editor.
+// v0.0.18 BUILD 2026-11-18 19:01
+// Searchable list of every Cherri action. Tapping one opens its fill-in form (or inserts it straight away if it has no parameters), swiping left quick-adds starter code, swiping right stars it as a favorite, and the info button opens its help. Favorites sit in their own gold section at the top and can be reordered. A highlighted card at the top opens the shortcut's name, color and icon editor.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -120,7 +120,7 @@ struct ActionPickerView: View {
                 Section {
                     ForEach(favoriteActions) { action in
                         actionRow(for: action)
-                            // Swipe-to-delete would fight Quick Insert, so removing is only offered while editing.
+                            // Swipe-to-delete would fight Quick Add, so removing is only offered while editing.
                             .deleteDisabled(!editMode.isEditing)
                     }
                     .onMove { offsets, destination in
@@ -129,10 +129,16 @@ struct ActionPickerView: View {
                     .onDelete { offsets in
                         favorites.remove(visible: favoriteActions.map(\.name), at: offsets)
                     }
-                    .listRowBackground(FavoritesStore.tint.opacity(colorScheme == .dark ? 0.14 : 0.22))
+                    .listRowBackground(FavoritesStore.rowBackground)
                 } header: {
-                    Label("Favorites", systemImage: "star.fill")
-                        .foregroundStyle(FavoritesStore.tint)
+                    // The same tile as the Settings rows, and a title in the normal text color so it stays readable in light mode.
+                    HStack(spacing: 10) {
+                        SettingsIcon(symbol: "star.fill", color: FavoritesStore.tint, weight: .bold)
+                        Text("Favorites")
+                            .font(.title3.bold())
+                            .foregroundStyle(.primary)
+                    }
+                    .textCase(nil)
                 }
             }
 
@@ -145,6 +151,9 @@ struct ActionPickerView: View {
             }
         }
         .environment(\.editMode, $editMode)
+        // White rows on the pale default page barely show their edges in light mode, so the page behind them is a step darker there.
+        .scrollContentBackground(colorScheme == .light ? .hidden : .automatic)
+        .background(colorScheme == .light ? Color(UIColor.systemGray5) : Color.clear)
         .sensoryFeedback(.selection, trigger: favorites.names)
     }
 
@@ -177,9 +186,12 @@ struct ActionPickerView: View {
             }
         }
         .swipeActions(edge: .trailing) {
-            Button("Quick Insert") {
+            // A glyph in the label is what makes iOS draw it as a round button with the title underneath, like Favorite.
+            Button {
                 onInsert(action.insertionText)
                 dismiss()
+            } label: {
+                Label("Quick Add", systemImage: "bolt.fill")
             }
             .tint(.accentColor)
         }
