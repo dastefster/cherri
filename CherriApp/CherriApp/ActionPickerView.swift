@@ -1,6 +1,6 @@
 // ===================================
 // Action Picker
-// v0.0.19 BUILD 2026-11-18 19:29
+// v0.0.20 BUILD 2026-11-18 19:29
 // Searchable list of every Cherri action. Tapping one opens its fill-in form (or inserts it straight away if it has no parameters), swiping left quick-adds starter code, swiping right stars it as a favorite, and the info button opens its help. Favorites sit in their own gold section at the top and can be reordered. A highlighted card at the top opens the shortcut's name, color and icon editor.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -134,7 +134,13 @@ struct ActionPickerView: View {
                     .onDelete { offsets in
                         favorites.remove(visible: favoriteActions.map(\.name), at: offsets)
                     }
-                    .listRowBackground(FavoritesStore.rowBackground)
+                    // Each favorite is its own rounded card, so a row lifted for dragging keeps rounded corners on every side instead of only the section's outer edge.
+                    .listRowBackground(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(FavoritesStore.rowBackground)
+                            .padding(.vertical, 3)
+                    )
+                    .listRowSeparator(.hidden)
                 } header: {
                     // The same tile as the Settings rows, and a title in the normal text color so it stays readable in light mode.
                     HStack(spacing: 10) {
