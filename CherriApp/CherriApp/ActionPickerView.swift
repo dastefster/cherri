@@ -1,6 +1,6 @@
 // ===================================
 // Action Picker
-// v0.0.20 BUILD 2026-11-18 19:29
+// v0.0.21 BUILD 2026-11-18 19:42
 // Searchable list of every Cherri action. Tapping one opens its fill-in form (or inserts it straight away if it has no parameters), swiping left quick-adds starter code, swiping right stars it as a favorite, and the info button opens its help. Favorites sit in their own gold section at the top and can be reordered. A highlighted card at the top opens the shortcut's name, color and icon editor.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -98,6 +98,9 @@ struct ActionPickerView: View {
     // LIST
     // ===================================
 
+    // How far a favorite's card sits inside its row, on every side. Also the gap between neighbors is twice this.
+    private static let favoriteCardInset: CGFloat = 6
+
     // The Edit button only shows when there is a favorite on screen to edit.
     private var showsFavoritesEdit: Bool {
         guard let catalog, query.trimmingCharacters(in: .whitespaces).isEmpty else { return false }
@@ -125,6 +128,9 @@ struct ActionPickerView: View {
                 Section {
                     ForEach(favoriteActions) { action in
                         actionRow(for: action)
+                            // Matches the inset on the card behind it, so the text keeps the same distance from the card's edge.
+                            .padding(.horizontal, Self.favoriteCardInset)
+                            .padding(.vertical, Self.favoriteCardInset)
                             // Swipe-to-delete would fight Quick Add, so removing is only offered while editing.
                             .deleteDisabled(!editMode.isEditing)
                     }
@@ -134,11 +140,11 @@ struct ActionPickerView: View {
                     .onDelete { offsets in
                         favorites.remove(visible: favoriteActions.map(\.name), at: offsets)
                     }
-                    // Each favorite is its own rounded card, so a row lifted for dragging keeps rounded corners on every side instead of only the section's outer edge.
+                    // Each favorite is its own rounded card. The list clips a row's outer corners by its position, with a bigger radius than ours, and a lifted row keeps that clip. The card sits a few points inside the row so the clip never reaches it, which leaves all four corners the same.
                     .listRowBackground(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
                             .fill(FavoritesStore.rowBackground)
-                            .padding(.vertical, 3)
+                            .padding(Self.favoriteCardInset)
                     )
                     .listRowSeparator(.hidden)
                 } header: {
