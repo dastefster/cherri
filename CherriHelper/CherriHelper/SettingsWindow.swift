@@ -1,6 +1,6 @@
 // ===================================
 // Settings Window
-// v0.0.1 BUILD 2026-11-21@11:49
+// v0.0.2 BUILD 2026-11-21@12:01
 // The Settings window for Cherri Helper: start at login, pairing, and support tools.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -64,10 +64,10 @@ struct SettingsView: View {
             }
 
             Section("Support") {
-                Button("Show Log in Finder") {
-                    NSWorkspace.shared.activateFileViewerSelecting([Log.url])
+                Button("Report a Problem…") {
+                    ReportProblem.open(status: model.status, launchAtLogin: model.launchAtLogin)
                 }
-                Text("The log only records sizes, times and results. It never contains your shortcuts.")
+                Text("Opens an email to support with your Mac's basic info and the helper's log. You can read and edit it before sending. The log only records sizes, times and results, never your shortcuts.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
