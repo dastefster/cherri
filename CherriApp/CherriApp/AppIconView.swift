@@ -1,6 +1,6 @@
 // ===================================
 // App Icon Picker
-// v0.0.5 BUILD 2026-11-11 16:58
+// v0.0.11 BUILD 2026-11-20 19:22
 // Grid of the available app icons with a preview of each; tapping one switches the Home Screen icon.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -22,13 +22,16 @@ struct AppIconOption: Identifiable {
     var alternateName: String? { id == "AppIcon" ? nil : id }
 
     static let all: [AppIconOption] = [
-        AppIconOption(id: "AppIcon", title: "Default", preview: "IconPreviewDefault"),
+        // The primary icon is the official Cherri cherries (matches the macOS app). The preview set keeps its old "Default" name.
+        AppIconOption(id: "AppIcon", title: "Classic", preview: "IconPreviewDefault"),
         AppIconOption(id: "AppIcon-Purple", title: "Purple", preview: "IconPreviewPurple"),
         AppIconOption(id: "AppIcon-Glass", title: "Glass", preview: "IconPreviewGlass"),
+        AppIconOption(id: "AppIcon-Original", title: "Original", preview: "IconPreviewOriginal"),
+        AppIconOption(id: "AppIcon-Minimal", title: "Minimal", preview: "IconPreviewMinimal"),
     ]
 
     static func title(for iconID: String) -> String {
-        all.first { $0.id == iconID }?.title ?? "Default"
+        all.first { $0.id == iconID }?.title ?? "Classic"
     }
 }
 
@@ -54,7 +57,7 @@ struct AppIconView: View {
             }
             .padding()
 
-            Text("Default and Glass follow your iPhone's light and dark appearance. If they don't switch, check your Home Screen icon style under Edit → Customize. Purple stays as chosen.")
+            Text("Classic, Glass, Original and Minimal can follow your iPhone's light and dark appearance. Touch and hold the Home Screen until the apps wiggle, tap **Edit** or the **paintbrush** in the top-left corner, then go to **Customize → Dark → Auto**. Purple stays as chosen.")
                 .font(.footnote)
                 .foregroundStyle(Color.helperText)
                 .padding(.horizontal)
