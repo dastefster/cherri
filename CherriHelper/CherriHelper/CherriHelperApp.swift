@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Helper
-// v0.0.6 BUILD 2026-11-21@11:10
+// v0.0.7 BUILD 2026-11-21@11:49
 // Menu-bar app that signs Shortcuts for Cherri Shortcuts on this Mac, over an encrypted local connection.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -98,6 +98,15 @@ final class HelperModel: ObservableObject {
         start()
     }
 
+    func confirmAndResetPairing() {
+        let alert = NSAlert()
+        alert.messageText = "Reset pairing?"
+        alert.informativeText = "Every paired iPhone will stop working until it scans the new code."
+        alert.addButton(withTitle: "Reset")
+        alert.addButton(withTitle: "Cancel")
+        if alert.runModal() == .alertFirstButtonReturn { resetPairing() }
+    }
+
     func setLaunchAtLogin(_ enabled: Bool) {
         do {
             if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
@@ -122,46 +131,14 @@ struct HelperMenuView: View {
             Text(model.status).font(.caption).foregroundStyle(.secondary)
             Divider()
 
-            Button(model.showQR ? "Hide pairing QR" : "Pair an iPhone…") { model.showQR.toggle() }
-
-            if model.showQR {
-                if let image = QRCode.image(for: model.pairingURL) {
-                    Image(nsImage: image)
-                        .resizable()
-                        .interpolation(.none)
-                        .frame(width: 220, height: 220)
-                }
-                Text("In Cherri Shortcuts, open Settings → Signing → My Mac, then scan this code.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Button("Copy pairing link") {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(model.pairingURL, forType: .string)
-            }
-
-            Button("Reset pairing…") { confirmReset() }
-
-            Toggle("Start at login", isOn: Binding(
-                get: { model.launchAtLogin },
-                set: { model.setLaunchAtLogin($0) }
-            ))
+            Button("Pair an iPhone…") { PairingWindow.show() }
+            Button("Settings…") { SettingsWindow.show() }
+                .keyboardShortcut(",")
 
             Divider()
             Button("Quit Cherri Helper") { NSApplication.shared.terminate(nil) }
         }
         .padding(14)
         .frame(width: 260)
-    }
-
-    private func confirmReset() {
-        let alert = NSAlert()
-        alert.messageText = "Reset pairing?"
-        alert.informativeText = "Every paired iPhone will stop working until it scans the new code."
-        alert.addButton(withTitle: "Reset")
-        alert.addButton(withTitle: "Cancel")
-        if alert.runModal() == .alertFirstButtonReturn { model.resetPairing() }
     }
 }

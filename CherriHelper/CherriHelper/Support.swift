@@ -1,6 +1,6 @@
 // ===================================
 // Support
-// v0.0.1 BUILD 2026-11-21@10:00
+// v0.0.2 BUILD 2026-11-21@11:49
 // Shared folders, the log file, and the status file the test tools read.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -29,7 +29,7 @@ enum StoragePaths {
 // Sizes, timings, and outcomes only. Shortcut names and contents never reach the log.
 enum Log {
     private static let queue = DispatchQueue(label: "com.dastefster.CherriHelper.log")
-    private static let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/CherriHelper.log")
+    static let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/CherriHelper.log")
 
     static func write(_ message: String) {
         queue.async {
