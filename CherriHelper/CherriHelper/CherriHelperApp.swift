@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Helper
-// v0.0.3 BUILD 2026-11-21@10:16
+// v0.0.4 BUILD 2026-11-21@10:27
 // Menu-bar app that signs Shortcuts for Cherri Shortcuts on this Mac, over an encrypted local connection.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -19,8 +19,11 @@ struct CherriHelperApp: App {
     @ObservedObject private var model = HelperModel.shared
 
     var body: some Scene {
-        MenuBarExtra("Cherri Helper", systemImage: "signature") {
+        MenuBarExtra {
             HelperMenuView(model: model)
+        } label: {
+            // SF Symbols has no cherry, so the emoji is the icon.
+            Text("🍒")
         }
         .menuBarExtraStyle(.window)
     }
