@@ -1,6 +1,6 @@
 // ===================================
 // Welcome View
-// v0.0.1 BUILD 2026-11-21@15:45
+// v0.0.2 BUILD 2026-11-21@15:50
 // The four welcome pages: what the helper does, what it needs, pairing with a live "connected" check, and the start-at-login choice.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -52,6 +52,7 @@ struct WelcomeView: View {
             }
         }
         .frame(width: 600, height: 560)
+        .withoutFocusRing()
         .animation(.easeInOut(duration: 0.25), value: page)
     }
 
@@ -185,6 +186,7 @@ struct WelcomeView: View {
 
             Button("Open Help…", action: onOpenHelp)
                 .buttonStyle(.link)
+                .withoutFocusRing()
                 .padding(.top, 2)
         }
         .padding(.top, 40)
@@ -245,6 +247,7 @@ struct WelcomeView: View {
     private var footer: some View {
         HStack {
             Button("Back") { page -= 1 }
+                .withoutFocusRing()
                 .opacity(page == 0 ? 0 : 1)
                 .disabled(page == 0)
 
@@ -265,6 +268,7 @@ struct WelcomeView: View {
             .buttonStyle(.borderedProminent)
             .tint(cherry)
             .controlSize(.large)
+            .withoutFocusRing()
         }
         .padding(.horizontal, 28)
         .padding(.vertical, 20)
@@ -276,6 +280,22 @@ struct WelcomeView: View {
         case 1: return "Continue"
         case 2: return paired ? "Continue" : "Skip for Now"
         default: return "Done"
+        }
+    }
+}
+
+
+// ===================================
+// FOCUS RING
+// ===================================
+
+private extension View {
+    // With keyboard navigation on, macOS drew a blue ring around the default button that sat in the wrong place. A setup screen has no use for it.
+    @ViewBuilder func withoutFocusRing() -> some View {
+        if #available(macOS 14.0, *) {
+            focusEffectDisabled()
+        } else {
+            focusable(false)
         }
     }
 }
