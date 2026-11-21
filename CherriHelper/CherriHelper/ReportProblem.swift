@@ -1,6 +1,6 @@
 // ===================================
 // Report a Problem
-// v0.0.2 BUILD 2026-11-21@12:02
+// v0.0.3 BUILD 2026-11-21@12:14
 // Opens an email to support with this Mac's basic info and the helper's log, so nobody has to dig through files to ask for help.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -31,6 +31,15 @@ enum ReportProblem {
         }
 
         openWithMailto(status: status, launchAtLogin: launchAtLogin, logCopy: logCopy)
+    }
+
+    // For anyone who reads their email in a browser or has no account set up in Mail: the whole report goes on the clipboard,
+    // and the log is shown in Finder so it can be attached by hand.
+    static func copyReport(status: String, launchAtLogin: Bool) {
+        let text = "To: \(supportEmail)\nSubject: \(subject)\n\n" + intro + diagnostics(status: status, launchAtLogin: launchAtLogin, logLines: 200)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        if let logCopy = copyOfLog() { NSWorkspace.shared.activateFileViewerSelecting([logCopy]) }
     }
 
     private static let intro = "Please describe what went wrong here:\n\n\n\n----- Details for support (you can read and edit these) -----\n"

@@ -1,6 +1,6 @@
 // ===================================
 // Settings Window
-// v0.0.2 BUILD 2026-11-21@12:01
+// v0.0.3 BUILD 2026-11-21@12:14
 // The Settings window for Cherri Helper: start at login, pairing, and support tools.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -37,6 +37,7 @@ enum SettingsWindow {
 
 struct SettingsView: View {
     @ObservedObject var model: HelperModel
+    @State private var copied = false
 
     private var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
@@ -67,7 +68,12 @@ struct SettingsView: View {
                 Button("Report a Problem…") {
                     ReportProblem.open(status: model.status, launchAtLogin: model.launchAtLogin)
                 }
-                Text("Opens an email to support with your Mac's basic info and the helper's log. You can read and edit it before sending. The log only records sizes, times and results, never your shortcuts.")
+                Button(copied ? "Copied ✓" : "Copy Report Instead") {
+                    ReportProblem.copyReport(status: model.status, launchAtLogin: model.launchAtLogin)
+                    copied = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { copied = false }
+                }
+                Text("Report a Problem opens an email to support with your Mac's basic info and the helper's log. You can read and edit it before sending. No mail account set up? Use Copy Report Instead, then paste it into an email to \(ReportProblem.supportEmail) and attach the log file that opens in Finder. The log only records sizes, times and results, never your shortcuts.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -77,6 +83,6 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 420, height: 460)
+        .frame(width: 420, height: 520)
     }
 }
