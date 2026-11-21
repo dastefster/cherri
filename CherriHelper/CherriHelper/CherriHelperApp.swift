@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Helper
-// v0.0.11 BUILD 2026-11-21@15:45
+// v0.0.12 BUILD 2026-11-21@16:30
 // Menu-bar app that signs Shortcuts for Cherri Shortcuts on this Mac, over an encrypted local connection.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -17,6 +17,29 @@ import ServiceManagement
 struct CherriHelperApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @ObservedObject private var model = HelperModel.shared
+
+    // Runs before any window or menu-bar icon exists, so a duplicate leaves without ever flashing a second cherry.
+    init() {
+        // A copy that is still shutting down (a quick quit and reopen, or an update relaunch) gets a moment to finish before this one gives up.
+        for _ in 0..<6 {
+            if !Self.anotherCopyIsAlreadyRunning { return }
+            Thread.sleep(forTimeInterval: 0.25)
+        }
+        exit(0)
+    }
+
+    // Two copies can run when one is launched from the DMG window or a build folder while the installed one is up.
+    // The newer one steps aside, so two copies that start at the same moment can't both quit.
+    private static var anotherCopyIsAlreadyRunning: Bool {
+        guard let id = Bundle.main.bundleIdentifier else { return false }
+        let me = NSRunningApplication.current
+        let myStart = me.launchDate ?? Date()
+        return NSRunningApplication.runningApplications(withBundleIdentifier: id).contains { other in
+            guard other.processIdentifier != me.processIdentifier else { return false }
+            let theirStart = other.launchDate ?? .distantPast
+            return theirStart < myStart || (theirStart == myStart && other.processIdentifier < me.processIdentifier)
+        }
+    }
 
     var body: some Scene {
         MenuBarExtra {
