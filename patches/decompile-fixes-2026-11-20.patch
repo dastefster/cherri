@@ -1,0 +1,46 @@
+diff --git a/decompile.go b/decompile.go
+index 84707ca..0f7f9a2 100644
+--- a/decompile.go
++++ b/decompile.go
+@@ -214,6 +214,10 @@ func mapDictionaryValueIdentifiers(items []WFDictionaryFieldValueItem) {
+ 			var valueTwo = wfValue["Value"].(map[string]interface{})
+ 			if valueTwo != nil && valueTwo["Value"] != nil && reflect.TypeOf(valueTwo["Value"]).Kind() == reflect.Map {
+ 				var itemsValue = valueTwo["Value"].(map[string]interface{})
++				// A dictionary field set to a variable holds an attachment here instead of items.
++				if itemsValue["WFDictionaryFieldValueItems"] == nil {
++					continue
++				}
+ 
+ 				var dictionaryItems []WFDictionaryFieldValueItem
+ 				mapToStruct(itemsValue["WFDictionaryFieldValueItems"], &dictionaryItems)
+@@ -945,6 +949,13 @@ func decompValueObject(value map[string]interface{}) string {
+ 		}
+ 	}
+ 
++	// A variable set as a whole Dictionary field is wrapped in one more attachment layer.
++	if value["Type"] == nil && value["WFDictionaryFieldValueItems"] == nil {
++		if inner, found := value["Value"].(map[string]interface{}); found && inner["Type"] != nil {
++			value = inner
++		}
++	}
++
+ 	if value["WFDictionaryFieldValueItems"] != nil {
+ 		var items []WFDictionaryFieldValueItem
+ 		mapToStruct(value["WFDictionaryFieldValueItems"], &items)
+@@ -1023,7 +1034,15 @@ func decompObjectValue(valueObj any) string {
+ 
+ func decompAttachmentString(attachmentString *string, attachments map[string]interface{}) {
+ 	var originalString = *attachmentString
+-	var attachmentChars = strings.Split(*attachmentString, "")
++
++	// Attachment positions are UTF-16 offsets, so characters outside the BMP (emoji, math alphanumerics) take two slots.
++	var attachmentChars []string
++	for _, char := range *attachmentString {
++		attachmentChars = append(attachmentChars, string(char))
++		if char > 0xFFFF {
++			attachmentChars = append(attachmentChars, "")
++		}
++	}
+ 
+ 	for attachmentRange, a := range attachments {
+ 		var attachmentRanges = strings.Split(attachmentRange, ",")
