@@ -104,7 +104,7 @@ struct WelcomeView: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Your privacy", systemImage: "lock.shield")
                 .font(.headline)
-            Text("When you tap Export, your shortcut is sent to the custom signing server to be signed, because iOS only imports signed shortcuts. When you import, the iCloud link is looked up on iCloud to fetch that shortcut. Nothing is sent until you tap Export or start an import.")
+            Text("When you tap Export, your shortcut is sent to be signed, because iOS only imports signed shortcuts: to the developer's signing server by default, or to your own Mac if you set up Cherri Helper. When you import, the iCloud link is looked up on iCloud to fetch that shortcut. Nothing is sent until you tap Export or start an import.")
                 .font(.subheadline)
                 .foregroundStyle(Color.helperText)
                 .fixedSize(horizontal: false, vertical: true)

@@ -127,7 +127,7 @@ struct LocalSignerView: View {
                 } header: {
                     Text("Your Mac")
                 } footer: {
-                    Text("Open Cherri Helper on your Mac, choose Pair an iPhone, and scan the code. Your phone and Mac need to be on the same Wi-Fi network. If this is set to My Mac, Export never falls back to the Cherri server.")
+                    Text("Open Cherri Helper on your Mac, choose Pair an iPhone, and scan the code. Don't have it yet? Get it at dastefster.github.io/cherricuts/helper. Your phone and Mac need to be on the same Wi-Fi network. If this is set to My Mac, Export never falls back to the Cherri server.")
                         .foregroundStyle(Color.helperText)
                 }
             }

@@ -33,4 +33,4 @@ gomobile wraps every exported name in the package it is given, and the compiler 
 
 `Compile(source, name string) ([]byte, error)` returns the unsigned Shortcut plist, or the compiler's own error text with line and column. `CompilerVersion() string` returns the Cherri version.
 
-Signing is a separate step. The app sends the unsigned Shortcut to its own signing server (`signer/signer.py`), which runs macOS's `shortcuts sign` and sends the signed file back.
+Signing is a separate step. The app sends the unsigned Shortcut to its own signing server (`signer/signer.py`), which runs macOS's `shortcuts sign` and sends the signed file back. If the user pairs a Mac instead, it goes to Cherri Helper (`CherriHelper/`), a menu-bar app that does the same on the user's own Mac over an encrypted local connection.

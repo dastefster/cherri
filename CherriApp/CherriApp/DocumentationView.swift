@@ -41,10 +41,17 @@ let docTopics: [GuideSection] = [
         .tip("Compile as you go. Small steps make errors easy to spot."),
     ]),
     GuideSection(id: "export", title: "Export", symbol: "square.and.arrow.up", blocks: [
-        .text("**Export** compiles your code, gets the shortcut signed, and opens the share sheet. iOS only accepts signed shortcuts, and signing is done by the custom signing server, so Export needs an internet connection."),
+        .text("**Export** compiles your code, gets the shortcut signed, and opens the share sheet. iOS only accepts signed shortcuts, and signing is done either by the app's signing server (the default) or, if you set up Cherri Helper, on your own Mac. Export needs an internet connection."),
         .text("In the share sheet, choose the **Shortcuts** icon (swipe the row if you don't see it). Shortcuts opens with an Add Shortcut screen. Tap the blue **Add Shortcut** button at the bottom and the shortcut joins your library."),
-        .text("By default Cherri Shortcuts asks before exporting, because your shortcut is sent to the signing server. You can turn that question off in Settings, under **Ask Before Exporting**. Once your shortcut is signed, a short tip reminds you to tap **Shortcuts** in the share sheet; you can turn it off under **Show Export Tip**."),
+        .text("By default Cherri Shortcuts asks before exporting, because your shortcut is sent out to be signed, to the signing server or to your own Mac if you use Cherri Helper. You can turn that question off in Settings, under **Ask Before Exporting**. Once your shortcut is signed, a short tip reminds you to tap **Shortcuts** in the share sheet; you can turn it off under **Show Export Tip**."),
         .tip("If Export seems stuck after choosing Save to Files, force-quit Cherri Shortcuts, reopen it, and pick the Shortcuts icon instead."),
+    ]),
+    GuideSection(id: "mac", title: "Sign on your Mac", symbol: "desktopcomputer", blocks: [
+        .text("**Cherri Helper** is an optional, free app for your Mac. With it, Export is signed on your own Mac instead of by the signing server, and your shortcut goes straight from your iPhone to your Mac over your Wi-Fi."),
+        .text("**Set it up.** Download Cherri Helper at dastefster.github.io/cherricuts/helper, install it, and open it on your Mac. It shows a QR code. In Cherri Shortcuts, open **Settings**, then **Signing**, choose **My Mac**, tap **Scan QR Code**, and point your camera at the code."),
+        .text("**What you need.** Your Mac signed in to iCloud and online, your iPhone and Mac on the same Wi-Fi, and Cherri Helper running. It lives in your Mac's menu bar."),
+        .text("When Signing is set to **My Mac**, Export never falls back to the signing server. If your Mac can't be reached, Export tells you, and your code is safe."),
+        .tip("To switch back, choose Cherri Server in Settings, under Signing."),
     ]),
     GuideSection(id: "import", title: "Import", symbol: "square.and.arrow.down", blocks: [
         .text("**Import** is Export in reverse. It takes a shortcut you already have in the Shortcuts app and turns it into Cherri code in the editor, so you can read it, change it, and export it again."),
@@ -62,7 +69,7 @@ let docTopics: [GuideSection] = [
         .text("**name** sets the shortcut's name, which is also used for the exported file. Without it, the name is Shortcut."),
         .text("**color** sets the shortcut's color. Choose from `red`, `darkorange`, `orange`, `yellow`, `green`, `teal`, `lightblue`, `blue`, `darkblue`, `violet`, `purple`, `pink`, `darkgray`, `gray` or `taupe`."),
         .text("**glyph** sets the icon on the shortcut. `apple` and `hammer` are two examples."),
-        .tip("Your shortcut's name is sent to the signing server along with the shortcut when you Export."),
+        .tip("Your shortcut's name is sent along with the shortcut to whatever signs it, the signing server or your own Mac, when you Export."),
     ]),
     GuideSection(id: "thirdparty", title: "Third-party app actions", symbol: "square.grid.2x2", blocks: [
         .text("The **Third-Party Apps** category holds actions for other apps, such as **Scriptable**, **Pythonista** and **Menu Box**. Other categories include actions for apps like Craft, Photos and Reminders."),
@@ -81,7 +88,7 @@ let docTopics: [GuideSection] = [
     GuideSection(id: "privacy", title: "Your code and your privacy", symbol: "lock.shield", blocks: [
         .text("Your code is stored only on your device."),
         .text("**Compile** never leaves your device."),
-        .text("**Export** sends the compiled shortcut and its name to the custom signing server, run by the app's developer, so it can be signed, and nothing else. The server doesn't keep a copy. Cherri Shortcuts has no accounts, no ads and no analytics."),
+        .text("**Export** sends the compiled shortcut and its name to be signed, and nothing else. By default that is the signing server run by the app's developer, which doesn't keep a copy. If you use Cherri Helper, it goes straight to your own Mac instead and the developer's server isn't involved. Cherri Shortcuts has no accounts, no ads and no analytics."),
         .text("**Import** looks up the iCloud link you give it on Apple's iCloud servers to download that shortcut, and nothing else. The shortcut is turned into code on your device. The Share sheet option only reads the link and hands it to the app. It doesn't use the internet itself."),
         .text("If you install the app through TestFlight, Apple collects its own crash and usage data for testing."),
         .tip("The full privacy policy is in Settings, under About."),

@@ -65,7 +65,7 @@ let guideSections: [GuideSection] = [
     ]),
     GuideSection(id: "export", title: "Compile vs. Export", symbol: "square.and.arrow.up", blocks: [
         .text("**Compile** runs entirely on your device and sends nothing anywhere."),
-        .text("**Export** needs an internet connection. iOS only imports signed shortcuts, so your shortcut is sent to the custom signing server to be signed, then returned to you."),
+        .text("**Export** needs an internet connection. iOS only imports signed shortcuts, so your shortcut is sent to be signed, then returned to you. By default the signing server does it. If you set up Cherri Helper on your Mac, your Mac does it instead."),
         .text("In the share sheet, choose the **Shortcuts** icon (swipe the row if you don't see it). Shortcuts opens with an Add Shortcut screen. Tap the blue **Add Shortcut** button at the bottom."),
     ]),
     GuideSection(id: "import", title: "Importing a shortcut", symbol: "square.and.arrow.down", blocks: [
@@ -91,7 +91,7 @@ let guideSections: [GuideSection] = [
         .text("**An action asks you to choose something when it runs** (a space, folder, list or album). That's expected. These choices are specific to your device, so the shortcut asks you at run time."),
         .text("**Import says iCloud couldn't find the shortcut.** The link may be old, or sharing may be off. Copy a fresh iCloud link and try again. A link you shared a moment ago can take a few seconds to appear, so the app waits and tries again before it gives up."),
         .text("**Import says some actions aren't supported yet.** The shortcut still imports. The actions Cherri Shortcuts doesn't know are kept in your code as `rawAction` lines. They may lose their settings or not work once compiled. Tap **Tell Support** to report them."),
-        .text("**Export fails or can't reach the signing server.** Export needs the signing server to be online. Compile always works, so you can still check your code."),
+        .text("**Export fails or can't reach the signing server.** Export needs the signing server to be online. If Signing is set to My Mac, check that Cherri Helper is running on your Mac, that both devices are on the same Wi-Fi, and that the Mac is signed in to iCloud. Compile always works, so you can still check your code."),
         .text("**Error messages are long.** The red line under the editor is the important one. Tap **Show details** for the rest, or **Copy full message** to send it to me."),
     ]),
     GuideSection(id: "about", title: "About", symbol: "info.circle", blocks: [

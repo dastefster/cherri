@@ -244,11 +244,11 @@ struct LicensesView: View {
             }
 
             Section("Independent app") {
-                Text("Cherri Shortcuts is an independent app. It is not made or maintained by the Cherri developers, and neither is its signing server.")
+                Text("Cherri Shortcuts is an independent app. It is not made or maintained by the Cherri developers, and neither is its signing server or Cherri Helper.")
             }
 
             Section("Signing") {
-                Text("Shortcuts are signed by a custom signing server, run by the app's developer. It is not run or maintained by the Cherri developers.")
+                Text("Shortcuts are signed by a custom signing server run by the app's developer, or, if you choose My Mac in the Signing settings, by Cherri Helper on your own Mac. Neither is run or maintained by the Cherri developers.")
             }
 
             Section {
