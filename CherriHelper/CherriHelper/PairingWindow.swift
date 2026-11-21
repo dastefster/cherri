@@ -1,7 +1,7 @@
 // ===================================
 // Pairing Window
-// v0.0.1 BUILD 2026-11-21@10:54
-// The window that opens when Cherri Helper is launched or opened again, so a menu-bar-only app never looks like it did nothing.
+// v0.0.2 BUILD 2026-11-21@15:45
+// The compact QR window behind Pair an iPhone, for pairing another phone or re-pairing later. First-run setup lives in the welcome screen.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -72,7 +72,7 @@ struct PairingWindowView: View {
                 set: { model.setLaunchAtLogin($0) }
             ))
 
-            Text("Cherri Helper lives in your menu bar (🍒). Click it any time, or open Cherri Helper from your Applications folder to see this window again.")
+            Text("Cherri Helper lives in your menu bar (🍒). Click it any time. Open Cherri Helper from your Applications folder again to see Settings.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

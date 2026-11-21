@@ -1,12 +1,11 @@
 // ===================================
 // Pairing Store
-// v0.0.2 BUILD 2026-11-21@10:16
+// v0.0.3 BUILD 2026-11-21@15:45
 // Holds the 32-byte pairing secret (the TLS-PSK key) and builds the pairing QR link.
 // dev by @dastefster 🍒🔨
 // ===================================
 
 import Foundation
-import CoreImage
 import AppKit
 import Security
 
@@ -21,6 +20,8 @@ final class PairingStore {
     static let identity = "cherri-helper"
 
     private(set) var secret: Data
+    // True when this run had to create the key, which is how a first launch tells itself apart from an update.
+    let isNew: Bool
     private let fileURL: URL
 
     init() {
@@ -30,9 +31,11 @@ final class PairingStore {
 
         if let existing = try? Data(contentsOf: url), existing.count == 32 {
             secret = existing
+            isNew = false
         } else {
             secret = PairingStore.randomSecret()
             PairingStore.write(secret, to: url)
+            isNew = true
         }
     }
 
@@ -74,24 +77,5 @@ final class PairingStore {
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
-    }
-}
-
-
-// ===================================
-// QR CODE
-// ===================================
-
-enum QRCode {
-    static func image(for string: String) -> NSImage? {
-        guard !string.isEmpty, let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
-        filter.setValue(Data(string.utf8), forKey: "inputMessage")
-        filter.setValue("M", forKey: "inputCorrectionLevel")
-        guard let output = filter.outputImage?.samplingNearest().transformed(by: CGAffineTransform(scaleX: 10, y: 10)) else { return nil }
-
-        let representation = NSCIImageRep(ciImage: output)
-        let image = NSImage(size: representation.size)
-        image.addRepresentation(representation)
-        return image
     }
 }

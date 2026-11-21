@@ -1,11 +1,11 @@
 // ===================================
 // Support
-// v0.0.2 BUILD 2026-11-21@11:49
-// Shared folders, the log file, and the status file the test tools read.
+// v0.0.3 BUILD 2026-11-21@15:45
+// Shared folders, the log file, the status file the test tools read, and the Help link.
 // dev by @dastefster 🍒🔨
 // ===================================
 
-import Foundation
+import AppKit
 
 
 // ===================================
@@ -60,5 +60,18 @@ enum StatusFile {
         let payload: [String: Any] = ["port": port, "service": serviceName, "version": HelperServer.version]
         guard let data = try? JSONSerialization.data(withJSONObject: payload) else { return }
         try? data.write(to: StoragePaths.supportFolder.appendingPathComponent("status.json"), options: .atomic)
+    }
+}
+
+
+// ===================================
+// HELP
+// ===================================
+
+enum HelpLinks {
+    static let helpURL = URL(string: "https://dastefster.github.io/cherricuts/helper/help.html")!
+
+    static func open() {
+        NSWorkspace.shared.open(helpURL)
     }
 }

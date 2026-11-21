@@ -1,6 +1,6 @@
 // ===================================
 // Settings Window
-// v0.0.5 BUILD 2026-11-21@12:24
+// v0.0.6 BUILD 2026-11-21@15:45
 // The Settings window for Cherri Helper: icon tabs across the top, each one sized to fit so nothing ever needs scrolling.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -155,6 +155,13 @@ struct SupportPane: View {
 
     var body: some View {
         PaneFrame {
+            Row(label: "Help") {
+                HStack {
+                    Button("Open Help…") { HelpLinks.open() }
+                    Button("Show Welcome Screen…") { WelcomeWindow.show() }
+                }
+                Note(text: "Help opens the setup guide and troubleshooting tips on the web. The welcome screen walks through pairing again.")
+            }
             Row(label: "Get help") {
                 HStack {
                     Button("Report a Problem…") {

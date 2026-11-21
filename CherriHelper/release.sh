@@ -1,7 +1,6 @@
 #!/bin/bash
 # ===================================
-# v0.0.4 BUILD 2026-11-21@12:28
-# v0.0.1 BUILD 2026-11-21@11:44
+# v0.0.5 BUILD 2026-11-21@15:45
 # Builds the helper, signs it with the Developer ID certificate, packs it into a DMG, has Apple notarize it, and staples the ticket.
 # dev by @dastefster 🍒🔨
 # ===================================
@@ -64,4 +63,7 @@ xcrun stapler staple "$DMG"
 echo "== final check"
 spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG" || true
 xcrun stapler validate "$DMG"
+# A fixed name lets the download page link to /releases/latest/download/Cherri-Helper.dmg and always get the newest version.
+cp "$DMG" "$OUT/Cherri-Helper.dmg"
 echo "DONE: $DMG"
+echo "ALSO: $OUT/Cherri-Helper.dmg"

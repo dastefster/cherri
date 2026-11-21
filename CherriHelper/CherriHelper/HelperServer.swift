@@ -1,6 +1,6 @@
 // ===================================
 // Helper Server
-// v0.0.4 BUILD 2026-11-21@11:10
+// v0.0.5 BUILD 2026-11-21@15:45
 // Encrypted local HTTP server (TLS-PSK) with GET /health and POST /sign, advertised over Bonjour.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -25,6 +25,7 @@ final class HelperServer {
 
     var onStatus: ((String) -> Void)?
     var onReady: ((Int) -> Void)?
+    var onPhoneConnected: (() -> Void)?
 
     private let queue = DispatchQueue(label: "com.dastefster.CherriHelper.server")
     private var listener: NWListener?
@@ -67,7 +68,9 @@ final class HelperServer {
 
             newListener.newConnectionHandler = { [weak self] connection in
                 guard let self else { return }
-                Exchange(connection: connection, queue: self.queue, signer: self.signer).begin()
+                Exchange(connection: connection, queue: self.queue, signer: self.signer, onAuthenticated: { [weak self] in
+                    self?.onPhoneConnected?()
+                }).begin()
             }
 
             newListener.start(queue: queue)
@@ -108,18 +111,28 @@ private final class Exchange {
     private let connection: NWConnection
     private let queue: DispatchQueue
     private let signer: Signer
+    private let onAuthenticated: () -> Void
     private var buffer = Data()
     private var finished = false
 
-    init(connection: NWConnection, queue: DispatchQueue, signer: Signer) {
+    init(connection: NWConnection, queue: DispatchQueue, signer: Signer, onAuthenticated: @escaping () -> Void) {
         self.connection = connection
         self.queue = queue
         self.signer = signer
+        self.onAuthenticated = onAuthenticated
     }
 
     func begin() {
         connection.stateUpdateHandler = { [self] state in
-            if case .failed = state { finish() }
+            switch state {
+            case .ready:
+                // The key exchange only completes for a phone that holds the pairing secret.
+                onAuthenticated()
+            case .failed:
+                finish()
+            default:
+                break
+            }
         }
         connection.start(queue: queue)
         receive()
