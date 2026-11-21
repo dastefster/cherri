@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Helper
-// v0.0.4 BUILD 2026-11-21@10:27
+// v0.0.5 BUILD 2026-11-21@10:54
 // Menu-bar app that signs Shortcuts for Cherri Shortcuts on this Mac, over an encrypted local connection.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -32,7 +32,25 @@ struct CherriHelperApp: App {
 // The server has to run from launch, not from the first time the menu opens.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        Task { @MainActor in HelperModel.shared.start() }
+        // Only readable while the launch event is being handled, so it is checked before the Task below.
+        let atLogin = Self.launchedAsLoginItem
+        Task { @MainActor in
+            HelperModel.shared.start()
+            // A menu-bar-only app shows nothing on launch, so open the pairing window unless the Mac just started it at login.
+            if !atLogin { PairingWindow.show() }
+        }
+    }
+
+    // Opening the app again from Applications while it is already running lands here.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        Task { @MainActor in PairingWindow.show() }
+        return true
+    }
+
+    private static var launchedAsLoginItem: Bool {
+        NSAppleEventManager.shared().currentAppleEvent?
+            .paramDescriptor(forKeyword: AEKeyword(keyAEPropData))?
+            .enumCodeValue == OSType(keyAELaunchedAsLogInItem)
     }
 }
 

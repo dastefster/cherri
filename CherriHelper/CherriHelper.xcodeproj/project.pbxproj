@@ -170,6 +170,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Cherri Helper";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_KEY_CFBundleDisplayName = "Cherri Helper";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Cherri Helper signs shortcuts for Cherri Shortcuts on your iPhone over your local network.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -196,6 +198,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Cherri Helper";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_KEY_CFBundleDisplayName = "Cherri Helper";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Cherri Helper signs shortcuts for Cherri Shortcuts on your iPhone over your local network.";
 				LD_RUNPATH_SEARCH_PATHS = (
