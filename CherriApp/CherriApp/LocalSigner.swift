@@ -1,7 +1,7 @@
 // ===================================
 // Local Signer
-// v0.0.2 BUILD 2026-11-21 10:07
-// Lets Export sign on the user's own Mac instead of the developer's signing server. Holds the saved choice (server or Mac) and the Signing settings screen that pairs with the Cherri Helper by QR code and tests the connection.
+// v0.0.3 BUILD 2026-11-21 16:58
+// Lets Export sign on the user's own Mac instead of the developer's signing server. Holds the saved choice (server or Mac) and the Signing settings screen that downloads the Cherri Helper, pairs with it by QR code and tests the connection.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -16,6 +16,9 @@ enum LocalSigner {
     static let modeKey = "signingMode"
     static let serverMode = "server"
     static let macMode = "mac"
+
+    // GitHub redirects "latest/download" to the newest release's file, so this link never needs updating when the helper does. The release repo holds only helper releases, which keeps "latest" pointing at the helper.
+    static let helperDownloadURL = URL(string: "https://github.com/dastefster/cherricuts/releases/latest/download/Cherri-Helper.dmg")!
 
     static var usesMac: Bool {
         UserDefaults.standard.string(forKey: modeKey) == macMode
@@ -87,6 +90,25 @@ struct LocalSignerView: View {
             }
 
             if mode == LocalSigner.macMode {
+                // Shown first because the helper has to be on the Mac before pairing makes sense.
+                Section {
+                    Link(destination: LocalSigner.helperDownloadURL) {
+                        Label("Download Cherri Helper", systemImage: "arrow.down.circle")
+                    }
+
+                    // Sends the link, not the file: the Mac opens it and downloads straight from GitHub, so nothing big crosses AirDrop.
+                    ShareLink(item: LocalSigner.helperDownloadURL,
+                              subject: Text("Cherri Helper for Mac"),
+                              message: Text("Download Cherri Helper for your Mac.")) {
+                        Label("Send Download Link to Your Mac", systemImage: "laptopcomputer.and.iphone")
+                    }
+                } header: {
+                    Text("Get Cherri Helper")
+                } footer: {
+                    Text("Cherri Helper is a free Mac app, macOS 13 or later. Download it here and AirDrop the file to your Mac, or send the link to your Mac with AirDrop and let it download there.")
+                        .foregroundStyle(Color.helperText)
+                }
+
                 Section {
                     HStack {
                         Text("Paired Mac")
@@ -127,7 +149,7 @@ struct LocalSignerView: View {
                 } header: {
                     Text("Your Mac")
                 } footer: {
-                    Text("Open Cherri Helper on your Mac, choose Pair an iPhone, and scan the code. Don't have it yet? Get it at dastefster.github.io/cherricuts/helper. Your phone and Mac need to be on the same Wi-Fi network. If this is set to My Mac, Export never falls back to the Cherri server.")
+                    Text("Open Cherri Helper on your Mac, choose Pair an iPhone, and scan the code. Your phone and Mac need to be on the same Wi-Fi network. If this is set to My Mac, Export never falls back to the Cherri server.")
                         .foregroundStyle(Color.helperText)
                 }
             }
