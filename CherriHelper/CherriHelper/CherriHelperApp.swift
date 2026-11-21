@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Helper
-// v0.0.9 BUILD 2026-11-21@12:21
+// v0.0.10 BUILD 2026-11-21@12:24
 // Menu-bar app that signs Shortcuts for Cherri Shortcuts on this Mac, over an encrypted local connection.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -34,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Only readable while the launch event is being handled, so it is checked before the Task below.
         let atLogin = Self.launchedAsLoginItem
+        Task { @MainActor in _ = UpdateController.shared }
         Task { @MainActor in
             HelperModel.shared.start()
             // A menu-bar-only app shows nothing on launch, so open the pairing window unless the Mac just started it at login.

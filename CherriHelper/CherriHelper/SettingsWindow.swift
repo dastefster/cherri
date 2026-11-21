@@ -1,6 +1,6 @@
 // ===================================
 // Settings Window
-// v0.0.4 BUILD 2026-11-21@12:21
+// v0.0.5 BUILD 2026-11-21@12:24
 // The Settings window for Cherri Helper: icon tabs across the top, each one sized to fit so nothing ever needs scrolling.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -94,6 +94,7 @@ private struct PaneFrame<Content: View>: View {
 
 struct GeneralPane: View {
     @ObservedObject var model: HelperModel
+    @ObservedObject var updates = UpdateController.shared
 
     var body: some View {
         PaneFrame {
@@ -103,6 +104,15 @@ struct GeneralPane: View {
                     set: { model.setLaunchAtLogin($0) }
                 ))
                 Note(text: "Cherri Helper has to be running for your iPhone to sign shortcuts. It lives in the menu bar and uses very little.")
+            }
+            Row(label: "Updates") {
+                Toggle("Check for updates automatically", isOn: Binding(
+                    get: { updates.automaticChecks },
+                    set: { updates.automaticChecks = $0 }
+                ))
+                Button("Check for Updates Now…") { updates.checkNow() }
+                    .disabled(!updates.canCheck)
+                Note(text: "Cherri Helper checks once a day. Every update is signed, so only releases from the developer can install.")
             }
         }
     }

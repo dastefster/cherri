@@ -1,6 +1,6 @@
 #!/bin/bash
 # ===================================
-# v0.0.2 BUILD 2026-11-21@11:45
+# v0.0.4 BUILD 2026-11-21@12:28
 # v0.0.1 BUILD 2026-11-21@11:44
 # Builds the helper, signs it with the Developer ID certificate, packs it into a DMG, has Apple notarize it, and staples the ticket.
 # dev by @dastefster 🍒🔨
@@ -25,6 +25,7 @@ rm -rf "$OUT"
 mkdir -p "$OUT"
 
 xcodebuild -project "$HERE/CherriHelper.xcodeproj" -scheme CherriHelper -configuration Release \
+  -destination 'generic/platform=macOS' \
   -derivedDataPath "$BUILD" \
   CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$IDENTITY" DEVELOPMENT_TEAM="$TEAM" \
   OTHER_CODE_SIGN_FLAGS="--timestamp" \
@@ -34,6 +35,9 @@ xcodebuild -project "$HERE/CherriHelper.xcodeproj" -scheme CherriHelper -configu
 APP="$BUILD/Build/Products/Release/CherriHelper.app"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
 DMG="$OUT/Cherri-Helper-$VERSION.dmg"
+
+echo "== re-signing Sparkle's helper tools"
+"$HERE/sign-sparkle.sh" "$APP" "$IDENTITY"
 
 echo "== verifying app signature"
 codesign --verify --deep --strict --verbose=2 "$APP"
