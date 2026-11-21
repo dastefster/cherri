@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Helper
-// v0.0.5 BUILD 2026-11-21@10:54
+// v0.0.6 BUILD 2026-11-21@11:10
 // Menu-bar app that signs Shortcuts for Cherri Shortcuts on this Mac, over an encrypted local connection.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -63,7 +63,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 final class HelperModel: ObservableObject {
     static let shared = HelperModel()
 
-    @Published private(set) var status = "Starting…"
+    @Published private(set) var status = "Starting up…"
     @Published private(set) var pairingURL = ""
     @Published var showQR = false
     @Published private(set) var launchAtLogin = SMAppService.mainApp.status == .enabled

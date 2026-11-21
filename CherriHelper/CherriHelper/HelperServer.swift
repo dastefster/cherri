@@ -1,6 +1,6 @@
 // ===================================
 // Helper Server
-// v0.0.3 BUILD 2026-11-21@10:16
+// v0.0.4 BUILD 2026-11-21@11:10
 // Encrypted local HTTP server (TLS-PSK) with GET /health and POST /sign, advertised over Bonjour.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -48,7 +48,7 @@ final class HelperServer {
                 switch state {
                 case .ready:
                     let port = Int(newListener?.port?.rawValue ?? 0)
-                    self?.onStatus?("Ready, listening on port \(port)")
+                    self?.onStatus?("Ready. Waiting for Cherri Shortcuts on your iPhone.")
                     StatusFile.write(port: port, serviceName: serviceName)
                     Log.write("listening on port \(port)")
                     self?.onReady?(port)
@@ -57,7 +57,7 @@ final class HelperServer {
                         Log.write("preferred port unavailable, using another: \(error)")
                         self?.start(secret: secret, serviceName: serviceName, usePreferredPort: false)
                     } else {
-                        self?.onStatus?("Server failed: \(error.localizedDescription)")
+                        self?.onStatus?("Cherri Helper couldn't start: \(error.localizedDescription)")
                         Log.write("listener failed: \(error)")
                     }
                 default:
@@ -73,7 +73,7 @@ final class HelperServer {
             newListener.start(queue: queue)
             listener = newListener
         } catch {
-            onStatus?("Could not start: \(error.localizedDescription)")
+            onStatus?("Cherri Helper couldn't start: \(error.localizedDescription)")
             Log.write("could not start listener: \(error)")
         }
     }
