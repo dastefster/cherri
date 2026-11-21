@@ -1,7 +1,7 @@
 // ===================================
 // Settings
-// v0.0.17 BUILD 2026-11-18 16:05
-// Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses, one Send Feedback row that opens a small menu: form or email) and a debug-only Developer section. App Icon opens a grid picker (see AppIconView).
+// v0.0.18 BUILD 2026-11-21 04:00
+// Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting, and where to sign), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses, one Send Feedback row that opens a small menu: form or email) and a debug-only Developer section. App Icon opens a grid picker (see AppIconView).
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -69,6 +69,7 @@ struct SettingsView: View {
     @AppStorage("cherriSource") private var source = StarterCode.text
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = true
     @AppStorage(PremiumStore.unlockedKey) private var isPremium = false
+    @AppStorage(LocalSigner.modeKey) private var signingMode = LocalSigner.serverMode
     @State private var confirmingReset = false
     
     // Only used to show the current icon name on the row; the picker screen does the switching.
@@ -123,10 +124,20 @@ struct SettingsView: View {
                 Toggle(isOn: $showShareTip) {
                     SettingsLabel(title: "Show Export Tip", symbol: "lightbulb.fill", color: .orange)
                 }
+
+                NavigationLink {
+                    LocalSignerView()
+                } label: {
+                    LabeledContent {
+                        Text(signingMode == LocalSigner.macMode ? "My Mac" : "Cherri Server")
+                    } label: {
+                        SettingsLabel(title: "Signing", symbol: "signature", color: .teal)
+                    }
+                }
             } header: {
                 Text("Export")
             } footer: {
-                Text("Export sends your shortcut to the custom signing server to be signed. Compile stays on your device. The export tip reminds you to tap Shortcuts in the share sheet.")
+                Text("Export sends your shortcut to \(LocalSigner.destination) to be signed. Compile stays on your device. The export tip reminds you to tap Shortcuts in the share sheet.")
                     .foregroundStyle(Color.helperText)
             }
 

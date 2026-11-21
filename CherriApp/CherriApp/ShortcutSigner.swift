@@ -1,7 +1,7 @@
 // ===================================
 // Shortcut Signer Client
-// v0.0.11 BUILD 2026-11-12 15:55
-// Sends a compiled (unsigned) Shortcut plist to the custom signing server and returns the signed .shortcut bytes.
+// v0.0.12 BUILD 2026-11-21 04:00
+// Sends a compiled (unsigned) Shortcut plist to the custom signing server and returns the signed .shortcut bytes. Signs on the user's own Mac instead when My Mac is chosen in Settings (see LocalSigner).
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -19,6 +19,9 @@ enum ShortcutSignerError: LocalizedError {
     case badStatus(Int, String?)
     case badContentType(String)
     case notAShortcut
+    case macNotSet
+    case macUnreachable
+    case macCodeRejected
 
     var errorDescription: String? {
         switch self {
@@ -46,6 +49,12 @@ enum ShortcutSignerError: LocalizedError {
             return "The signing server sent back an unexpected response type: \(type)"
         case .notAShortcut:
             return "The signing server's response does not look like a signed Shortcut file."
+        case .macNotSet:
+            return "Signing is set to My Mac, but the Mac isn't set up yet. Open Settings, then Signing, and enter its address and pairing code. Your code is safe."
+        case .macUnreachable:
+            return "Could not reach your Mac. Make sure the Cherri helper is running on it, that this phone is on the same Wi-Fi network, and that Local Network is on for Cherri Shortcuts in the Settings app. Your code is safe."
+        case .macCodeRejected:
+            return "Your Mac didn't accept the pairing code. Check it in Settings, then Signing, against the one the helper shows. Your code is safe."
         }
     }
 }
@@ -77,11 +86,26 @@ enum ShortcutSigner {
             throw ShortcutSignerError.notText
         }
 
+        // When signing is set to the user's own Mac, nothing may fall back to the developer's server, even if the Mac isn't ready, because that would send the shortcut somewhere the user chose not to.
+        let usesMac = LocalSigner.usesMac
+        let target: URL
+        if usesMac {
+            guard let macEndpoint = LocalSigner.endpoint, !LocalSigner.pairingCode.isEmpty else {
+                throw ShortcutSignerError.macNotSet
+            }
+            target = macEndpoint
+        } else {
+            target = endpoint
+        }
+
         // Signing takes a few seconds, and a cold start can take longer, so 60 seconds leaves room.
-        var request = URLRequest(url: endpoint, timeoutInterval: 60)
+        var request = URLRequest(url: target, timeoutInterval: 60)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(userAgent(detail: "cherri/\(compilerVersion)"), forHTTPHeaderField: "User-Agent")
+        if usesMac {
+            request.setValue(LocalSigner.pairingCode, forHTTPHeaderField: "X-Cherri-Pair")
+        }
         let body = try JSONSerialization.data(withJSONObject: [
             "shortcutName": name,
             "shortcut": xml
@@ -100,9 +124,12 @@ enum ShortcutSigner {
 
         while true {
             // Each attempt needs its own proof, because a challenge works only once. This never fails, it just comes back empty when proof isn't possible.
+            // The Mac helper checks the pairing code instead, so App Attest is only for the developer's server.
             var attemptRequest = request
-            for (header, value) in await AppAttest.shared.headers(for: body) {
-                attemptRequest.setValue(value, forHTTPHeaderField: header)
+            if !usesMac {
+                for (header, value) in await AppAttest.shared.headers(for: body) {
+                    attemptRequest.setValue(value, forHTTPHeaderField: header)
+                }
             }
 
             do {
@@ -116,6 +143,7 @@ enum ShortcutSigner {
                     attempt += 1
                     continue
                 }
+                if usesMac, error is URLError { throw ShortcutSignerError.macUnreachable }
                 if let urlError = error as? URLError {
                     if offlineCodes.contains(urlError.code) { throw ShortcutSignerError.offline }
                     if unreachableCodes.contains(urlError.code) { throw ShortcutSignerError.unavailable }
@@ -135,8 +163,9 @@ enum ShortcutSigner {
                 continue
             }
             // The signer's own 502 carries a plain-text reason. A 502 or 504 with none came from the tunnel, which means the signer is not answering.
+            if usesMac, http.statusCode == 401 { throw ShortcutSignerError.macCodeRejected }
             if http.statusCode == 502 || http.statusCode == 504, bodySnippet(result.0) == nil {
-                throw ShortcutSignerError.unavailable
+                throw usesMac ? ShortcutSignerError.macUnreachable : ShortcutSignerError.unavailable
             }
             throw ShortcutSignerError.badStatus(http.statusCode, diagnostics(body: result.0, attempt: attempt, since: started))
         }

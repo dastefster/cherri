@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.38 BUILD 2026-11-18 16:58
+// v0.0.39 BUILD 2026-11-21 04:00
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -229,7 +229,7 @@ struct ContentView: View {
                 )
             }
 
-            Text("Export sends your shortcut to the custom signing server to be signed.")
+            Text("Export sends your shortcut to \(LocalSigner.destination) to be signed.")
                 .font(.caption)
                 .foregroundStyle(Color.helperText)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -259,7 +259,7 @@ struct ContentView: View {
             Button("Export") { exportToShortcuts() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Your shortcut will be sent to the custom signing server to be signed. You can turn this prompt off in Settings.")
+            Text("Your shortcut will be sent to \(LocalSigner.destination) to be signed. You can turn this prompt off in Settings.")
         }
         .alert("Add It to Shortcuts", isPresented: $showingShareTip) {
             Button("Continue") {
