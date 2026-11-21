@@ -1,6 +1,6 @@
 // ===================================
 // Pairing Store
-// v0.0.1 BUILD 2026-11-21@10:00
+// v0.0.2 BUILD 2026-11-21@10:16
 // Holds the 32-byte pairing secret (the TLS-PSK key) and builds the pairing QR link.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -42,8 +42,8 @@ final class PairingStore {
         Log.write("pairing reset")
     }
 
-    // The QR carries the secret and the Bonjour name, so the phone can find this Mac without anyone typing an address.
-    func pairingURL(serviceName: String) -> String {
+    // The QR carries the secret, the Bonjour name, and this Mac's host name and port, so the phone can find it without anyone typing an address.
+    func pairingURL(serviceName: String, host: String?, port: Int?) -> String {
         var components = URLComponents()
         components.scheme = "cherri-pair"
         components.host = "v1"
@@ -51,6 +51,9 @@ final class PairingStore {
             URLQueryItem(name: "k", value: PairingStore.base64URL(secret)),
             URLQueryItem(name: "n", value: serviceName),
         ]
+        // The phone tries this address first and falls back to the Bonjour name, so a changed host or port still works.
+        if let host { components.queryItems?.append(URLQueryItem(name: "h", value: host)) }
+        if let port { components.queryItems?.append(URLQueryItem(name: "p", value: String(port))) }
         return components.string ?? ""
     }
 

@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Helper
-// v0.0.1 BUILD 2026-11-21@10:00
+// v0.0.3 BUILD 2026-11-21@10:16
 // Menu-bar app that signs Shortcuts for Cherri Shortcuts on this Mac, over an encrypted local connection.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -56,11 +56,19 @@ final class HelperModel: ObservableObject {
         server.onStatus = { [weak self] text in
             Task { @MainActor in self?.status = text }
         }
+        server.onReady = { [weak self] port in
+            Task { @MainActor in self?.portReady(port) }
+        }
     }
 
     func start() {
-        pairingURL = store.pairingURL(serviceName: serviceName)
         server.start(secret: store.secret, serviceName: serviceName)
+    }
+
+    // The pairing link needs the port the server actually got, so it is built once the server is listening.
+    private func portReady(_ port: Int) {
+        let host = ProcessInfo.processInfo.hostName
+        pairingURL = store.pairingURL(serviceName: serviceName, host: host.hasSuffix(".local") ? host : nil, port: port)
     }
 
     func resetPairing() {
@@ -106,6 +114,11 @@ struct HelperMenuView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Button("Copy pairing link") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(model.pairingURL, forType: .string)
             }
 
             Button("Reset pairing…") { confirmReset() }

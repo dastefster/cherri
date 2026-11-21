@@ -1,6 +1,6 @@
 // ===================================
 // Helper Server
-// v0.0.1 BUILD 2026-11-21@10:00
+// v0.0.3 BUILD 2026-11-21@10:16
 // Encrypted local HTTP server (TLS-PSK) with GET /health and POST /sign, advertised over Bonjour.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -20,18 +20,28 @@ final class HelperServer {
     static let maxBodyBytes = 2 * 1024 * 1024
     static let maxNameLength = 120
 
+    // A fixed port keeps the address in the pairing QR valid across restarts. If something else has it, the helper falls back to any free port.
+    static let preferredPort: UInt16 = 47788
+
     var onStatus: ((String) -> Void)?
+    var onReady: ((Int) -> Void)?
 
     private let queue = DispatchQueue(label: "com.dastefster.CherriHelper.server")
     private var listener: NWListener?
     private let signer = Signer()
 
-    func start(secret: Data, serviceName: String) {
+    func start(secret: Data, serviceName: String, usePreferredPort: Bool = true) {
         listener?.cancel()
         listener = nil
 
         do {
-            let newListener = try NWListener(using: Self.parameters(secret: secret))
+            let parameters = Self.parameters(secret: secret)
+            let newListener: NWListener
+            if usePreferredPort, let port = NWEndpoint.Port(rawValue: Self.preferredPort) {
+                newListener = try NWListener(using: parameters, on: port)
+            } else {
+                newListener = try NWListener(using: parameters)
+            }
             newListener.service = NWListener.Service(name: serviceName, type: Self.serviceType, txtRecord: NWTXTRecord(["v": "1"]))
 
             newListener.stateUpdateHandler = { [weak self, weak newListener] state in
@@ -41,9 +51,15 @@ final class HelperServer {
                     self?.onStatus?("Ready, listening on port \(port)")
                     StatusFile.write(port: port, serviceName: serviceName)
                     Log.write("listening on port \(port)")
+                    self?.onReady?(port)
                 case .failed(let error):
-                    self?.onStatus?("Server failed: \(error.localizedDescription)")
-                    Log.write("listener failed: \(error)")
+                    if usePreferredPort {
+                        Log.write("preferred port unavailable, using another: \(error)")
+                        self?.start(secret: secret, serviceName: serviceName, usePreferredPort: false)
+                    } else {
+                        self?.onStatus?("Server failed: \(error.localizedDescription)")
+                        Log.write("listener failed: \(error)")
+                    }
                 default:
                     break
                 }
@@ -74,6 +90,10 @@ final class HelperServer {
         sec_protocol_options_append_tls_ciphersuite(options, tls_ciphersuite_t(rawValue: UInt16(TLS_PSK_WITH_AES_128_GCM_SHA256))!)
         sec_protocol_options_set_min_tls_protocol_version(options, .TLSv12)
         sec_protocol_options_set_max_tls_protocol_version(options, .TLSv12)
+
+        // A resumed session skips the key check, so a stale pairing could keep working after the Mac resets it.
+        sec_protocol_options_set_tls_resumption_enabled(options, false)
+        sec_protocol_options_set_tls_tickets_enabled(options, false)
 
         return NWParameters(tls: tls, tcp: NWProtocolTCP.Options())
     }

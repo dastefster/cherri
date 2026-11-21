@@ -14,11 +14,12 @@
 		</dict>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Cherri Shortcuts connects to the Cherri helper on your Mac, and only if you choose to sign on your Mac in Settings.</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>
-	</dict>
+	<string>Cherri Shortcuts connects to Cherri Helper on your Mac, and only if you choose to sign on your Mac in Settings.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_cherri-signer._tcp</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Cherri Shortcuts uses the camera only to scan the pairing QR code that Cherri Helper shows on your Mac.</string>
 </dict>
 </plist>

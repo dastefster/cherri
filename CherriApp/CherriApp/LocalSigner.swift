@@ -1,11 +1,12 @@
 // ===================================
 // Local Signer
-// v0.0.1 BUILD 2026-11-21 04:00
-// Lets Export sign on the user's own Mac over the local network instead of the developer's signing server. Holds the saved choice (server or Mac, the Mac's address, the pairing code) and the Signing settings screen that edits and tests it.
+// v0.0.2 BUILD 2026-11-21 10:07
+// Lets Export sign on the user's own Mac instead of the developer's signing server. Holds the saved choice (server or Mac) and the Signing settings screen that pairs with the Cherri Helper by QR code and tests the connection.
 // dev by @dastefster 🍒🔨
 // ===================================
 
 import SwiftUI
+
 
 // ===================================
 // SAVED CHOICE
@@ -13,13 +14,8 @@ import SwiftUI
 
 enum LocalSigner {
     static let modeKey = "signingMode"
-    static let addressKey = "localSignerAddress"
-    static let codeKey = "localSignerCode"
     static let serverMode = "server"
     static let macMode = "mac"
-
-    // The port the Mac helper listens on unless told otherwise.
-    static let defaultPort = 8788
 
     static var usesMac: Bool {
         UserDefaults.standard.string(forKey: modeKey) == macMode
@@ -30,68 +26,38 @@ enum LocalSigner {
         usesMac ? "your Mac" : "the custom signing server"
     }
 
-    static var pairingCode: String {
-        (UserDefaults.standard.string(forKey: codeKey) ?? "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .uppercased()
-    }
-
-    // The /sign address on the Mac, or nil when no usable address has been entered.
-    static var endpoint: URL? {
-        baseURL(from: UserDefaults.standard.string(forKey: addressKey) ?? "")?.appendingPathComponent("sign")
-    }
-
-    // Accepts "my-mac.local", "192.168.1.20" or a full "http://my-mac.local:8788", and fills in the port when it is missing.
-    static func baseURL(from text: String) -> URL? {
-        var value = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !value.isEmpty else { return nil }
-        if !value.contains("://") { value = "http://" + value }
-        guard var parts = URLComponents(string: value), let host = parts.host, !host.isEmpty else { return nil }
-        parts.scheme = "http"
-        if parts.port == nil { parts.port = defaultPort }
-        parts.path = ""
-        parts.query = nil
-        return parts.url
+    // Plain-words description of why a Mac request failed, shared by the test button and the Export errors.
+    static func explain(_ error: Error) -> String {
+        guard let error = error as? MacSignerError else { return "Something went wrong talking to your Mac." }
+        switch error {
+        case .notPaired:
+            return "No Mac is paired yet. Scan the QR code on your Mac first."
+        case .permissionDenied:
+            return "Local Network is off for Cherri Shortcuts. Turn it on in the Settings app, under Privacy & Security, then Local Network."
+        case .unreachable:
+            return "Could not find your Mac. Check that Cherri Helper is running on it and that this phone is on the same Wi-Fi network."
+        case .pairingRejected:
+            return "Your Mac didn't accept this pairing. It may have been reset. Scan the QR code on your Mac again."
+        case .badReply, .server:
+            return "Something answered, but it isn't the Cherri Helper."
+        }
     }
 
     // ===================================
     // CONNECTION TEST
     // ===================================
 
-    // Checks that something answers like the Cherri helper, then that it accepts the pairing code.
-    static func testConnection(address: String, code: String) async -> String {
-        guard let base = baseURL(from: address) else { return "Enter your Mac's address first." }
-        let cleanCode = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        guard !cleanCode.isEmpty else { return "Enter the pairing code the helper shows." }
-
+    static func testConnection() async -> String {
+        guard let pairing = MacPairingStore.load() else { return explain(MacSignerError.notPaired) }
         do {
-            var health = URLRequest(url: base.appendingPathComponent("health"), timeoutInterval: 8)
-            health.setValue(ShortcutSigner.userAgent(detail: "test"), forHTTPHeaderField: "User-Agent")
-            let (healthData, healthResponse) = try await URLSession.shared.data(for: health)
-            let healthStatus = (healthResponse as? HTTPURLResponse)?.statusCode ?? 0
-            guard healthStatus == 200,
-                  let info = try? JSONSerialization.jsonObject(with: healthData) as? [String: Any],
-                  (info["name"] as? String) == "Cherri Local Signer" else {
-                return "Something answered, but it isn't the Cherri helper."
-            }
-            let version = info["version"] as? String ?? "?"
-
-            var pair = URLRequest(url: base.appendingPathComponent("pair"), timeoutInterval: 8)
-            pair.setValue(ShortcutSigner.userAgent(detail: "test"), forHTTPHeaderField: "User-Agent")
-            pair.setValue(cleanCode, forHTTPHeaderField: "X-Cherri-Pair")
-            let (_, pairResponse) = try await URLSession.shared.data(for: pair)
-            let pairStatus = (pairResponse as? HTTPURLResponse)?.statusCode ?? 0
-            switch pairStatus {
-            case 200: return "Connected. Cherri helper \(version) accepted the pairing code."
-            case 401: return "Found the helper (\(version)), but it didn't accept that pairing code."
-            case 429: return "Too many wrong codes. Wait a minute and try again."
-            default: return "Found the helper (\(version)), but pairing failed."
-            }
+            let version = try await MacSignerClient.health(pairing: pairing)
+            return "Connected. Cherri Helper \(version) is ready on \(pairing.serviceName)."
         } catch {
-            return "Could not reach that address. Check that the helper is running, that this phone is on the same Wi-Fi, and that Local Network is on for Cherri Shortcuts in the Settings app."
+            return explain(error)
         }
     }
 }
+
 
 // ===================================
 // SIGNING SETTINGS SCREEN
@@ -99,10 +65,11 @@ enum LocalSigner {
 
 struct LocalSignerView: View {
     @AppStorage(LocalSigner.modeKey) private var mode = LocalSigner.serverMode
-    @AppStorage(LocalSigner.addressKey) private var address = ""
-    @AppStorage(LocalSigner.codeKey) private var code = ""
-    @State private var testing = false
-    @State private var testResult: String?
+    @AppStorage(MacPairingStore.nameKey) private var macName = ""
+    @State private var paired = MacPairingStore.load() != nil
+    @State private var showingScanner = false
+    @State private var working = false
+    @State private var message: String?
 
     var body: some View {
         List {
@@ -114,55 +81,125 @@ struct LocalSignerView: View {
                 .pickerStyle(.segmented)
             } footer: {
                 Text(mode == LocalSigner.macMode
-                     ? "Exports are signed by the Cherri helper on your own Mac, over your local network. Nothing is sent to the Cherri server. Your Mac still contacts Apple's servers to sign."
+                     ? "Exports are signed by the Cherri Helper on your own Mac, over an encrypted connection on your local network. Nothing is sent to the Cherri server. Your Mac still contacts Apple's servers to sign."
                      : "Exports are signed by the custom signing server run by the app's developer.")
                     .foregroundStyle(Color.helperText)
             }
 
             if mode == LocalSigner.macMode {
                 Section {
-                    TextField("Mac address, like my-mac.local", text: $address)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                    TextField("Pairing code", text: $code)
-                        .textInputAutocapitalization(.characters)
-                        .autocorrectionDisabled()
-                } header: {
-                    Text("Your Mac")
-                } footer: {
-                    Text("Run the Cherri helper on your Mac, then enter its address and the pairing code it shows. Your phone and Mac need to be on the same Wi-Fi network. If this is set to My Mac, Export never falls back to the Cherri server.")
-                        .foregroundStyle(Color.helperText)
-                }
+                    HStack {
+                        Text("Paired Mac")
+                        Spacer()
+                        Text(paired && !macName.isEmpty ? macName : "Not paired")
+                            .foregroundStyle(Color.helperText)
+                    }
 
-                Section {
-                    Button {
-                        testing = true
-                        testResult = nil
-                        Task {
-                            testResult = await LocalSigner.testConnection(address: address, code: code)
-                            testing = false
-                        }
-                    } label: {
-                        HStack {
-                            Text("Test Connection")
-                            if testing {
-                                Spacer()
-                                ProgressView()
+                    Button(paired ? "Scan a New QR Code" : "Scan QR Code") { showingScanner = true }
+                    Button("Paste Pairing Link") { pasteLink() }
+
+                    if paired {
+                        Button {
+                            runTest()
+                        } label: {
+                            HStack {
+                                Text("Test Connection")
+                                if working {
+                                    Spacer()
+                                    ProgressView()
+                                }
                             }
                         }
-                    }
-                    .disabled(testing)
+                        .disabled(working)
 
-                    if let testResult {
-                        Text(testResult)
+                        Button("Unpair", role: .destructive) {
+                            MacPairingStore.clear()
+                            paired = false
+                            message = nil
+                        }
+                    }
+
+                    if let message {
+                        Text(message)
                             .font(.footnote)
                             .foregroundStyle(Color.helperText)
                     }
+                } header: {
+                    Text("Your Mac")
+                } footer: {
+                    Text("Open Cherri Helper on your Mac, choose Pair an iPhone, and scan the code. Your phone and Mac need to be on the same Wi-Fi network. If this is set to My Mac, Export never falls back to the Cherri server.")
+                        .foregroundStyle(Color.helperText)
                 }
             }
         }
         .navigationTitle("Signing")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingScanner) {
+            ScannerSheet(onCode: accept)
+        }
+    }
+
+    // Saves a valid pairing link and tests it right away, so the person sees whether it worked.
+    private func accept(_ text: String) -> Bool {
+        guard let pairing = PairingLink.parse(text) else {
+            message = "That isn't a Cherri Helper pairing code."
+            return false
+        }
+        MacPairingStore.save(pairing)
+        paired = true
+        showingScanner = false
+        runTest()
+        return true
+    }
+
+    private func pasteLink() {
+        guard let text = UIPasteboard.general.string, !text.isEmpty else {
+            message = "The clipboard is empty. Copy the pairing link from the helper's menu first."
+            return
+        }
+        _ = accept(text)
+    }
+
+    private func runTest() {
+        working = true
+        message = nil
+        Task {
+            message = await LocalSigner.testConnection()
+            working = false
+        }
+    }
+}
+
+
+// ===================================
+// SCANNER SHEET
+// ===================================
+
+private struct ScannerSheet: View {
+    let onCode: (String) -> Bool
+    @Environment(\.dismiss) private var dismiss
+    @State private var problem: String?
+
+    var body: some View {
+        NavigationStack {
+            ZStack(alignment: .bottom) {
+                QRScannerView(onCode: onCode, onProblem: { problem = $0 })
+                    .ignoresSafeArea()
+
+                Text(problem ?? "Point the camera at the QR code on your Mac.")
+                    .font(.callout)
+                    .multilineTextAlignment(.center)
+                    .padding()
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    .padding()
+            }
+            .navigationTitle("Scan QR Code")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
     }
 }
