@@ -1,6 +1,6 @@
 // ===================================
 // App Icon Picker
-// v0.0.11 BUILD 2026-11-20 19:22
+// v0.0.12 BUILD 2026-11-22 01:21
 // Grid of the available app icons with a preview of each; tapping one switches the Home Screen icon.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -28,6 +28,7 @@ struct AppIconOption: Identifiable {
         AppIconOption(id: "AppIcon-Glass", title: "Glass", preview: "IconPreviewGlass"),
         AppIconOption(id: "AppIcon-Original", title: "Original", preview: "IconPreviewOriginal"),
         AppIconOption(id: "AppIcon-Minimal", title: "Minimal", preview: "IconPreviewMinimal"),
+        AppIconOption(id: "AppIcon-Shortcuts", title: "Shortcuts", preview: "IconPreviewShortcuts"),
     ]
 
     static func title(for iconID: String) -> String {
