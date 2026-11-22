@@ -1,6 +1,6 @@
 // ===================================
 // Import View
-// v0.0.6 BUILD 2026-11-22 09:20
+// v0.0.7 BUILD 2026-11-22 09:30
 // The Import sheet, and the one home for the whole import: paste a Shortcuts iCloud link (with Apple's no-prompt Paste button) or arrive here from the Share extension with the link already filled in, download the shortcut, then choose what to do with it (import it as code, or copy actions). Errors, with the contact-support button, stay in this sheet. It only closes once a choice is made.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -167,12 +167,18 @@ struct ImportView: View {
         }
 
         Section {
-            Button("Use a Different Link") {
+            Button {
                 self.fetched = nil
                 failure = nil
                 link = ""
+            } label: {
+                choiceLabel(
+                    title: "Use a Different Link",
+                    detail: "Start over with another shortcut.",
+                    symbol: "link.badge.plus",
+                    busy: false
+                )
             }
-            .font(.footnote)
             .disabled(decompiling)
         }
     }
