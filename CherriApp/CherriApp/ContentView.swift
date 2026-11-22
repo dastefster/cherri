@@ -1,7 +1,7 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.40 BUILD 2026-11-22 08:55
-// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app), then asks whether to turn it back into Cherri code or copy some of its actions. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
+// v0.0.41 BUILD 2026-11-22 09:20
+// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) in the Import sheet, which also asks whether to turn it back into Cherri code or copy some of its actions. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -36,9 +36,8 @@ struct ContentView: View {
     // An import waits here while the replace-your-code question is on screen.
     @State private var pendingImport: ShortcutImporter.Imported?
     @State private var showingImportReplaceConfirm = false
-    // A downloaded shortcut waits here while the code-or-copy-actions question is on screen.
-    @State private var fetchedShortcut: ShortcutImporter.Fetched?
-    @State private var showingImportChoice = false
+    // A link the Share extension handed over; the Import sheet downloads it as soon as it opens.
+    @State private var sharedLink: String?
     @State private var unsupportedImport: ShortcutImporter.Imported?
     @State private var showingUnsupportedNotice = false
     @Environment(\.openURL) private var openURL
@@ -216,8 +215,10 @@ struct ContentView: View {
                 .tint(.primary)
             }
             .disabled(working)
-            .sheet(isPresented: $showingImport) {
-                ImportView(onFetched: handleFetched)
+            .sheet(isPresented: $showingImport, onDismiss: { sharedLink = nil }) {
+                // The id restarts the sheet if a different link is shared while it is open.
+                ImportView(initialLink: sharedLink, onImported: handleImported, onCopyActions: handleCopyActions)
+                    .id(sharedLink ?? "")
             }
             .sheet(isPresented: $showingStyle) {
                 ShortcutStyleSheet(style: ShortcutStyleEditor.parse(source), onApply: applyStyle)
@@ -282,13 +283,6 @@ struct ContentView: View {
             Button("Cancel", role: .cancel) { pendingImport = nil }
         } message: {
             Text("Importing \"\(pendingImport?.name ?? "this shortcut")\" will replace everything in the editor.")
-        }
-        .confirmationDialog("What do you want to do with \"\(fetchedShortcut?.name ?? "this shortcut")\"?", isPresented: $showingImportChoice, titleVisibility: .visible) {
-            Button("Import into Editor") { importFetchedAsCode() }
-            Button("Copy Actions") { copyActionsFromFetched() }
-            Button("Cancel", role: .cancel) { fetchedShortcut = nil }
-        } message: {
-            Text("Import it as Cherri code, or pick actions from it to copy and paste into another shortcut.")
         }
         .alert("Some Actions Aren't Supported Yet", isPresented: $showingUnsupportedNotice) {
             Button("Tell Support") {
@@ -419,47 +413,11 @@ struct ContentView: View {
     // IMPORT
     // ===================================
 
-    // Both ways in (the Import sheet and the Share extension) end here once iCloud has handed over the shortcut. The person decides what to do with it, so nothing is decompiled yet.
-    private func handleFetched(_ fetched: ShortcutImporter.Fetched) {
+    // The person chose Copy Actions in the Import sheet. Placeholder until the action list screen exists (next step on this branch).
+    private func handleCopyActions(_ fetched: ShortcutImporter.Fetched) {
         showingImport = false
-        fetchedShortcut = fetched
-        // Presenting a dialog while the sheet is still leaving can drop it, so give the sheet a beat to go.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showingImportChoice = true }
-    }
-
-    private func importFetchedAsCode() {
-        guard let fetched = fetchedShortcut else { return }
-        fetchedShortcut = nil
-        working = true
-        failed = false
-        showDetails = false
-        copied = false
-        status = "Importing \"\(fetched.name)\"…"
-
-        Task {
-            do {
-                let imported = try await ShortcutImporter.decompile(fetched)
-                working = false
-                handleImported(imported)
-            } catch let error as ShortcutImporter.Failure {
-                showImportFailure(error.headline, details: error.details, link: fetched.link)
-            } catch {
-                showImportFailure(error.localizedDescription, details: error.localizedDescription, link: fetched.link)
-            }
-        }
-    }
-
-    // Placeholder until the action list screen exists (next step on this branch).
-    private func copyActionsFromFetched() {
-        guard let fetched = fetchedShortcut else { return }
         failed = false
         status = "Copy Actions: downloaded \"\(fetched.name)\" (\(fetched.plist.count) bytes). The action list is the next piece."
-    }
-
-    private func showImportFailure(_ headline: String, details: String, link: String) {
-        working = false
-        failed = true
-        status = "Import failed for \(link)\n\(details)\nError: \(headline)"
     }
 
     // Empty or untouched starter code is safe to overwrite; anything else gets a question first, since the editor has no undo for a swap.
@@ -477,45 +435,11 @@ struct ContentView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showingImportReplaceConfirm = true }
     }
 
-    // Imports the link the Share extension saved, with the same replace-your-code question and unsupported-actions notice as a pasted link. A link shared a moment ago may not be published by iCloud yet, so "not found" is retried for a few seconds before it is reported.
+    // A shortcut shared from the Shortcuts app opens the same Import sheet as a pasted link, with the link filled in and the download already running. The sheet owns everything from there: retries while iCloud publishes the link, errors, and the choice of code or copy actions.
     private func importSharedLink() {
         guard let link = SharedImport.takePendingLink() else { return }
-        showingImport = false
-        working = true
-        failed = false
-        showDetails = false
-        copied = false
-        status = "Importing the shared shortcut…"
-
-        Task {
-            let attempts = 6
-            for attempt in 1...attempts {
-                do {
-                    let fetched = try await ShortcutImporter.fetchShortcut(from: link)
-                    working = false
-                    handleFetched(fetched)
-                    return
-                } catch let error as ShortcutImporter.Failure {
-                    if error.isMissing && attempt < attempts {
-                        status = "Waiting for iCloud to publish the shared shortcut… (\(attempt)/\(attempts - 1))"
-                        try? await Task.sleep(nanoseconds: 3_000_000_000)
-                        continue
-                    }
-                    showSharedFailure(error.headline, details: error.details, link: link, tries: attempt)
-                    return
-                } catch {
-                    showSharedFailure(error.localizedDescription, details: error.localizedDescription, link: link, tries: attempt)
-                    return
-                }
-            }
-        }
-    }
-
-    // The link and iCloud's answer go into the details so "Copy full message" carries what is needed to reproduce a failure.
-    private func showSharedFailure(_ headline: String, details: String, link: String, tries: Int) {
-        working = false
-        failed = true
-        status = "Shared link: \(link)\n\(details) (tried \(tries)x)\nError: \(headline)"
+        sharedLink = link
+        showingImport = true
     }
 
     private func applyImport(_ imported: ShortcutImporter.Imported) {
