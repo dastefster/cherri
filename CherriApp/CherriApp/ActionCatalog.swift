@@ -32,6 +32,8 @@ nonisolated struct CatalogParam: Codable, Hashable {
 
 nonisolated struct CatalogAction: Codable, Identifiable, Hashable {
     let name: String
+    // The identifier a shortcut file stores for this action (is.workflow.actions.gettext). Nil for the app's hand-made entries.
+    let identifier: String?
     let title: String?
     let description: String?
     let warning: String?

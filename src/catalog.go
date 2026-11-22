@@ -1,6 +1,6 @@
 // ===================================
 // Cherri Action Catalog
-// v0.0.1 BUILD 2026-10-15 13:52
+// v0.0.2 BUILD 2026-11-22 07:40
 // Exports every standard Cherri action as JSON so the app can build its action picker and parameter help.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -30,7 +30,9 @@ type catalogParam struct {
 }
 
 type catalogAction struct {
-	Name        string         `json:"name"`
+	Name string `json:"name"`
+	// The identifier written into a Shortcut's plist (is.workflow.actions.gettext), so the app can name an action it finds in a shortcut file.
+	Identifier  string         `json:"identifier,omitempty"`
 	Title       string         `json:"title,omitempty"`
 	Description string         `json:"description,omitempty"`
 	Warning     string         `json:"warning,omitempty"`
@@ -201,6 +203,7 @@ func ActionCatalog() (result string, err error) {
 
 		list = append(list, catalogAction{
 			Name:        name,
+			Identifier:  fullIdentifier(name, def),
 			Title:       def.doc.title,
 			Description: def.doc.description,
 			Warning:     def.doc.warning,

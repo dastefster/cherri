@@ -49,6 +49,24 @@ func TestActionCatalog(t *testing.T) {
 		t.Logf("uncategorized: %v", uncategorized)
 	}
 	t.Logf("alert: %+v", byName["alert"])
+
+	// The app names actions found in a shortcut file by this identifier, so every action needs one.
+	var missingIdentifier []string
+	for _, action := range parsed.Actions {
+		if action.Identifier == "" {
+			missingIdentifier = append(missingIdentifier, action.Name)
+		}
+	}
+	if len(missingIdentifier) > 0 {
+		t.Errorf("actions without an identifier: %v", missingIdentifier)
+	}
+	// Cherri's getText is "Get Text from Input" (detect.text); the plain Text action is called text.
+	if got := byName["text"].Identifier; got != "is.workflow.actions.gettext" {
+		t.Errorf("text identifier = %q, want is.workflow.actions.gettext", got)
+	}
+	if got := byName["getText"].Identifier; got != "is.workflow.actions.detect.text" {
+		t.Errorf("getText identifier = %q, want is.workflow.actions.detect.text", got)
+	}
 }
 
 // Loading actions for the catalog must not break compiling afterward, in either order.

@@ -27,6 +27,7 @@ nonisolated enum VariableActions {
     static let actions: [CatalogAction] = [
         CatalogAction(
             name: setName,
+            identifier: "is.workflow.actions.setvariable",
             title: "Set Variable",
             description: "Saves a value under a name so later actions can use it. Written as @name = value.",
             warning: nil,
@@ -41,6 +42,7 @@ nonisolated enum VariableActions {
         ),
         CatalogAction(
             name: addName,
+            identifier: "is.workflow.actions.appendvariable",
             title: "Add to Variable",
             description: "Adds to a variable you already made: math on a number, more text on text, a new item on a list. Written as @name += value.",
             warning: nil,
