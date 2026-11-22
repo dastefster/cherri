@@ -1,7 +1,7 @@
 // ===================================
 // Settings
-// v0.0.18 BUILD 2026-11-21 04:00
-// Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting, and where to sign), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses, one Send Feedback row that opens a small menu: form or email) and a debug-only Developer section. App Icon opens a grid picker (see AppIconView).
+// v0.0.19 BUILD 2026-11-22 07:20
+// Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting, and where to sign), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses, one Send Feedback row that opens a small menu: form or email) and a debug-only Developer section (Reset First Run, Copy Test Actions for the clipboard spike). App Icon opens a grid picker (see AppIconView).
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -71,6 +71,9 @@ struct SettingsView: View {
     @AppStorage(PremiumStore.unlockedKey) private var isPremium = false
     @AppStorage(LocalSigner.modeKey) private var signingMode = LocalSigner.serverMode
     @State private var confirmingReset = false
+    #if DEBUG
+    @State private var spikeCopiedCount: Int?
+    #endif
     
     // Only used to show the current icon name on the row; the picker screen does the switching.
     @State private var activeIcon: String = UIApplication.shared.alternateIconName ?? "AppIcon"
@@ -196,6 +199,14 @@ struct SettingsView: View {
             Section("Developer") {
                 Button(role: .destructive, action: { hasSeenWelcome = false }) {
                     SettingsLabel(title: "Reset First Run", symbol: "wrench.and.screwdriver.fill", color: .gray)
+                }
+                // Clipboard spike: writes 3 linked actions so we can paste them into Shortcuts and see what survives.
+                Button(action: { spikeCopiedCount = ClipboardSpike.copyTestActions() }) {
+                    SettingsLabel(
+                        title: spikeCopiedCount.map { "Copied \($0) actions" } ?? "Copy Test Actions",
+                        symbol: "doc.on.clipboard.fill",
+                        color: .orange
+                    )
                 }
             }
             #endif
