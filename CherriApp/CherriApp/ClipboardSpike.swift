@@ -1,6 +1,6 @@
 // ===================================
 // Clipboard Spike
-// v0.0.1 BUILD 2026-11-22 07:20
+// v0.0.2 BUILD 2026-11-22 10:20
 // Debug-only experiment: writes three linked Shortcuts actions to the clipboard as com.apple.shortcuts.action items so we can test whether Shortcuts on iPhone pastes them when a third-party app is the writer.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -13,9 +13,6 @@ import UIKit
 // ===================================
 
 enum ClipboardSpike {
-    // The type Shortcuts itself uses for copied actions (verified on the Mac: one pasteboard item per action, each holding a binary plist of one bare action dictionary).
-    static let actionType = "com.apple.shortcuts.action"
-
     // Fixed UUID so the Set Variable can point at the Text action. If Shortcuts keeps the link after paste, the output reference survives a third-party write.
     private static let textUUID = "5A1C0DE0-0000-4000-8000-00000000A001"
 
@@ -76,18 +73,10 @@ enum ClipboardSpike {
     // WRITE TO THE CLIPBOARD
     // ===================================
 
-    // One pasteboard item per action, in order, each a binary plist under the Shortcuts action type. Returns how many items were written, or nil if serializing failed.
+    // Uses the same writer as the real Copy Actions screen. Returns how many items were written, or nil if serializing failed.
     @discardableResult
     static func copyTestActions() -> Int? {
-        var items: [[String: Any]] = []
-        for action in actions() {
-            guard let data = try? PropertyListSerialization.data(fromPropertyList: action, format: .binary, options: 0) else {
-                return nil
-            }
-            items.append([actionType: data])
-        }
-        UIPasteboard.general.setItems(items, options: [:])
-        return items.count
+        return ActionClipboard.copy(actions())
     }
 }
 #endif

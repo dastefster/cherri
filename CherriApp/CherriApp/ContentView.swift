@@ -1,7 +1,7 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.41 BUILD 2026-11-22 09:20
-// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) in the Import sheet, which also asks whether to turn it back into Cherri code or copy some of its actions. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
+// v0.0.42 BUILD 2026-11-22 10:20
+// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) in the Import sheet, which also asks whether to turn it back into Cherri code or copy some of its actions (Copy Actions opens the action list, ActionGrabberView). The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -38,6 +38,9 @@ struct ContentView: View {
     @State private var showingImportReplaceConfirm = false
     // A link the Share extension handed over; the Import sheet downloads it as soon as it opens.
     @State private var sharedLink: String?
+    // The shortcut whose actions the person chose to copy, and whether that screen is up.
+    @State private var grabSource: ShortcutImporter.Fetched?
+    @State private var showingGrabber = false
     @State private var unsupportedImport: ShortcutImporter.Imported?
     @State private var showingUnsupportedNotice = false
     @Environment(\.openURL) private var openURL
@@ -219,6 +222,11 @@ struct ContentView: View {
                 // The id restarts the sheet if a different link is shared while it is open.
                 ImportView(initialLink: sharedLink, onImported: handleImported, onCopyActions: handleCopyActions)
                     .id(sharedLink ?? "")
+            }
+            .sheet(isPresented: $showingGrabber) {
+                if let grabSource {
+                    ActionGrabberView(fetched: grabSource)
+                }
             }
             .sheet(isPresented: $showingStyle) {
                 ShortcutStyleSheet(style: ShortcutStyleEditor.parse(source), onApply: applyStyle)
@@ -413,11 +421,11 @@ struct ContentView: View {
     // IMPORT
     // ===================================
 
-    // The person chose Copy Actions in the Import sheet. Placeholder until the action list screen exists (next step on this branch).
+    // The person chose Copy Actions in the Import sheet. The list of actions opens once that sheet has left, since a sheet presented while another is still leaving can be dropped.
     private func handleCopyActions(_ fetched: ShortcutImporter.Fetched) {
         showingImport = false
-        failed = false
-        status = "Copy Actions: downloaded \"\(fetched.name)\" (\(fetched.plist.count) bytes). The action list is the next piece."
+        grabSource = fetched
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { showingGrabber = true }
     }
 
     // Empty or untouched starter code is safe to overwrite; anything else gets a question first, since the editor has no undo for a swap.
