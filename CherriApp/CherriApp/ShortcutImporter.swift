@@ -1,7 +1,7 @@
 // ===================================
 // Shortcut Importer
-// v0.0.5 BUILD 2026-10-25 07:40
-// Downloads a shortcut from a Shortcuts iCloud share link and turns it back into Cherri code for the editor. Only runs when the person taps Import.
+// v0.0.6 BUILD 2026-11-22 08:50
+// Downloads a shortcut from a Shortcuts iCloud share link (fetchShortcut) and turns it back into Cherri code for the editor (decompile). Only runs when the person taps Import or shares a shortcut to the app.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -19,6 +19,13 @@ enum ShortcutImporter {
         // Actions Cherri doesn't know come back as rawAction("identifier", ...), which can lose settings and may not
         // run once compiled, so the editor warns about them. Each identifier is listed once, in the order found.
         let unsupportedActions: [String]
+        let link: String
+    }
+
+    // What comes back from iCloud before anything is done with it. The person then picks what to do: turn it into code for the editor, or copy some of its actions. The plist is kept as downloaded so copied actions are the shortcut's own, untouched.
+    struct Fetched {
+        let name: String
+        let plist: Data
         let link: String
     }
 
@@ -52,7 +59,13 @@ enum ShortcutImporter {
     // IMPORT
     // ===================================
 
+    // Fetch and decompile in one go, for callers that already know they want code.
     static func importShortcut(from text: String) async throws -> Imported {
+        return try await decompile(try await fetchShortcut(from: text))
+    }
+
+    // Looks up the link and downloads the shortcut file. Nothing is decompiled here, so a shortcut the decompiler can't read can still have its actions copied.
+    static func fetchShortcut(from text: String) async throws -> Fetched {
         guard let link = extractLink(from: text) else {
             throw Failure(
                 headline: "That doesn't look like a Shortcuts iCloud link. In the Shortcuts app, open the share menu for a shortcut and tap Copy iCloud Link.",
@@ -64,7 +77,14 @@ enum ShortcutImporter {
         let record = try await fetchRecord(link: link)
         let plist = try await download(record.downloadURL)
 
-        let name = record.name
+        return Fetched(name: record.name, plist: plist, link: link)
+    }
+
+    // Turns a fetched shortcut back into Cherri code.
+    static func decompile(_ fetched: Fetched) async throws -> Imported {
+        let plist = fetched.plist
+        let name = fetched.name
+        let link = fetched.link
         let decompiled = await Task.detached(priority: .userInitiated) { () -> (code: String, error: NSError?) in
             var error: NSError?
             let code = CherriDecompile(plist, name, &error)

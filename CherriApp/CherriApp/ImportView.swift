@@ -1,7 +1,7 @@
 // ===================================
 // Import View
-// v0.0.4 BUILD 2026-11-11 16:58
-// The Import sheet: paste a Shortcuts iCloud link (with Apple's no-prompt Paste button), import it into the editor, and reach support if the shortcut can't be read.
+// v0.0.5 BUILD 2026-11-22 08:50
+// The Import sheet: paste a Shortcuts iCloud link (with Apple's no-prompt Paste button), download the shortcut, and reach support if it can't be fetched. What to do with it is asked afterward by ContentView.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -13,7 +13,8 @@ import UIKit
 // ===================================
 
 struct ImportView: View {
-    let onImported: (ShortcutImporter.Imported) -> Void
+    // Called once the shortcut is downloaded. What to do with it (code or copy actions) is asked by the screen behind this sheet.
+    let onFetched: (ShortcutImporter.Fetched) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
@@ -141,9 +142,9 @@ struct ImportView: View {
 
         Task {
             do {
-                let imported = try await ShortcutImporter.importShortcut(from: link)
+                let fetched = try await ShortcutImporter.fetchShortcut(from: link)
                 working = false
-                onImported(imported)
+                onFetched(fetched)
             } catch let error as ShortcutImporter.Failure {
                 failure = error
                 working = false

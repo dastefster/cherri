@@ -1,7 +1,7 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.39 BUILD 2026-11-21 04:00
-// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) and turns it back into Cherri code. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
+// v0.0.40 BUILD 2026-11-22 08:55
+// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app), then asks whether to turn it back into Cherri code or copy some of its actions. The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -36,6 +36,9 @@ struct ContentView: View {
     // An import waits here while the replace-your-code question is on screen.
     @State private var pendingImport: ShortcutImporter.Imported?
     @State private var showingImportReplaceConfirm = false
+    // A downloaded shortcut waits here while the code-or-copy-actions question is on screen.
+    @State private var fetchedShortcut: ShortcutImporter.Fetched?
+    @State private var showingImportChoice = false
     @State private var unsupportedImport: ShortcutImporter.Imported?
     @State private var showingUnsupportedNotice = false
     @Environment(\.openURL) private var openURL
@@ -214,7 +217,7 @@ struct ContentView: View {
             }
             .disabled(working)
             .sheet(isPresented: $showingImport) {
-                ImportView(onImported: handleImported)
+                ImportView(onFetched: handleFetched)
             }
             .sheet(isPresented: $showingStyle) {
                 ShortcutStyleSheet(style: ShortcutStyleEditor.parse(source), onApply: applyStyle)
@@ -279,6 +282,13 @@ struct ContentView: View {
             Button("Cancel", role: .cancel) { pendingImport = nil }
         } message: {
             Text("Importing \"\(pendingImport?.name ?? "this shortcut")\" will replace everything in the editor.")
+        }
+        .confirmationDialog("What do you want to do with \"\(fetchedShortcut?.name ?? "this shortcut")\"?", isPresented: $showingImportChoice, titleVisibility: .visible) {
+            Button("Import into Editor") { importFetchedAsCode() }
+            Button("Copy Actions") { copyActionsFromFetched() }
+            Button("Cancel", role: .cancel) { fetchedShortcut = nil }
+        } message: {
+            Text("Import it as Cherri code, or pick actions from it to copy and paste into another shortcut.")
         }
         .alert("Some Actions Aren't Supported Yet", isPresented: $showingUnsupportedNotice) {
             Button("Tell Support") {
@@ -409,6 +419,49 @@ struct ContentView: View {
     // IMPORT
     // ===================================
 
+    // Both ways in (the Import sheet and the Share extension) end here once iCloud has handed over the shortcut. The person decides what to do with it, so nothing is decompiled yet.
+    private func handleFetched(_ fetched: ShortcutImporter.Fetched) {
+        showingImport = false
+        fetchedShortcut = fetched
+        // Presenting a dialog while the sheet is still leaving can drop it, so give the sheet a beat to go.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showingImportChoice = true }
+    }
+
+    private func importFetchedAsCode() {
+        guard let fetched = fetchedShortcut else { return }
+        fetchedShortcut = nil
+        working = true
+        failed = false
+        showDetails = false
+        copied = false
+        status = "Importing \"\(fetched.name)\"…"
+
+        Task {
+            do {
+                let imported = try await ShortcutImporter.decompile(fetched)
+                working = false
+                handleImported(imported)
+            } catch let error as ShortcutImporter.Failure {
+                showImportFailure(error.headline, details: error.details, link: fetched.link)
+            } catch {
+                showImportFailure(error.localizedDescription, details: error.localizedDescription, link: fetched.link)
+            }
+        }
+    }
+
+    // Placeholder until the action list screen exists (next step on this branch).
+    private func copyActionsFromFetched() {
+        guard let fetched = fetchedShortcut else { return }
+        failed = false
+        status = "Copy Actions: downloaded \"\(fetched.name)\" (\(fetched.plist.count) bytes). The action list is the next piece."
+    }
+
+    private func showImportFailure(_ headline: String, details: String, link: String) {
+        working = false
+        failed = true
+        status = "Import failed for \(link)\n\(details)\nError: \(headline)"
+    }
+
     // Empty or untouched starter code is safe to overwrite; anything else gets a question first, since the editor has no undo for a swap.
     private func handleImported(_ imported: ShortcutImporter.Imported) {
         showingImport = false
@@ -438,9 +491,9 @@ struct ContentView: View {
             let attempts = 6
             for attempt in 1...attempts {
                 do {
-                    let imported = try await ShortcutImporter.importShortcut(from: link)
+                    let fetched = try await ShortcutImporter.fetchShortcut(from: link)
                     working = false
-                    handleImported(imported)
+                    handleFetched(fetched)
                     return
                 } catch let error as ShortcutImporter.Failure {
                     if error.isMissing && attempt < attempts {
