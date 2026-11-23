@@ -1,7 +1,7 @@
 // ===================================
 // Action Grabber View
-// v0.0.4 BUILD 2026-11-23 07:35
-// Lists every action in a downloaded shortcut so the person can tap the ones they want, then copies them to the clipboard to paste into another shortcut in the Shortcuts app. Tapping the If, Repeat or Menu line itself takes the whole block; tapping an action inside one takes just that action. If the selection reads from actions that aren't selected, it says so and offers to include them, so a paste never lands with broken variable links.
+// v0.0.5 BUILD 2026-11-23 09:30
+// Lists every action in a downloaded shortcut so the person can tap the ones they want, then copies them to the clipboard to paste into another shortcut in the Shortcuts app. Tapping the If, Repeat or Menu line itself takes the whole block; tapping an action inside one takes just that action. If the selection reads from actions that aren't selected, it says so and offers to include them, so a paste never lands with broken variable links. A search box narrows the list for long shortcuts, and Select Range takes everything between two taps (blocks it touches come in whole).
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -21,7 +21,10 @@ struct ActionGrabberView: View {
     // Set after a copy; cleared as soon as the selection changes, since the clipboard no longer matches it.
     @State private var copiedCount: Int?
     @State private var copyFailed = false
-
+    @State private var query = ""
+    // Select Range works in two taps: this is on from choosing it until the second tap, and rangeStart holds the first.
+    @State private var choosingRange = false
+    @State private var rangeStart: Int?
 
     // ===================================
     // BODY
@@ -50,6 +53,15 @@ struct ActionGrabberView: View {
                 if let list {
                     ToolbarItem(placement: .topBarTrailing) {
                         Menu {
+                            Button("Select Range", systemImage: "arrow.up.and.down.text.horizontal") {
+                                choosingRange = true
+                                rangeStart = nil
+                            }
+                            if !query.trimmingCharacters(in: .whitespaces).isEmpty {
+                                let matches = list.rows(matching: query).map(\.index)
+                                Button("Select All Matches", systemImage: "text.magnifyingglass") { change(selection.union(matches)) }
+                                    .disabled(matches.isEmpty)
+                            }
                             Button("Select All", systemImage: "checkmark.circle") { change(Set(list.rows.map(\.index))) }
                             Button("Select None", systemImage: "circle") { change([]) }
                         } label: {
@@ -59,6 +71,7 @@ struct ActionGrabberView: View {
                 }
             }
             .task { await load() }
+            .searchable(text: $query, prompt: "Search actions")
         }
     }
 
@@ -69,6 +82,7 @@ struct ActionGrabberView: View {
     @ViewBuilder
     private func content(_ list: GrabList) -> some View {
         let missing = list.missingDependencies(for: selection)
+        let shown = list.rows(matching: query)
 
         List {
             Section {
@@ -77,27 +91,37 @@ struct ActionGrabberView: View {
                     .foregroundStyle(Color.helperText)
             }
 
+            if choosingRange {
+                rangeSection
+            }
+
             if !missing.isEmpty {
                 dependencySection(list, missing: missing)
             }
 
             Section {
-                ForEach(list.rows) { row in
-                    Button { change(list.selectionAfterToggling(row.index, from: selection)) } label: {
-                        rowLabel(row, selected: selection.contains(row.index))
+                ForEach(shown) { row in
+                    Button { tap(row, in: list) } label: {
+                        rowLabel(row, selected: selection.contains(row.index), isRangeStart: rangeStart == row.index)
                     }
                     .buttonStyle(.plain)
                 }
             }
         }
+        .overlay {
+            if shown.isEmpty {
+                ContentUnavailableView.search(text: query)
+            }
+        }
         .safeAreaInset(edge: .bottom) { copyBar(list) }
     }
 
-    private func rowLabel(_ row: GrabRow, selected: Bool) -> some View {
+    private func rowLabel(_ row: GrabRow, selected: Bool, isRangeStart: Bool) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+            // The first tap of a range is marked with a flag until the second tap closes it.
+            Image(systemName: isRangeStart ? "flag.circle.fill" : (selected ? "checkmark.circle.fill" : "circle"))
                 .font(.title3)
-                .foregroundStyle(selected ? Color("CherriPurpleText") : Color.helperText)
+                .foregroundStyle(selected || isRangeStart ? Color("CherriPurpleText") : Color.helperText)
 
             // Indentation shows how deep an action sits inside If, Repeat and Menu blocks.
             Color.clear.frame(width: CGFloat(row.indent) * 16, height: 1)
@@ -120,6 +144,40 @@ struct ActionGrabberView: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    // ===================================
+    // RANGE
+    // ===================================
+
+    private var rangeSection: some View {
+        Section {
+            Label(rangeStart == nil ? "Tap the first action of the range" : "Now tap the last action", systemImage: "flag.circle")
+            Text("Everything in between is selected. A block the range touches comes in whole.")
+                .font(.footnote)
+                .foregroundStyle(Color.helperText)
+            Button("Cancel", role: .cancel) {
+                choosingRange = false
+                rangeStart = nil
+            }
+        }
+    }
+
+    // A tap either toggles the row, or, while a range is being chosen, sets one end of it.
+    private func tap(_ row: GrabRow, in list: GrabList) {
+        guard choosingRange else {
+            change(list.selectionAfterToggling(row.index, from: selection))
+            return
+        }
+
+        guard let start = rangeStart else {
+            rangeStart = row.index
+            return
+        }
+
+        change(selection.union(list.range(from: start, to: row.index)))
+        choosingRange = false
+        rangeStart = nil
     }
 
     // ===================================

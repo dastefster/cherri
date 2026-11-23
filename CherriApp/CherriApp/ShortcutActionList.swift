@@ -1,6 +1,6 @@
 // ===================================
 // Shortcut Action List
-// v0.0.3 BUILD 2026-11-23 07:45
+// v0.0.4 BUILD 2026-11-23 09:30
 // Reads the actions out of a downloaded shortcut file so the person can pick some to copy. Names each action, works out indentation and control-flow blocks, and finds which other actions a selection depends on, so a paste never lands with a broken variable link. Pure Foundation, no UI.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -157,6 +157,39 @@ nonisolated struct GrabList {
             group.forEach { result.insert($0) }
         }
         return result
+    }
+
+    // Every row from one tapped row to another, in either order. A block the range touches comes in whole, so a range can never end with an If and no End If (or the other way round). Nested blocks are handled by repeating until nothing more is pulled in.
+    func range(from first: Int, to second: Int) -> Set<Int> {
+        guard rows.indices.contains(first), rows.indices.contains(second) else { return [] }
+        var low = min(first, second)
+        var high = max(first, second)
+
+        var changed = true
+        while changed {
+            changed = false
+            for row in rows[low...high] {
+                guard let blockID = row.blockID, let block = blockRanges[blockID] else { continue }
+                if block.lowerBound < low { low = block.lowerBound; changed = true }
+                if block.upperBound > high { high = block.upperBound; changed = true }
+            }
+        }
+        return Set(low...high)
+    }
+
+    // ===================================
+    // SEARCH
+    // ===================================
+
+    // Every word typed has to show up somewhere in the row's name, its subtitle, or the app it comes from. Ignores case and accents.
+    func rows(matching query: String) -> [GrabRow] {
+        let words = query.split(whereSeparator: \.isWhitespace).map(String.init)
+        guard !words.isEmpty else { return rows }
+
+        return rows.filter { row in
+            let text = [row.title, row.subtitle ?? ""].joined(separator: " ")
+            return words.allSatisfy { text.range(of: $0, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
+        }
     }
 
     // ===================================
