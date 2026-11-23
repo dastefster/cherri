@@ -1,6 +1,6 @@
 // ===================================
 // Action Grabber View
-// v0.0.1 BUILD 2026-11-22 10:20
+// v0.0.2 BUILD 2026-11-23 06:35
 // Lists every action in a downloaded shortcut so the person can tap the ones they want, then copies them to the clipboard to paste into another shortcut in the Shortcuts app. Tapping part of an If, Repeat or Menu takes the whole block. If the selection reads from actions that aren't selected, it says so and offers to include them, so a paste never lands with broken variable links.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -156,7 +156,7 @@ struct ActionGrabberView: View {
                     .font(.footnote)
                     .foregroundStyle(.red)
             } else if let copiedCount {
-                Text("Copied \(copiedCount) action\(copiedCount == 1 ? "" : "s"). In Shortcuts, open the shortcut you want them in, touch and hold an action, and tap Paste.")
+                Text("Copied \(copiedCount) action\(copiedCount == 1 ? "" : "s"). In Shortcuts, open the shortcut you want them in, tap the icon at the top left of an action, then tap Paste Above or Paste Below.")
                     .font(.footnote)
                     .foregroundStyle(Color.helperText)
                     .multilineTextAlignment(.center)
