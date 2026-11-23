@@ -1,6 +1,6 @@
 // ===================================
 // Shortcut Action List
-// v0.0.2 BUILD 2026-11-23 07:35
+// v0.0.3 BUILD 2026-11-23 07:45
 // Reads the actions out of a downloaded shortcut file so the person can pick some to copy. Names each action, works out indentation and control-flow blocks, and finds which other actions a selection depends on, so a paste never lands with a broken variable link. Pure Foundation, no UI.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -358,19 +358,61 @@ private nonisolated func summary(of params: [String: Any], identifier: String, m
     return nil
 }
 
-// Plain text as is. Text with variable chips has its chips shown as a ▢. Anything else is skipped.
+// Plain text as is. A variable shows by name in braces, the way Cherri writes it ({Repeat Index}), whether it's the whole value or sits inside text. Anything else is skipped.
 private nonisolated func readableText(_ value: Any?) -> String? {
     var raw: String?
     if let text = value as? String {
         raw = text
     } else if let dict = value as? [String: Any],
-              let inner = dict["Value"] as? [String: Any],
-              let text = inner["string"] as? String {
-        raw = text.replacingOccurrences(of: "\u{FFFC}", with: "▢")
+              let inner = dict["Value"] as? [String: Any] {
+        if let text = inner["string"] as? String {
+            raw = fillChips(in: text, attachments: inner["attachmentsByRange"] as? [String: Any] ?? [:])
+        } else if inner["Type"] is String {
+            // The whole value is one variable, with no text around it.
+            raw = "{\(chipName(inner))}"
+        }
     }
 
     guard let raw else { return nil }
     let oneLine = raw.split(whereSeparator: \.isNewline).joined(separator: " ").trimmingCharacters(in: .whitespaces)
     guard !oneLine.isEmpty else { return nil }
     return oneLine.count > 60 ? String(oneLine.prefix(60)) + "…" : oneLine
+}
+
+// Each chip in a text value is a placeholder character, and a table says which variable sits at which position. Keys look like "{3, 1}": where the chip is, and how long. A chip with no entry stays a ▢.
+private nonisolated func fillChips(in text: String, attachments: [String: Any]) -> String {
+    let source = text as NSString
+    var result = ""
+    var last = 0
+
+    for position in 0..<source.length where source.character(at: position) == 0xFFFC {
+        result += source.substring(with: NSRange(location: last, length: position - last))
+        last = position + 1
+
+        let entry = attachments.first { key, _ in
+            let start = key.trimmingCharacters(in: CharacterSet(charactersIn: "{}")).split(separator: ",").first
+            return start.flatMap { Int($0.trimmingCharacters(in: .whitespaces)) } == position
+        }
+        if let chip = entry?.value as? [String: Any] {
+            result += "{\(chipName(chip))}"
+        } else {
+            result += "▢"
+        }
+    }
+
+    return result + source.substring(from: last)
+}
+
+// What a variable chip is called in the Shortcuts editor.
+private nonisolated func chipName(_ attachment: [String: Any]) -> String {
+    switch attachment["Type"] as? String {
+    case "Variable": return attachment["VariableName"] as? String ?? "Variable"
+    case "ActionOutput": return attachment["OutputName"] as? String ?? "Result"
+    case "ExtensionInput": return "Shortcut Input"
+    case "Clipboard": return "Clipboard"
+    case "CurrentDate": return "Current Date"
+    case "Ask": return "Ask Each Time"
+    case let type?: return type.spacedFromCamelCase
+    case nil: return "Variable"
+    }
 }
