@@ -1,7 +1,7 @@
 // ===================================
 // Action Grabber View
-// v0.0.5 BUILD 2026-11-23 09:30
-// Lists every action in a downloaded shortcut so the person can tap the ones they want, then copies them to the clipboard to paste into another shortcut in the Shortcuts app. Tapping the If, Repeat or Menu line itself takes the whole block; tapping an action inside one takes just that action. If the selection reads from actions that aren't selected, it says so and offers to include them, so a paste never lands with broken variable links. A search box narrows the list for long shortcuts, and Select Range takes everything between two taps (blocks it touches come in whole).
+// v0.0.6 BUILD 2026-11-23 10:35
+// Lists every action in a downloaded shortcut so the person can tap the ones they want, then copies them to the clipboard to paste into another shortcut in the Shortcuts app. An action that contains other actions is selected together with everything inside it; tapping one of the actions inside takes just that one. If the selection reads from actions that aren't selected, it says so and offers to include them, so a paste never lands with broken variable links. A search box narrows the list for long shortcuts, and Select Range takes everything between two taps (blocks it touches come in whole).
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -86,7 +86,7 @@ struct ActionGrabberView: View {
 
         List {
             Section {
-                Text("Tap the actions you want to copy. Tapping the If, Repeat or Menu line itself takes the whole block. Tapping an action inside one takes just that action.")
+                Text("Tap the actions you want to copy. An action that contains other actions is selected together with everything inside it.")
                     .font(.footnote)
                     .foregroundStyle(Color.helperText)
             }
@@ -184,26 +184,25 @@ struct ActionGrabberView: View {
     // DEPENDENCIES
     // ===================================
 
+    // Kept short on purpose: it sits above the list, so every extra line pushes the actions further down.
     private func dependencySection(_ list: GrabList, missing: Set<Int>) -> some View {
         Section {
-            Label {
-                Text("This selection needs \(missing.count) more action\(missing.count == 1 ? "" : "s")")
-            } icon: {
+            HStack(spacing: 12) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
+                Text("Needs \(missing.count) more action\(missing.count == 1 ? "" : "s")")
+                Spacer(minLength: 8)
+                Button("Include Them") { change(selection.union(missing)) }
+                    .buttonStyle(.borderless)
+                    .tint(Color("CherriPurpleText"))
             }
-            Text("Some of what you picked uses values made by actions you didn't pick. Without them, the copied actions would lose those links when pasted.")
+            Text("Your picks use values these make. Without them, the links break when pasted.")
                 .font(.footnote)
                 .foregroundStyle(Color.helperText)
             if list.readsLoopOutsideItsLoop(selection) {
-                Text("Repeat Index and Repeat Item only work inside a Repeat. Include the Repeat, or paste these into a Repeat that's already in the other shortcut.")
+                Text("Repeat Index and Repeat Item only work inside a Repeat. Include the Repeat, or paste into one that's already in the other shortcut.")
                     .font(.footnote)
                     .foregroundStyle(Color.helperText)
-            }
-            Button {
-                change(selection.union(missing))
-            } label: {
-                Label("Include Them", systemImage: "plus.circle.fill")
             }
         }
     }

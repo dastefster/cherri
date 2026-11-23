@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.44 BUILD 2026-11-23 08:55
+// v0.0.45 BUILD 2026-11-23 10:40
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) in the Import sheet, which also asks whether to turn it back into Cherri code or copy some of its actions (Copy Actions opens the action list, ActionGrabberView). The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, and a restore button next to the trash can swaps it back in, even after the app is closed. Restoring over typed code keeps that code as the new cleared copy, so a second tap swaps back.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -110,17 +110,27 @@ struct ContentView: View {
                         }
                         .buttonStyle(.plain)
                     }
+                    // Two icons on each side. With one on the left and three on the right the title no longer fits centered, so iOS pushes it to the left edge.
                     ToolbarItem(placement: .topBarLeading) {
-                        Button(action: {
-                            editor.textView?.resignFirstResponder()
-                            showingSettings = true
-                        }) {
-                            Image(systemName: "gearshape")
+                        HStack(spacing: 16) {
+                            Button(action: {
+                                editor.textView?.resignFirstResponder()
+                                showingSettings = true
+                            }) {
+                                Image(systemName: "gearshape")
+                            }
+
+                            Button(action: {
+                                editor.textView?.resignFirstResponder()
+                                showingGuide = true
+                            }) {
+                                Image(systemName: "questionmark.circle")
+                            }
                         }
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         HStack(spacing: 16) {
-                            // Left of the trash so the trash and help icons never move when this appears. Counterclockwise, not the undo arrow, so it isn't mistaken for the undo bar above the keyboard.
+                            // Left of the trash so the trash never moves when this appears. Counterclockwise, not the undo arrow, so it isn't mistaken for the undo bar above the keyboard.
                             if !clearedBackup.isEmpty {
                                 Button(action: {
                                     editor.textView?.resignFirstResponder()
@@ -137,13 +147,6 @@ struct ContentView: View {
                             }) {
                                 Image(systemName: "trash")
                                     .foregroundStyle(.red)
-                            }
-                            
-                            Button(action: {
-                                editor.textView?.resignFirstResponder()
-                                showingGuide = true
-                            }) {
-                                Image(systemName: "questionmark.circle")
                             }
                         }
                     }
