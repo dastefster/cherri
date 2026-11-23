@@ -1,7 +1,7 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.43 BUILD 2026-11-23 08:20
-// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) in the Import sheet, which also asks whether to turn it back into Cherri code or copy some of its actions (Copy Actions opens the action list, ActionGrabberView). The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
+// v0.0.44 BUILD 2026-11-23 08:55
+// Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) in the Import sheet, which also asks whether to turn it back into Cherri code or copy some of its actions (Copy Actions opens the action list, ActionGrabberView). The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, and a restore button next to the trash can swaps it back in, even after the app is closed. Restoring over typed code keeps that code as the new cleared copy, so a second tap swaps back.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -38,6 +38,7 @@ struct ContentView: View {
     @State private var showingGuide = false
     @State private var showingSettings = false
     @State private var showingClearConfirm = false
+    @State private var showingRestoreConfirm = false
     @State private var showingImport = false
     @State private var showingStyle = false
     // An import waits here while the replace-your-code question is on screen.
@@ -119,6 +120,17 @@ struct ContentView: View {
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         HStack(spacing: 16) {
+                            // Left of the trash so the trash and help icons never move when this appears. Counterclockwise, not the undo arrow, so it isn't mistaken for the undo bar above the keyboard.
+                            if !clearedBackup.isEmpty {
+                                Button(action: {
+                                    editor.textView?.resignFirstResponder()
+                                    restoreClearedCode()
+                                }) {
+                                    Image(systemName: "arrow.counterclockwise")
+                                }
+                                .accessibilityLabel("Restore cleared code")
+                            }
+
                             Button(action: {
                                 editor.textView?.resignFirstResponder()
                                 showingClearConfirm = true
@@ -161,22 +173,6 @@ struct ContentView: View {
         VStack(spacing: 12) {
             CodeEditor(text: $sourceStore.text, controller: editor, style: editorStyle)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .overlay {
-                    // Only while the editor is empty, so it sits in the blank space and never covers code.
-                    if source.isEmpty && !clearedBackup.isEmpty {
-                        Button {
-                            source = clearedBackup
-                            clearedBackup = ""
-                        } label: {
-                            Label("Restore cleared code", systemImage: "arrow.uturn.backward")
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                }
-                .onChange(of: source) { _, newValue in
-                    // New code means the old backup is stale, and keeping it would let an empty editor offer to bring back something unrelated.
-                    if !newValue.isEmpty && !clearedBackup.isEmpty { clearedBackup = "" }
-                }
 
             HStack(spacing: 12) {
                 // Only Compile takes the accent color. The other three are neutral so nothing but the primary action competes for attention.
@@ -311,6 +307,12 @@ struct ContentView: View {
             let actions = unsupportedImport?.unsupportedActions ?? []
             Text("\"\(unsupportedImport?.name ?? "This shortcut")\" uses \(actions.count == 1 ? "an action" : "\(actions.count) actions") Cherri Shortcuts doesn't support yet:\n\n\(actions.joined(separator: "\n"))\n\nThey're kept in your code as rawAction lines, so they may lose their settings or not work once compiled.")
         }
+        .alert("Restore Cleared Code?", isPresented: $showingRestoreConfirm) {
+            Button("Restore") { swapInClearedCode() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This swaps the code in the editor with the code you last cleared. What's in the editor now is kept, so tapping restore again swaps back.")
+        }
         .alert("Clear Editor?", isPresented: $showingClearConfirm) {
             Button("Clear", role: .destructive) {
                 // Saved before the editor is emptied, and only when there is something to save, so clearing an already empty editor never wipes the backup.
@@ -319,7 +321,7 @@ struct ContentView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This will delete all current Cherri code in the editor.")
+            Text("This clears the editor. The code is kept, and the restore button next to the trash can brings it back. Only your most recent clear is kept.")
         }
     }
 
@@ -476,6 +478,26 @@ struct ContentView: View {
     // ===================================
     // STYLE
     // ===================================
+
+    // An empty editor restores straight away. Code that's there gets a question first, since it's about to be swapped out.
+    private func restoreClearedCode() {
+        if source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            swapInClearedCode()
+        } else {
+            showingRestoreConfirm = true
+        }
+    }
+
+    // A swap, not an overwrite: whatever was in the editor becomes the cleared copy, so nothing is ever lost and a second tap undoes the first.
+    private func swapInClearedCode() {
+        let restored = clearedBackup
+        let replaced = source
+        guard !restored.isEmpty else { return }
+        source = restored
+        // The restored code is written before the cleared copy changes, so a quit in between can't lose either one.
+        sourceStore.flush()
+        clearedBackup = replaced
+    }
 
     // Writes the chosen name, color and icon back into the code's '#define' lines. The editor picks up the changed source on its own.
     private func applyStyle(_ style: ShortcutStyle) {
