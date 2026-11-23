@@ -1,6 +1,6 @@
 // ===================================
 // Documentation
-// v0.0.12 BUILD 2026-11-18 19:01
+// v0.0.13 BUILD 2026-11-23 08:20
 // In-app reference for everything Cherri Shortcuts does: the editor, the Actions picker, Compile, Export, third-party app actions, Settings, and what stays on your device. Content lives in the docTopics array so it can be edited without touching layout code.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -90,6 +90,7 @@ let docTopics: [GuideSection] = [
         .text("**Compile** never leaves your device."),
         .text("**Export** sends the compiled shortcut and its name to be signed, and nothing else. By default that is the signing server run by the app's developer, which doesn't keep a copy. If you use Cherri Helper, it goes straight to your own Mac instead and the developer's server isn't involved. Cherri Shortcuts has no accounts, no ads and no analytics."),
         .text("**Import** looks up the iCloud link you give it on Apple's iCloud servers to download that shortcut, and nothing else. The shortcut is turned into code on your device. The Share sheet option only reads the link and hands it to the app. It doesn't use the internet itself."),
+        .text("**Recent shortcuts.** The Import sheet keeps the last 10 shortcuts you downloaded on your device, so you can use one again without downloading it twice. They aren't backed up or sent anywhere. Swipe one to remove it, tap Clear Recent, or turn this off in Settings, which deletes them."),
         .text("If you install the app through TestFlight, Apple collects its own crash and usage data for testing."),
         .tip("The full privacy policy is in Settings, under About."),
     ]),

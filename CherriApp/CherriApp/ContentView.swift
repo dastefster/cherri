@@ -1,6 +1,6 @@
 // ===================================
 // Cherri App Main Screen
-// v0.0.42 BUILD 2026-11-22 10:20
+// v0.0.43 BUILD 2026-11-23 08:20
 // Type Cherri code (saved between launches), insert actions and values at the cursor from the picker, compile it with the embedded compiler, or export it: sign via the custom signing server and open the share sheet to import into Shortcuts. Import pulls an existing shortcut in from an iCloud link (pasted, or shared to the app from the Shortcuts app) in the Import sheet, which also asks whether to turn it back into Cherri code or copy some of its actions (Copy Actions opens the action list, ActionGrabberView). The title bar shows the shortcut's icon, color and name (read from the code's '#define' lines); tapping it opens the editor for all three. Clearing the editor first saves the code to disk, so a Restore button can bring it back, even after the app is closed.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -14,10 +14,17 @@ import Cherri
 // ===================================
 
 struct ContentView: View {
-    // Kept in UserDefaults so closing the app never loses work. A file will replace this if scripts get large.
-    @AppStorage("cherriSource") private var source = StarterCode.text
+    // The editor's code lives in a file in the app's private storage (see EditorStorage), so closing the app never loses work. These two read and write it, so the rest of this screen reads the same as before.
+    @ObservedObject private var sourceStore = EditorSourceStore.shared
+    private var source: String {
+        get { sourceStore.text }
+        nonmutating set { sourceStore.text = newValue }
+    }
     // The code from the last Clear, kept on disk so Restore still works after the app closes. It is dropped as soon as new code is typed, so it can never be offered against work that came after it.
-    @AppStorage("clearedBackup") private var clearedBackup = ""
+    private var clearedBackup: String {
+        get { sourceStore.clearedBackup }
+        nonmutating set { sourceStore.clearedBackup = newValue }
+    }
     @State private var status = "Cherri \(CherriCompilerVersion())"
     @State private var failed = false
     @State private var showDetails = false
@@ -152,7 +159,7 @@ struct ContentView: View {
 
     private var mainContent: some View {
         VStack(spacing: 12) {
-            CodeEditor(text: $source, controller: editor, style: editorStyle)
+            CodeEditor(text: $sourceStore.text, controller: editor, style: editorStyle)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .overlay {
                     // Only while the editor is empty, so it sits in the blank space and never covers code.

@@ -1,7 +1,7 @@
 // ===================================
 // Import View
-// v0.0.7 BUILD 2026-11-22 09:30
-// The Import sheet, and the one home for the whole import: paste a Shortcuts iCloud link (with Apple's no-prompt Paste button) or arrive here from the Share extension with the link already filled in, download the shortcut, then choose what to do with it (import it as code, or copy actions). Errors, with the contact-support button, stay in this sheet. It only closes once a choice is made.
+// v0.0.8 BUILD 2026-11-23 08:20
+// The Import sheet, and the one home for the whole import: paste a Shortcuts iCloud link (with Apple's no-prompt Paste button) or arrive here from the Share extension with the link already filled in, download the shortcut (or pick one of the last 10 from Recent, which opens without downloading), then choose what to do with it (import it as code, or copy actions). Errors, with the contact-support button, stay in this sheet. It only closes once a choice is made.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -31,7 +31,9 @@ struct ImportView: View {
     @State private var fetched: ShortcutImporter.Fetched?
     @State private var decompiling = false
     @State private var failure: ShortcutImporter.Failure?
-
+    @StateObject private var recent = RecentShortcutsStore()
+    // Set when the shortcut on screen is a saved copy, so the sheet can say so and offer a fresh download.
+    @State private var savedCopyDate: Date?
 
     // ===================================
     // BODY
@@ -127,6 +129,57 @@ struct ImportView: View {
             }
             .disabled(working || link.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
+
+        recentSection
+    }
+
+    // ===================================
+    // RECENT
+    // ===================================
+
+    // The last few downloads, kept on this device. Tapping one skips the download.
+    @ViewBuilder
+    private var recentSection: some View {
+        if !recent.entries.isEmpty {
+            Section {
+                ForEach(recent.entries) { entry in
+                    Button { openRecent(entry) } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.name)
+                                .foregroundStyle(.primary)
+                            Text(entry.savedAt.formatted(.relative(presentation: .named, unitsStyle: .wide)))
+                                .font(.caption)
+                                .foregroundStyle(Color.helperText)
+                        }
+                    }
+                }
+                .onDelete { recent.remove(at: $0) }
+
+                Button("Clear Recent", role: .destructive) { recent.clearAll() }
+            } header: {
+                Text("Recent")
+                    .foregroundStyle(Color.helperText)
+            } footer: {
+                Text("Saved on this device only. Swipe to remove one, or turn this off in Settings.")
+                    .foregroundStyle(Color.helperText)
+            }
+        }
+    }
+
+    // Opens a saved copy without touching the network. A copy that can't be read is dropped from the list.
+    private func openRecent(_ entry: RecentShortcut) {
+        guard let saved = recent.fetched(for: entry) else {
+            failure = ShortcutImporter.Failure(
+                headline: "That saved copy couldn't be read, so it was removed. Paste its link again to download it.",
+                details: "Saved copy unreadable",
+                offersSupport: false
+            )
+            return
+        }
+        failure = nil
+        link = saved.link
+        fetched = saved
+        savedCopyDate = entry.savedAt
     }
 
     // ===================================
@@ -139,7 +192,7 @@ struct ImportView: View {
         Section {
             Text(fetched.name)
                 .font(.headline)
-            Text("Downloaded. What do you want to do with it?")
+            Text(savedCopyDate.map { "Saved copy from \($0.formatted(date: .abbreviated, time: .shortened)). What do you want to do with it?" } ?? "Downloaded. What do you want to do with it?")
                 .font(.footnote)
                 .foregroundStyle(Color.helperText)
         }
@@ -167,8 +220,22 @@ struct ImportView: View {
         }
 
         Section {
+            // A saved copy is a snapshot. If the author has changed the shortcut since, this gets the current one.
+            if savedCopyDate != nil {
+                Button { Task { await fetch(retryMissing: false) } } label: {
+                    choiceLabel(
+                        title: working ? "Downloading…" : "Download a Fresh Copy",
+                        detail: "Get the shortcut's current version from iCloud.",
+                        symbol: "arrow.clockwise",
+                        busy: working
+                    )
+                }
+                .disabled(working || decompiling)
+            }
+
             Button {
                 self.fetched = nil
+                savedCopyDate = nil
                 failure = nil
                 link = ""
             } label: {
@@ -254,7 +321,10 @@ struct ImportView: View {
         let attempts = retryMissing ? 6 : 1
         for attempt in 1...attempts {
             do {
-                fetched = try await ShortcutImporter.fetchShortcut(from: link)
+                let downloaded = try await ShortcutImporter.fetchShortcut(from: link)
+                fetched = downloaded
+                savedCopyDate = nil
+                recent.remember(downloaded)
                 break
             } catch let error as ShortcutImporter.Failure {
                 if error.isMissing && attempt < attempts {

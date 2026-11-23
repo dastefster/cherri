@@ -1,7 +1,7 @@
 // ===================================
 // Settings
-// v0.0.19 BUILD 2026-11-22 07:20
-// Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting, and where to sign), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses, one Send Feedback row that opens a small menu: form or email) and a debug-only Developer section (Reset First Run, Copy Test Actions for the clipboard spike). App Icon opens a grid picker (see AppIconView).
+// v0.0.20 BUILD 2026-11-23 08:20
+// Grouped settings list with colored icon tiles: Editor (Appearance), App Icon, Export (ask before exporting, and where to sign), Import (keep recent shortcuts), Your code (reset), Help (Guide, Documentation, Welcome), About (versions, credits, licenses, one Send Feedback row that opens a small menu: form or email) and a debug-only Developer section (Reset First Run, Copy Test Actions for the clipboard spike). App Icon opens a grid picker (see AppIconView).
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -66,7 +66,7 @@ struct SettingsView: View {
 
     @AppStorage(ExportSettings.confirmKey) private var confirmBeforeExport = true
     @AppStorage(ExportSettings.tipKey) private var showShareTip = true
-    @AppStorage("cherriSource") private var source = StarterCode.text
+    @AppStorage(RecentShortcutsStore.enabledKey) private var keepRecent = true
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = true
     @AppStorage(PremiumStore.unlockedKey) private var isPremium = false
     @AppStorage(LocalSigner.modeKey) private var signingMode = LocalSigner.serverMode
@@ -144,6 +144,17 @@ struct SettingsView: View {
                     .foregroundStyle(Color.helperText)
             }
 
+            Section {
+                Toggle(isOn: $keepRecent) {
+                    SettingsLabel(title: "Keep Recent Shortcuts", symbol: "clock.arrow.circlepath", color: .orange)
+                }
+            } header: {
+                Text("Import")
+            } footer: {
+                Text("Keeps the last 10 shortcuts you downloaded on this device, so you can use one again without downloading it twice. They aren't backed up or sent anywhere. Turning this off deletes them.")
+                    .foregroundStyle(Color.helperText)
+            }
+
             Section("Your Code") {
                 Button(role: .destructive, action: { confirmingReset = true }) {
                     SettingsLabel(title: "Reset Editor to Starter Code", symbol: "arrow.counterclockwise", color: .red)
@@ -214,8 +225,14 @@ struct SettingsView: View {
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { activeIcon = UIApplication.shared.alternateIconName ?? "AppIcon" }
+        .onChange(of: keepRecent) { _, isOn in
+            if !isOn { RecentShortcutsStore.deleteEverything() }
+        }
         .confirmationDialog("Reset the editor?", isPresented: $confirmingReset, titleVisibility: .visible) {
-            Button("Reset Editor", role: .destructive) { source = StarterCode.text }
+            Button("Reset Editor", role: .destructive) {
+                EditorSourceStore.shared.text = StarterCode.text
+                EditorSourceStore.shared.flush()
+            }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This replaces everything in the editor with the starter code. It can't be undone.")
