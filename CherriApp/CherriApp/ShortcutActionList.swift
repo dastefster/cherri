@@ -1,6 +1,6 @@
 // ===================================
 // Shortcut Action List
-// v0.0.1 BUILD 2026-11-22 10:05
+// v0.0.2 BUILD 2026-11-23 07:35
 // Reads the actions out of a downloaded shortcut file so the person can pick some to copy. Names each action, works out indentation and control-flow blocks, and finds which other actions a selection depends on, so a paste never lands with a broken variable link. Pure Foundation, no UI.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -177,9 +177,43 @@ nonisolated struct GrabList {
                     queue.append(index)
                 }
             }
+
+            // Only the Repeat and End Repeat are added, not every other action inside the loop, so one action can be wrapped in its loop without dragging the rest along. The Repeat's own count or list is followed like anything else.
+            for wrapper in loopWrapperIndexes(for: rows[current]) where !covered.contains(wrapper) {
+                covered.insert(wrapper)
+                needed.insert(wrapper)
+                queue.append(wrapper)
+            }
         }
 
         return needed
+    }
+
+    // True when something in the selection reads Repeat Index or Repeat Item but its Repeat isn't in the selection, so the paste would show a broken (red) variable unless it lands inside a loop.
+    func readsLoopOutsideItsLoop(_ selection: Set<Int>) -> Bool {
+        selection.contains { index in
+            loopWrapperIndexes(for: rows[index]).contains { !selection.contains($0) }
+        }
+    }
+
+    private static let loopVariables: Set<String> = ["Repeat Index", "Repeat Item"]
+    private static let repeatIdentifiers: Set<String> = ["is.workflow.actions.repeat.count", "is.workflow.actions.repeat.each"]
+
+    // The Repeat and End Repeat rows around an action that reads Repeat Index or Repeat Item. Those variables only exist inside a loop. Empty when the action reads neither, or isn't inside a Repeat in the first place.
+    private func loopWrapperIndexes(for row: GrabRow) -> [Int] {
+        guard row.referencedVariables.contains(where: { Self.loopVariables.contains($0) }) else { return [] }
+
+        // The innermost Repeat is the one that starts closest above the row.
+        var innermost: ClosedRange<Int>?
+        for range in blockRanges.values where range.lowerBound < row.index && row.index < range.upperBound {
+            guard Self.repeatIdentifiers.contains(rows[range.lowerBound].identifier) else { continue }
+            if innermost == nil || range.lowerBound > innermost!.lowerBound {
+                innermost = range
+            }
+        }
+
+        guard let loop = innermost else { return [] }
+        return [loop.lowerBound, loop.upperBound]
     }
 
     private func producerIndexes(for row: GrabRow) -> [Int] {
@@ -191,7 +225,7 @@ nonisolated struct GrabList {
             }
         }
 
-        // A named variable comes from the closest Set Variable above the action that reads it. Names with no Set Variable (Repeat Item, Ask Each Time and the like) are built in and need nothing.
+        // A named variable comes from the closest Set Variable above the action that reads it. Names with no Set Variable (Ask Each Time and the like) are built in and need nothing. Repeat Index and Repeat Item are handled separately, because they need their loop.
         for name in row.referencedVariables {
             if let setter = rows[..<row.index].last(where: { $0.setsVariable == name }) {
                 result.append(setter.index)

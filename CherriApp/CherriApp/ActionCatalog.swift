@@ -1,6 +1,6 @@
  // ===================================
 // Action Catalog
-// v0.0.6 BUILD 2026-11-18 20:48
+// v0.0.7 BUILD 2026-11-23 07:35
 // Loads the list of every Cherri action from the embedded compiler, gives each a readable name, and turns an action into starter code to insert.
 // dev by @dastefster 🍒🔨
 // ===================================
@@ -91,10 +91,11 @@ extension CatalogAction {
             || (description ?? "").lowercased().contains(query)
     }
 
-    // Cherri's own doc comments mislabel two actions (copy-paste slips upstream: Take Video is titled "Take Photo", Play Later is titled "Play Next"), so they're corrected here. If Cherri fixes them, these just say the same thing.
+    // Cherri's own doc comments mislabel two actions (copy-paste slips upstream: Take Video is titled "Take Photo", Play Later is titled "Play Next"), and one is out of date (Apple renamed Show Result to Show Content), so they're corrected here. If Cherri fixes them, these just say the same thing. Search still finds the old name, because it also reads the documented title.
     private static let titleFixes: [String: String] = [
         "takeVideo": "Take Video",
         "playLater": "Play Later",
+        "show": "Show Content",
     ]
 
     // The documented title when Cherri has one, otherwise the call name split into words. Not Apple's official name, just readable.

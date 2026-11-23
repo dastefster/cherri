@@ -1,7 +1,7 @@
 // ===================================
 // Action Grabber View
-// v0.0.3 BUILD 2026-11-23 06:40
-// Lists every action in a downloaded shortcut so the person can tap the ones they want, then copies them to the clipboard to paste into another shortcut in the Shortcuts app. Tapping part of an If, Repeat or Menu takes the whole block. If the selection reads from actions that aren't selected, it says so and offers to include them, so a paste never lands with broken variable links.
+// v0.0.4 BUILD 2026-11-23 07:35
+// Lists every action in a downloaded shortcut so the person can tap the ones they want, then copies them to the clipboard to paste into another shortcut in the Shortcuts app. Tapping the If, Repeat or Menu line itself takes the whole block; tapping an action inside one takes just that action. If the selection reads from actions that aren't selected, it says so and offers to include them, so a paste never lands with broken variable links.
 // dev by @dastefster 🍒🔨
 // ===================================
 
@@ -72,7 +72,7 @@ struct ActionGrabberView: View {
 
         List {
             Section {
-                Text("Tap the actions you want to copy. Tapping part of an If, Repeat or Menu takes the whole block.")
+                Text("Tap the actions you want to copy. Tapping the If, Repeat or Menu line itself takes the whole block. Tapping an action inside one takes just that action.")
                     .font(.footnote)
                     .foregroundStyle(Color.helperText)
             }
@@ -137,6 +137,11 @@ struct ActionGrabberView: View {
             Text("Some of what you picked uses values made by actions you didn't pick. Without them, the copied actions would lose those links when pasted.")
                 .font(.footnote)
                 .foregroundStyle(Color.helperText)
+            if list.readsLoopOutsideItsLoop(selection) {
+                Text("Repeat Index and Repeat Item only work inside a Repeat. Include the Repeat, or paste these into a Repeat that's already in the other shortcut.")
+                    .font(.footnote)
+                    .foregroundStyle(Color.helperText)
+            }
             Button {
                 change(selection.union(missing))
             } label: {
